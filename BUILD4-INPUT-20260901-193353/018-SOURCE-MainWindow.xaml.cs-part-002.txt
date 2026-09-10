@@ -1,0 +1,305 @@
+                    result.Credentials.Name;
+                    job.DatabaseUser =
+                        result.Credentials.User;
+
+                    job.Message =
+                        $"Готово. Файлов: {result.FilesProcessed}; " +
+                        $"замен №1: {result.ReplacementCount1}; " +
+                        $"замен №2: {result.ReplacementCount2}.";
+
+                    usedDatabaseNames.Add(
+                        result.Credentials.Name);
+
+                    usedDatabaseUsers.Add(
+                        result.Credentials.User);
+
+                    _database.SaveJob(job);
+
+                    AddLog(
+                        "INFO",
+                        job.Domain,
+                        $"Обработка завершена. " +
+                        $"Результат: {result.FinalFolder}");
+                }
+                catch (OperationCanceledException)
+                {
+                    job.Status = JobStatus.Cancelled;
+                    job.Message =
+                        "Обработка отменена пользователем.";
+
+                    _database.SaveJob(job);
+
+                    AddLog(
+                        "WARN",
+                        job.Domain,
+                        job.Message);
+                }
+                catch (Exception exception)
+                {
+                    job.Status = JobStatus.Failed;
+                    job.Message =
+                        SensitiveDataRedactor.Redact(
+                            exception.Message);
+
+                    _database.SaveJob(job);
+
+                    AddLog(
+                        "ERROR",
+                        job.Domain,
+                        job.Message);
+                }
+            }
+
+            var completedCount = newJobs.Count(
+                job =>
+                    job.Status == JobStatus.Completed);
+
+            var failedCount = newJobs.Count(
+                job =>
+                    job.Status == JobStatus.Failed);
+
+            var cancelledCount = newJobs.Count(
+                job =>
+                    job.Status is
+                        JobStatus.Cancelled or
+                        JobStatus.Skipped);
+
+            SetStatus(
+                $"Очередь завершена. " +
+                $"Успешно: {completedCount}; " +
+                $"ошибок: {failedCount}; " +
+                $"отменено/пропущено: {cancelledCount}.");
+
+            AddLog(
+                "INFO",
+                string.Empty,
+                StatusTextBlock.Text);
+        }
+        catch (Exception exception)
+        {
+            var message =
+                SensitiveDataRedactor.Redact(
+                    exception.Message);
+
+            SetStatus(message);
+
+            AddLog(
+                "ERROR",
+                string.Empty,
+                message);
+
+            MessageBox.Show(
+                this,
+                message,
+                "Ошибка запуска",
+                MessageBoxButton.OK,
+                MessageBoxImage.Error);
+        }
+        finally
+        {
+            _cancellationTokenSource?.Dispose();
+            _cancellationTokenSource = null;
+
+            _isRunning = false;
+
+            StartButton.IsEnabled = true;
+            PreviewButton.IsEnabled = true;
+            CancelButton.IsEnabled = false;
+        }
+    }
+
+    private void Cancel_Click(
+        object sender,
+        RoutedEventArgs e)
+    {
+        CancelProcessing();
+    }
+
+    private void ClearJobs_Click(
+        object sender,
+        RoutedEventArgs e)
+    {
+        if (_isRunning)
+        {
+            return;
+        }
+
+        _jobs.Clear();
+
+        AddLog(
+            "INFO",
+            string.Empty,
+            "Таблица очищена. История SQLite сохранена.");
+    }
+
+    private void CancelProcessing()
+    {
+        if (!_isRunning)
+        {
+            return;
+        }
+
+        _cancellationTokenSource?.Cancel();
+
+        SetStatus(
+            "Запрошена остановка текущего задания.");
+
+        AddLog(
+            "WARN",
+            string.Empty,
+            "Пользователь запросил остановку очереди.");
+    }
+
+    private List<InputRow> ParseRows()
+    {
+        var domainLines = SplitLines(
+            DomainsTextBox.Text,
+            removeEmptyLines: true);
+
+        var secondValueLines = SplitLines(
+            SecondValuesTextBox.Text,
+            removeEmptyLines: false);
+
+        while (secondValueLines.Count > 0 &&
+               string.IsNullOrWhiteSpace(
+                   secondValueLines[^1]))
+        {
+            secondValueLines.RemoveAt(
+                secondValueLines.Count - 1);
+        }
+
+        if (!string.IsNullOrWhiteSpace(
+                SearchText2TextBox.Text) &&
+            secondValueLines.Count !=
+            domainLines.Count)
+        {
+            throw new InvalidOperationException(
+                "Количество значений №2 должно совпадать " +
+                "с количеством доменов.");
+        }
+
+        var rows = new List<InputRow>();
+
+        var uniqueDomains = new HashSet<string>(
+            StringComparer.OrdinalIgnoreCase);
+
+        for (var index = 0;
+             index < domainLines.Count;
+             index++)
+        {
+            var domain = _domainService.Normalize(
+                domainLines[index]);
+
+            if (!uniqueDomains.Add(domain))
+            {
+                throw new InvalidOperationException(
+                    $"Домен повторяется во входном списке: {domain}");
+            }
+
+            var secondValue =
+                index < secondValueLines.Count
+                    ? secondValueLines[index].Trim()
+                    : string.Empty;
+
+            rows.Add(
+                new InputRow(
+                    domain,
+                    secondValue));
+        }
+
+        return rows;
+    }
+
+    private static List<string> SplitLines(
+        string text,
+        bool removeEmptyLines)
+    {
+        var normalized = text
+            .Replace(
+                "\r\n",
+                "\n",
+                StringComparison.Ordinal)
+            .Replace('\r', '\n');
+
+        if (removeEmptyLines)
+        {
+            return normalized
+                .Split(
+                    '\n',
+                    StringSplitOptions.RemoveEmptyEntries |
+                    StringSplitOptions.TrimEntries)
+                .ToList();
+        }
+
+        return normalized
+            .Split(
+                '\n',
+                StringSplitOptions.None)
+            .ToList();
+    }
+
+    private void AddLog(
+        string level,
+        string domain,
+        string message)
+    {
+        var entry = new LogEntry
+        {
+            Level = level,
+            Domain = domain,
+            Message = SensitiveDataRedactor.Redact(
+                message)
+        };
+
+        _logs.Insert(0, entry);
+
+        while (_logs.Count > 1000)
+        {
+            _logs.RemoveAt(
+                _logs.Count - 1);
+        }
+
+        try
+        {
+            _database.AddLog(entry);
+        }
+        catch
+        {
+            // Ошибка записи журнала не останавливает обработку.
+        }
+    }
+
+    private void SetStatus(string message)
+    {
+        StatusTextBlock.Text = message;
+    }
+
+    private void Window_Closing(
+        object? sender,
+        CancelEventArgs eventArgs)
+    {
+        if (!_isRunning)
+        {
+            return;
+        }
+
+        var result = MessageBox.Show(
+            this,
+            "Идёт обработка. Остановить её и закрыть программу?",
+            "Подтверждение",
+            MessageBoxButton.YesNo,
+            MessageBoxImage.Warning);
+
+        if (result != MessageBoxResult.Yes)
+        {
+            eventArgs.Cancel = true;
+            return;
+        }
+
+        CancelProcessing();
+    }
+
+    private sealed record InputRow(
+        string Domain,
+        string SecondValue);
+}

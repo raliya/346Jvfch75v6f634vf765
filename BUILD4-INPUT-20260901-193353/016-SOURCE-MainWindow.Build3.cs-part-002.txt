@@ -1,0 +1,100 @@
+new Progress<SftpDeploymentProgress>(
+                    item =>
+                    {
+                        Build3ProgressBar.Value =
+                            item.Percent;
+
+                        Build3StatusTextBlock.Text =
+                            $"{item.Percent}% — {item.Message}";
+
+                        SetStatus(
+                            $"{selectedJob.Domain}: " +
+                            $"{item.Percent}% — {item.Message}");
+                    });
+
+            using var cancellation =
+                new CancellationTokenSource(
+                    TimeSpan.FromMinutes(30));
+
+            var result =
+                await _sftpDeploymentService.DeployAsync(
+                    settings,
+                    password,
+                    new SiteDeploymentRequest
+                    {
+                        Domain = selectedJob.Domain,
+                        LocalDirectory =
+                            selectedJob.OutputPath
+                    },
+                    progress,
+                    cancellation.Token);
+
+            var message =
+                $"Сайт {result.Domain} загружен. " +
+                $"Файлов: {result.UploadedFiles}; " +
+                $"байт: {result.UploadedBytes}; " +
+                $"каталог: {result.RemoteDirectory}.";
+
+            Build3ProgressBar.Value = 100;
+            Build3StatusTextBlock.Text = message;
+            SetStatus(message);
+
+            AddLog(
+                "INFO",
+                selectedJob.Domain,
+                message);
+
+            MessageBox.Show(
+                this,
+                message,
+                "SSH/SFTP",
+                MessageBoxButton.OK,
+                MessageBoxImage.Information);
+        }
+        catch (Exception exception)
+        {
+            ShowBuild3Error(exception);
+        }
+        finally
+        {
+            password=[СКРЫТО]
+            SetBuild3Busy(false);
+        }
+    }
+
+    private void SetBuild3Busy(bool busy)
+    {
+        _isRunning = busy;
+
+        SaveSshSettingsButton.IsEnabled = !busy;
+        ReadSshFingerprintButton.IsEnabled = !busy;
+        TestSshConnectionButton.IsEnabled = !busy;
+        DeploySelectedSiteButton.IsEnabled = !busy;
+
+        StartButton.IsEnabled = !busy;
+        PreviewButton.IsEnabled = !busy;
+        CreateWebDomainButton.IsEnabled = !busy;
+    }
+
+    private void ShowBuild3Error(Exception exception)
+    {
+        var message =
+            SensitiveDataRedactor.Redact(
+                exception.Message);
+
+        Build3StatusTextBlock.Text = message;
+        SetStatus(message);
+
+        AddLog(
+            "ERROR",
+            string.Empty,
+            message);
+
+        MessageBox.Show(
+            this,
+            message,
+            "Ошибка SSH/SFTP",
+            MessageBoxButton.OK,
+            MessageBoxImage.Error);
+    }
+}

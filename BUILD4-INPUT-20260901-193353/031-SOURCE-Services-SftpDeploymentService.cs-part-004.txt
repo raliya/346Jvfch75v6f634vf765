@@ -1,0 +1,66 @@
+ throw new InvalidOperationException(
+                "Серверный путь содержит недопустимый сегмент.");
+        }
+
+        return "/" + string.Join("/", parts);
+    }
+
+    private static string CombineRemote(
+        string root,
+        string relativePath)
+    {
+        var normalizedRoot =
+            NormalizeRemotePath(root);
+
+        var normalizedRelative =
+            NormalizeRelativePath(relativePath);
+
+        return string.IsNullOrEmpty(normalizedRelative)
+            ? normalizedRoot
+            : normalizedRoot.TrimEnd('/') +
+              "/" +
+              normalizedRelative;
+    }
+
+    private static string GetRemoteDirectoryName(
+        string path)
+    {
+        var normalized =
+            NormalizeRemotePath(path);
+
+        var separator =
+            normalized.LastIndexOf('/');
+
+        return separator <= 0
+            ? "/"
+            : normalized[..separator];
+    }
+
+    private static string ShellQuote(string value)
+    {
+        if (value.Contains('\0') ||
+            value.Contains('\r') ||
+            value.Contains('\n'))
+        {
+            throw new InvalidOperationException(
+                "Команда содержит недопустимые символы.");
+        }
+
+        return "'" +
+               value.Replace(
+                   "'",
+                   "'\"'\"'",
+                   StringComparison.Ordinal) +
+               "'";
+    }
+
+    private sealed record LocalFile(
+        string FullPath,
+        string RelativePath,
+        long Length);
+
+    private sealed record LocalManifest(
+        List<LocalFile> Files,
+        List<string> Directories,
+        long TotalBytes);
+}

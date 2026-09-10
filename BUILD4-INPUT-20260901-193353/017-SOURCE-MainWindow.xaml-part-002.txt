@@ -1,0 +1,190 @@
+mn="0"
+                                   Margin="0,0,10,9"
+                                   VerticalAlignment="Center"
+                                   Text="Логин:"/>
+
+                        <TextBox x:Name="IspmanagerLoginTextBox"
+                                 Grid.Row="1"
+                                 Grid.Column="1"
+                                 Margin="0,0,0,9"
+                                 Text="root"/>
+
+                        <TextBlock Grid.Row="2"
+                                   Grid.Column="0"
+                                   Margin="0,0,10,9"
+                                   VerticalAlignment="Center"
+                                   Text="Пароль=[СКРЫТО]
+
+                        <StackPanel Grid.Row="2"
+                                    Grid.Column="1"
+                                    Margin="0,0,0,9">
+                            <PasswordBox x:Name="IspmanagerPasswordBox"/>
+                            <TextBlock x:Name="PasswordSavedTextBlock"
+                                       Margin="0,4,0,0"
+                                       Foreground="#666666"
+                                       Text="Пароль ещё не сохранён."/>
+                        </StackPanel>
+
+                        <TextBlock Grid.Row="3"
+                                   Grid.Column="0"
+                                   Margin="0,0,10,9"
+                                   VerticalAlignment="Center"
+                                   Text="Владелец сайта:"/>
+
+                        <TextBox x:Name="IspmanagerOwnerTextBox"
+                                 Grid.Row="3"
+                                 Grid.Column="1"
+                                 Margin="0,0,0,9"
+                                 Text="www-root"/>
+
+                        <TextBlock Grid.Row="4"
+                                   Grid.Column="0"
+                                   Margin="0,0,10,9"
+                                   VerticalAlignment="Center"
+                                   Text="Версия PHP:"/>
+
+                        <TextBox x:Name="IspmanagerPhpVersionTextBox"
+                                 Grid.Row="4"
+                                 Grid.Column="1"
+                                 Margin="0,0,0,9"
+                                 Text="8.3.8"/>
+
+                        <CheckBox x:Name="IgnoreCertificateErrorsCheckBox"
+                                  Grid.Row="5"
+                                  Grid.ColumnSpan="2"
+                                  Margin="0,0,0,8"
+                                  IsChecked="True"
+                                  Content="Разрешить сертификат панели с ошибкой проверки (панель открывается по IP)"/>
+
+                        <CheckBox x:Name="ShowBrowserCheckBox"
+                                  Grid.Row="6"
+                                  Grid.ColumnSpan="2"
+                                  Margin="0,0,0,12"
+                                  IsChecked="True"
+                                  Content="Показывать окно Chromium во время автоматизации"/>
+
+                        <StackPanel Grid.Row="7"
+                                    Grid.ColumnSpan="2"
+                                    Orientation="Horizontal">
+                            <Button x:Name="SaveIspmanagerSettingsButton"
+                                    Width="170"
+                                    Margin="0,0,8,0"
+                                    Padding="10,6"
+                                    Click="SaveIspmanagerSettings_Click"
+                                    Content="Сохранить настройки"/>
+
+                            <Button x:Name="TestIspmanagerButton"
+                                    Width="180"
+                                    Margin="0,0,8,0"
+                                    Padding="10,6"
+                                    Click="TestIspmanagerConnection_Click"
+                                    Content="Проверить подключение"/>
+
+                            <Button x:Name="CreateWebDomainButton"
+                                    Width="225"
+                                    Padding="10,6"
+                                    Click="CreateSelectedWebDomain_Click"
+                                    Content="Создать выбранный WWW-домен"/>
+                        </StackPanel>
+
+                        <Border Grid.Row="8"
+                                Grid.ColumnSpan="2"
+                                Margin="0,14,0,0"
+                                Padding="10"
+                                Background="#FFF1F1F1"
+                                BorderBrush="#FFD0D0D0"
+                                BorderThickness="1">
+                            <TextBlock x:Name="Build2StatusTextBlock"
+                                       TextWrapping="Wrap"
+                                       Text="Сборка 2 ещё не проверена."/>
+                        </Border>
+                    </Grid>
+                </ScrollViewer>
+            </TabItem>
+            <TabItem Header="SSH/SFTP">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <Grid Margin="14">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="190"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <TextBlock Grid.Row="0"
+                                   Grid.Column="0"
+                                   Margin="0,0,10,9"
+                                   VerticalAlignment="Center"
+                                   Text="SSH-сервер:"/>
+
+                        <TextBox x:Name="SshHostTextBox"
+                                 Grid.Row="0"
+                                 Grid.Column="1"
+                                 Margin="0,0,0,9"/>
+
+                        <TextBlock Grid.Row="1"
+                                   Grid.Column="0"
+                                   Margin="0,0,10,9"
+                                   VerticalAlignment="Center"
+                                   Text="SSH-порт:"/>
+
+                        <TextBox x:Name="SshPortTextBox"
+                                 Grid.Row="1"
+                                 Grid.Column="1"
+                                 Margin="0,0,0,9"
+                                 Text="22"/>
+
+                        <TextBlock Grid.Row="2"
+                                   Grid.Column="0"
+                                   Margin="0,0,10,9"
+                                   VerticalAlignment="Center"
+                                   Text="SSH-пользователь:"/>
+
+                        <TextBox x:Name="SshUsernameTextBox"
+                                 Grid.Row="2"
+                                 Grid.Column="1"
+                                 Margin="0,0,0,9"
+                                 Text="root"/>
+
+                        <TextBlock Grid.Row="3"
+                                   Grid.Column="0"
+                                   Margin="0,0,10,9"
+                                   VerticalAlignment="Center"
+                                   Text="SSH-пароль=[СКРЫТО]
+
+                        <StackPanel Grid.Row="3"
+                                    Grid.Column="1"
+                                    Margin="0,0,0,9">
+                            <PasswordBox x:Name="SshPasswordBox"/>
+
+                            <TextBlock x:Name="SshPasswordSavedTextBlock"
+                                       Margin="0,4,0,0"
+                                       Foreground="#666666"
+                                       Text="SSH-пароль ещё не сохранён."/>
+                        </StackPanel>
+
+                        <TextBlock Grid.Row="4"
+                                   Grid.Column="0"
+                                   Margin="0,0,10,9"
+                                   VerticalAlignment="Center"
+                                   Text="Host key SHA-256:"/>
+
+                        <TextBox x:Name="SshFingerprintTextBox"
+                                 Grid.Row="4"
+                                 Grid.Column="1"
+                                 Margin="0,0,0,9"/>
+
+                        <TextBlock Grid.Row="5"
+                                  

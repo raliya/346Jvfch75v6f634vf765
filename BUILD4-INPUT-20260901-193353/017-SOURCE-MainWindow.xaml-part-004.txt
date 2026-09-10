@@ -1,0 +1,6 @@
+                TextTrimming="CharacterEllipsis"/>
+        </Border>
+    </Grid>
+</Window>
+
+

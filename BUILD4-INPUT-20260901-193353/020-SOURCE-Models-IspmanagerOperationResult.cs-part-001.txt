@@ -1,0 +1,23 @@
+ИСХОДНЫЙ ФАЙЛ
+
+Относительный путь:
+Models\IspmanagerOperationResult.cs
+
+Полный путь:
+C:\Users\User\Desktop\Adminki\. Программа домены\Новая папка\Models\IspmanagerOperationResult.cs
+
+Размер:
+253 байт
+
+СОДЕРЖИМОЕ
+
+namespace TextFileProcessor.Models;
+
+public sealed class IspmanagerOperationResult
+{
+    public bool Success { get; init; }
+
+    public string Message { get; init; } = string.Empty;
+
+    public string DiagnosticPath { get; init; } = string.Empty;
+}

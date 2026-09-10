@@ -1,0 +1,344 @@
+ectory.Exists(sourceFolder))
+        {
+            throw new DirectoryNotFoundException(
+                "Исходная папка не существует.");
+        }
+
+        if (string.IsNullOrWhiteSpace(outputFolder))
+        {
+            throw new InvalidOperationException(
+                "Не выбрана папка результата.");
+        }
+
+        var source = NormalizePath(sourceFolder);
+        var output = NormalizePath(outputFolder);
+
+        if (string.Equals(
+                source,
+                output,
+                StringComparison.OrdinalIgnoreCase))
+        {
+            throw new InvalidOperationException(
+                "Исходная папка и папка результата не могут совпадать.");
+        }
+
+        if (output.StartsWith(
+                source + Path.DirectorySeparatorChar,
+                StringComparison.OrdinalIgnoreCase))
+        {
+            throw new InvalidOperationException(
+                "Папка результата не должна находиться " +
+                "внутри исходной папки.");
+        }
+
+        if (source.StartsWith(
+                output + Path.DirectorySeparatorChar,
+                StringComparison.OrdinalIgnoreCase))
+        {
+            throw new InvalidOperationException(
+                "Исходная папка не должна находиться " +
+                "внутри папки результата.");
+        }
+    }
+
+    private static string NormalizePath(string path)
+    {
+        return Path.GetFullPath(path).TrimEnd(
+            Path.DirectorySeparatorChar,
+            Path.AltDirectorySeparatorChar);
+    }
+
+    private static void CopyDirectoryContents(
+        string source,
+        string destination,
+        CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+
+        foreach (var sourceFile in Directory.EnumerateFiles(
+                     source,
+                     "*",
+                     SearchOption.TopDirectoryOnly))
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            var fileInfo = new FileInfo(sourceFile);
+
+            if ((fileInfo.Attributes &
+                 FileAttributes.ReparsePoint) != 0)
+            {
+                continue;
+            }
+
+            var destinationFile = Path.Combine(
+                destination,
+                fileInfo.Name);
+
+            File.Copy(
+                sourceFile,
+                destinationFile,
+                true);
+        }
+
+        foreach (var sourceDirectory in
+                 Directory.EnumerateDirectories(
+                     source,
+                     "*",
+                     SearchOption.TopDirectoryOnly))
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            var directoryInfo =
+                new DirectoryInfo(sourceDirectory);
+
+            if ((directoryInfo.Attributes &
+                 FileAttributes.ReparsePoint) != 0)
+            {
+                continue;
+            }
+
+            var destinationDirectory = Path.Combine(
+                destination,
+                directoryInfo.Name);
+
+            Directory.CreateDirectory(
+                destinationDirectory);
+
+            CopyDirectoryContents(
+                sourceDirectory,
+                destinationDirectory,
+                cancellationToken);
+        }
+    }
+
+    private static ReplacementResult ReplaceText(
+        string root,
+        DomainJob job,
+        ProcessingOptions options,
+        CancellationToken cancellationToken)
+    {
+        var extensions = new HashSet<string>(
+            BaseExtensions,
+            StringComparer.OrdinalIgnoreCase);
+
+        if (options.IncludeAdditionalExtensions)
+        {
+            extensions.UnionWith(
+                AdditionalExtensions);
+        }
+
+        var filesProcessed = 0;
+        var replacementCount1 = 0;
+        var replacementCount2 = 0;
+
+        foreach (var path in Directory.EnumerateFiles(
+                     root,
+                     "*",
+                     SearchOption.AllDirectories))
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            var extension = Path.GetExtension(path);
+
+            if (!extensions.Contains(extension))
+            {
+                continue;
+            }
+
+            if (!IsProbablyText(path))
+            {
+                continue;
+            }
+
+            var textDocument = ReadText(path);
+            var content = textDocument.Text;
+            var changed = false;
+
+            var count1 = CountOccurrences(
+                content,
+                options.SearchText1);
+
+            if (count1 > 0)
+            {
+                content = content.Replace(
+                    options.SearchText1,
+                    job.Domain,
+                    StringComparison.Ordinal);
+
+                replacementCount1 += count1;
+                changed = true;
+            }
+
+            if (!string.IsNullOrWhiteSpace(
+                    options.SearchText2) &&
+                !string.IsNullOrWhiteSpace(
+                    job.SecondValue))
+            {
+                var count2 = CountOccurrences(
+                    content,
+                    options.SearchText2);
+
+                if (count2 > 0)
+                {
+                    content = content.Replace(
+                        options.SearchText2,
+                        job.SecondValue,
+                        StringComparison.Ordinal);
+
+                    replacementCount2 += count2;
+                    changed = true;
+                }
+            }
+
+            if (changed)
+            {
+                WriteTextAtomically(
+                    path,
+                    content,
+                    textDocument.Encoding);
+            }
+
+            filesProcessed++;
+        }
+
+        return new ReplacementResult(
+            filesProcessed,
+            replacementCount1,
+            replacementCount2);
+    }
+
+    private static bool IsProbablyText(string path)
+    {
+        const int sampleSize = 8192;
+
+        using var stream = new FileStream(
+            path,
+            FileMode.Open,
+            FileAccess.Read,
+            FileShare.Read);
+
+        var size = (int)Math.Min(
+            stream.Length,
+            sampleSize);
+
+        if (size == 0)
+        {
+            return true;
+        }
+
+        var buffer = new byte[size];
+        var read = stream.Read(
+            buffer,
+            0,
+            buffer.Length);
+
+        var controlCharacters = 0;
+
+        for (var index = 0;
+             index < read;
+             index++)
+        {
+            var current = buffer[index];
+
+            if (current == 0)
+            {
+                return false;
+            }
+
+            if (current < 9 ||
+                current is > 13 and < 32)
+            {
+                controlCharacters++;
+            }
+        }
+
+        return controlCharacters <=
+               Math.Max(3, read / 50);
+    }
+
+    private static TextDocument ReadText(string path)
+    {
+        var bytes = File.ReadAllBytes(path);
+
+        if (bytes.Length >= 3 &&
+            bytes[0] == 0xEF &&
+            bytes[1] == 0xBB &&
+            bytes[2] == 0xBF)
+        {
+            var encoding = new UTF8Encoding(true);
+
+            return new TextDocument(
+                encoding.GetString(
+                    bytes,
+                    3,
+                    bytes.Length - 3),
+                encoding);
+        }
+
+        if (bytes.Length >= 2 &&
+            bytes[0] == 0xFF &&
+            bytes[1] == 0xFE)
+        {
+            return new TextDocument(
+                Encoding.Unicode.GetString(
+                    bytes,
+                    2,
+                    bytes.Length - 2),
+                Encoding.Unicode);
+        }
+
+        if (bytes.Length >= 2 &&
+            bytes[0] == 0xFE &&
+            bytes[1] == 0xFF)
+        {
+            return new TextDocument(
+                Encoding.BigEndianUnicode.GetString(
+                    bytes,
+                    2,
+                    bytes.Length - 2),
+                Encoding.BigEndianUnicode);
+        }
+
+        try
+        {
+            var utf8 = new UTF8Encoding(
+                false,
+                true);
+
+            return new TextDocument(
+                utf8.GetString(bytes),
+                new UTF8Encoding(false));
+        }
+        catch (DecoderFallbackException)
+        {
+            return new TextDocument(
+                Encoding.Latin1.GetString(bytes),
+                Encoding.Latin1);
+        }
+    }
+
+    private static void WriteTextAtomically(
+        string path,
+        string content,
+        Encoding encoding)
+    {
+        var temporaryPath =
+            path + ".replace-" +
+            Guid.NewGuid().ToString("N");
+
+        try
+        {
+            File.WriteAllText(
+                temporaryPath,
+                content,
+                encoding);
+
+            File.Move(
+                temporaryPath,
+                path,
+                true);
+        }
+        finally
+        {
+            if (File.Exists(temporaryPath))
+          

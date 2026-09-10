@@ -1,0 +1,350 @@
+              $"На сервере отсутствует файл: {file.RelativePath}");
+            }
+
+            var attributes =
+                sftp.GetAttributes(remoteFile);
+
+            if (attributes.IsDirectory)
+            {
+                throw new InvalidOperationException(
+                    $"Вместо файла обнаружен каталог: " +
+                    file.RelativePath);
+            }
+
+            var remoteSize =
+                Convert.ToInt64(attributes.Size);
+
+            if (remoteSize != file.Length)
+            {
+                throw new InvalidOperationException(
+                    $"Размер файла не совпадает: " +
+                    $"{file.RelativePath}. " +
+                    $"Локально: {file.Length}; " +
+                    $"сервер: {remoteSize}.");
+            }
+
+            verifiedCount++;
+            verifiedBytes += remoteSize;
+        }
+
+        if (verifiedCount != manifest.Files.Count ||
+            verifiedBytes != manifest.TotalBytes)
+        {
+            throw new InvalidOperationException(
+                "Количество или общий размер файлов не совпадают.");
+        }
+    }
+
+    private static void RemoveTemporaryDirectory(
+        SshClient ssh,
+        string directory)
+    {
+        if (!directory.Contains(
+                "/.upload-",
+                StringComparison.Ordinal) &&
+            !directory.Contains(
+                "/.backup-",
+                StringComparison.Ordinal))
+        {
+            throw new InvalidOperationException(
+                "Отказ от удаления неподтверждённой папки.");
+        }
+
+        RunChecked(
+            ssh,
+            $"if test -e {ShellQuote(directory)}; " +
+            $"then rm -rf -- {ShellQuote(directory)}; fi");
+    }
+
+    private static void TryRollback(
+        SshClient ssh,
+        string targetDirectory,
+        string uploadDirectory,
+        string backupDirectory,
+        bool targetMoved,
+        bool uploadMoved)
+    {
+        if (!ssh.IsConnected)
+        {
+            return;
+        }
+
+        try
+        {
+            if (uploadMoved)
+            {
+                TryRun(
+                    ssh,
+                    $"if test -e {ShellQuote(targetDirectory)}; " +
+                    $"then rm -rf -- {ShellQuote(targetDirectory)}; fi");
+            }
+            else
+            {
+                TryRun(
+                    ssh,
+                    $"if test -e {ShellQuote(uploadDirectory)}; " +
+                    $"then rm -rf -- {ShellQuote(uploadDirectory)}; fi");
+            }
+
+            if (targetMoved)
+            {
+                TryRun(
+                    ssh,
+                    $"if test -d {ShellQuote(backupDirectory)}; " +
+                    $"then mv -- {ShellQuote(backupDirectory)} " +
+                    $"{ShellQuote(targetDirectory)}; fi");
+            }
+        }
+        catch
+        {
+            // Исходная ошибка важнее ошибки автоматического отката.
+        }
+    }
+
+    private static void RunChecked(
+        SshClient ssh,
+        string commandText)
+    {
+        using var command =
+            ssh.CreateCommand(commandText);
+
+        command.CommandTimeout =
+            TimeSpan.FromMinutes(15);
+
+        command.Execute();
+
+        if (command.ExitStatus == 0)
+        {
+            return;
+        }
+
+        var error = string.IsNullOrWhiteSpace(command.Error)
+            ? "сервер не вернул описание ошибки"
+            : command.Error
+                .Replace('\r', ' ')
+                .Replace('\n', ' ')
+                .Trim();
+
+        if (error.Length > 1000)
+        {
+            error = error[..1000];
+        }
+
+        throw new InvalidOperationException(
+            $"Серверная команда завершилась с кодом " +
+            $"{command.ExitStatus}: {error}");
+    }
+
+    private static void TryRun(
+        SshClient ssh,
+        string commandText)
+    {
+        try
+        {
+            using var command =
+                ssh.CreateCommand(commandText);
+
+            command.CommandTimeout =
+                TimeSpan.FromMinutes(5);
+
+            command.Execute();
+        }
+        catch
+        {
+            // Используется только при автоматическом откате.
+        }
+    }
+
+    private static void EnsureSftpDirectory(
+        SftpClient sftp,
+        string directory)
+    {
+        var normalized =
+            NormalizeRemotePath(directory);
+
+        if (normalized == "/")
+        {
+            return;
+        }
+
+        var current = string.Empty;
+
+        foreach (var segment in normalized.Split(
+                     '/',
+                     StringSplitOptions.RemoveEmptyEntries))
+        {
+            current += "/" + segment;
+
+            if (!sftp.Exists(current))
+            {
+                sftp.CreateDirectory(current);
+            }
+        }
+    }
+
+    private static SshClient CreateSshClient(
+        SshDeploymentSettings settings,
+        string password)
+    {
+        var client = new SshClient(
+            CreateConnectionInfo(settings, password))
+        {
+            KeepAliveInterval = TimeSpan.FromSeconds(15)
+        };
+
+        client.HostKeyReceived += (_, eventArgs) =>
+            ValidateHostKey(settings, eventArgs);
+
+        return client;
+    }
+
+    private static SftpClient CreateSftpClient(
+        SshDeploymentSettings settings,
+        string password)
+    {
+        var client = new SftpClient(
+            CreateConnectionInfo(settings, password))
+        {
+            OperationTimeout = TimeSpan.FromMinutes(15),
+            KeepAliveInterval = TimeSpan.FromSeconds(15)
+        };
+
+        client.HostKeyReceived += (_, eventArgs) =>
+            ValidateHostKey(settings, eventArgs);
+
+        return client;
+    }
+
+    private static ConnectionInfo CreateConnectionInfo(
+        SshDeploymentSettings settings,
+        string password)
+    {
+        var authentication =
+            new PasswordAuthenticationMethod(
+                settings.Username.Trim(),
+                password);
+
+        return new ConnectionInfo(
+            settings.Host.Trim(),
+            settings.Port,
+            settings.Username.Trim(),
+            authentication)
+        {
+            Timeout = TimeSpan.FromSeconds(30)
+        };
+    }
+
+    private static void ValidateHostKey(
+        SshDeploymentSettings settings,
+        HostKeyEventArgs eventArgs)
+    {
+        var expected = NormalizeFingerprint(
+            settings.HostKeySha256);
+
+        var actual = NormalizeFingerprint(
+            CreateFingerprint(eventArgs.HostKey));
+
+        var expectedBytes =
+            Encoding.ASCII.GetBytes(expected);
+
+        var actualBytes =
+            Encoding.ASCII.GetBytes(actual);
+
+        var matches =
+            expectedBytes.Length == actualBytes.Length &&
+            CryptographicOperations.FixedTimeEquals(
+                expectedBytes,
+                actualBytes);
+
+        eventArgs.CanTrust = matches;
+    }
+
+    private static string CreateFingerprint(
+        byte[] hostKey)
+    {
+        var hash = SHA256.HashData(hostKey);
+
+        return "SHA256:" +
+               Convert.ToBase64String(hash)
+                   .TrimEnd('=');
+    }
+
+    private static string NormalizeFingerprint(
+        string value)
+    {
+        var normalized = value.Trim();
+
+        if (normalized.StartsWith(
+                "SHA256:",
+                StringComparison.OrdinalIgnoreCase))
+        {
+            normalized = normalized[7..];
+        }
+
+        return normalized
+            .Trim()
+            .TrimEnd('=');
+    }
+
+    private static string NormalizeDomain(
+        string value)
+    {
+        var domain = value
+            .Trim()
+            .TrimEnd('.')
+            .ToLowerInvariant();
+
+        if (!DomainRegex.IsMatch(domain))
+        {
+            throw new InvalidOperationException(
+                $"Некорректный домен: {value}");
+        }
+
+        return domain;
+    }
+
+    private static string NormalizeRelativePath(
+        string value)
+    {
+        var normalized =
+            value.Replace('\\', '/').Trim('/');
+
+        if (string.IsNullOrWhiteSpace(normalized))
+        {
+            return string.Empty;
+        }
+
+        var parts = normalized.Split(
+            '/',
+            StringSplitOptions.RemoveEmptyEntries);
+
+        if (parts.Any(part => part is "." or ".."))
+        {
+            throw new InvalidOperationException(
+                "Относительный путь содержит недопустимый сегмент.");
+        }
+
+        return string.Join("/", parts);
+    }
+
+    private static string NormalizeRemotePath(
+        string value)
+    {
+        var normalized =
+            value.Replace('\\', '/').Trim();
+
+        if (!normalized.StartsWith(
+                "/",
+                StringComparison.Ordinal))
+        {
+            throw new InvalidOperationException(
+                "Серверный путь должен быть абсолютным.");
+        }
+
+        var parts = normalized.Split(
+            '/',
+            StringSplitOptions.RemoveEmptyEntries);
+
+        if (parts.Any(part => part is "." or ".."))
+        {
+           

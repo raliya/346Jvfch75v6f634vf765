@@ -1,0 +1,14 @@
+ИСХОДНЫЙ ФАЙЛ
+
+Относительный путь:
+GlobalUsings.cs
+
+Полный путь:
+C:\Users\User\Desktop\Adminki\. Программа домены\Новая папка\GlobalUsings.cs
+
+Размер:
+28 байт
+
+СОДЕРЖИМОЕ
+
+global using System.IO;

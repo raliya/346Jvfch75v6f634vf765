@@ -1,0 +1,265 @@
+  {
+                File.Delete(temporaryPath);
+            }
+        }
+    }
+
+    private static int CountOccurrences(
+        string content,
+        string searchText)
+    {
+        if (string.IsNullOrEmpty(searchText))
+        {
+            return 0;
+        }
+
+        var count = 0;
+        var position = 0;
+
+        while (true)
+        {
+            position = content.IndexOf(
+                searchText,
+                position,
+                StringComparison.Ordinal);
+
+            if (position < 0)
+            {
+                return count;
+            }
+
+            count++;
+            position += searchText.Length;
+        }
+    }
+
+    private static string FindRequiredStartFile(
+        string root)
+    {
+        var result = FindOptionalStartFile(root);
+
+        if (result is null)
+        {
+            throw new InvalidOperationException(
+                "В корне обработанного сайта не найден " +
+                "index.php, index.html или index.htm.");
+        }
+
+        return result;
+    }
+
+    private static string? FindOptionalStartFile(
+        string root)
+    {
+        var candidates = new[]
+        {
+            "index.php",
+            "index.html",
+            "index.htm"
+        };
+
+        foreach (var candidate in candidates)
+        {
+            var path = Path.Combine(
+                root,
+                candidate);
+
+            if (File.Exists(path))
+            {
+                return path;
+            }
+        }
+
+        return null;
+    }
+
+    private static void EnsureNoExtraDomainLevel(
+        string root,
+        string domain)
+    {
+        var nestedFolder = Path.Combine(
+            root,
+            domain);
+
+        if (Directory.Exists(nestedFolder))
+        {
+            throw new InvalidOperationException(
+                $"Обнаружен лишний уровень: {domain}\\{domain}. " +
+                "Выберите внутренний корень исходного сайта.");
+        }
+    }
+
+    private static ConfigResult ParseConfigPhp(
+        string root)
+    {
+        var configFiles = Directory
+            .EnumerateFiles(
+                root,
+                "config.php",
+                SearchOption.AllDirectories)
+            .ToList();
+
+        if (configFiles.Count == 0)
+        {
+            throw new InvalidOperationException(
+                "В обработанной копии не найден config.php.");
+        }
+
+        if (configFiles.Count > 1)
+        {
+            var preferredFiles = configFiles
+                .Where(path =>
+                    path.Replace('\\', '/')
+                        .EndsWith(
+                            "/config/config.php",
+                            StringComparison.OrdinalIgnoreCase))
+                .ToList();
+
+            if (preferredFiles.Count == 1)
+            {
+                configFiles = preferredFiles;
+            }
+            else
+            {
+                throw new InvalidOperationException(
+                    "Найдено несколько config.php. " +
+                    "Невозможно однозначно выбрать конфигурацию.");
+            }
+        }
+
+        var configPath = configFiles[0];
+        var content = File.ReadAllText(configPath);
+
+        var name = ReadPhpArrayValue(
+            content,
+            "name");
+
+        var user = ReadPhpArrayValue(
+            content,
+            "user");
+
+        var password=[СКРЫТО]
+            content,
+            "pass");
+
+        if (string.IsNullOrWhiteSpace(name) ||
+            string.IsNullOrWhiteSpace(user) ||
+            string.IsNullOrWhiteSpace(password))
+        {
+            throw new InvalidOperationException(
+                "В обработанном config.php не удалось " +
+                "прочитать name, user и pass.");
+        }
+
+        return new ConfigResult(
+            configPath,
+            new DatabaseCredentials
+            {
+                Name = name,
+                User = user,
+                Password=[СКРЫТО]
+            });
+    }
+
+    private static string ReadPhpArrayValue(
+        string content,
+        string key)
+    {
+        var pattern =
+            $@"['""]{Regex.Escape(key)}['""]" +
+            @"\s*=>\s*(['""])(?<value>.*?)\1";
+
+        var match = Regex.Match(
+            content,
+            pattern,
+            RegexOptions.IgnoreCase |
+            RegexOptions.Singleline);
+
+        return match.Success
+            ? match.Groups["value"].Value.Trim()
+            : string.Empty;
+    }
+
+    private static string FindSqlFile(
+        string root)
+    {
+        var sqlFiles = Directory
+            .EnumerateFiles(
+                root,
+                "*.sql",
+                SearchOption.AllDirectories)
+            .Select(path => new FileInfo(path))
+            .OrderByDescending(file =>
+                string.Equals(
+                    file.Name,
+                    "database.sql",
+                    StringComparison.OrdinalIgnoreCase))
+            .ThenByDescending(file => file.Length)
+            .ToList();
+
+        if (sqlFiles.Count == 0)
+        {
+            throw new InvalidOperationException(
+                "В обработанной копии не найден SQL-файл.");
+        }
+
+        return sqlFiles[0].FullName;
+    }
+
+    private static string ChangeRoot(
+        string path,
+        string oldRoot,
+        string newRoot)
+    {
+        var relativePath = Path.GetRelativePath(
+            oldRoot,
+            path);
+
+        return Path.Combine(
+            newRoot,
+            relativePath);
+    }
+
+    private static void DeleteDirectoryIfExists(
+        string path)
+    {
+        if (!Directory.Exists(path))
+        {
+            return;
+        }
+
+        foreach (var file in Directory.EnumerateFiles(
+                     path,
+                     "*",
+                     SearchOption.AllDirectories))
+        {
+            try
+            {
+                File.SetAttributes(
+                    file,
+                    FileAttributes.Normal);
+            }
+            catch
+            {
+                // Продолжаем стандартное удаление.
+            }
+        }
+
+        Directory.Delete(
+            path,
+            true);
+    }
+
+    private sealed record TextDocument(
+        string Text,
+        Encoding Encoding);
+
+    private sealed record ReplacementResult(
+        int FilesProcessed,
+        int ReplacementCount1,
+        int ReplacementCount2);
+
+    private sealed record ConfigResult(
+        string Path,
+        DatabaseCredentials Credentials);
+}

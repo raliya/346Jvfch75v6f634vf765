@@ -1,0 +1,328 @@
+;
+        }
+        catch (OperationCanceledException)
+            when (!cancellationToken.IsCancellationRequested)
+        {
+            return ApiResult.Failure(
+                "timeout",
+                "РСЃС‚РµРєР»Рѕ РІСЂРµРјСЏ РѕР¶РёРґР°РЅРёСЏ РѕС‚РІРµС‚Р° ISPmanager.");
+        }
+        catch (HttpRequestException exception)
+        {
+            return ApiResult.Failure(
+                "connection",
+                exception.Message);
+        }
+
+        using (response)
+        {
+            var responseText =
+                await response.Content.ReadAsStringAsync(
+                    cancellationToken);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                return ApiResult.Failure(
+                    ((int)response.StatusCode).ToString(
+                        CultureInfo.InvariantCulture),
+                    $"HTTP {(int)response.StatusCode}: " +
+                    response.ReasonPhrase);
+            }
+
+            if (string.IsNullOrWhiteSpace(responseText))
+            {
+                return ApiResult.Failure(
+                    "empty_response",
+                    "ISPmanager РІРµСЂРЅСѓР» РїСѓСЃС‚РѕР№ РѕС‚РІРµС‚.");
+            }
+
+            XDocument document;
+
+            try
+            {
+                document = XDocument.Parse(responseText);
+            }
+            catch
+            {
+                return ApiResult.Failure(
+                    "invalid_xml",
+                    "ISPmanager РІРµСЂРЅСѓР» РѕС‚РІРµС‚ РЅРµРёР·РІРµСЃС‚РЅРѕРіРѕ С„РѕСЂРјР°С‚Р°.");
+            }
+
+            var errorElement = document
+                .Descendants()
+                .FirstOrDefault(element =>
+                    string.Equals(
+                        element.Name.LocalName,
+                        "error",
+                        StringComparison.OrdinalIgnoreCase));
+
+            if (errorElement is null)
+            {
+                return ApiResult.SuccessResult(document);
+            }
+
+            var errorCode =
+                errorElement.Attribute("code")?.Value ??
+                FindElementValue(errorElement, "code") ??
+                "ispmanager_error";
+
+            var errorMessage =
+                errorElement.Attribute("msg")?.Value ??
+                FindElementValue(errorElement, "msg") ??
+                FindElementValue(errorElement, "message") ??
+                errorElement.Value;
+
+            if (string.IsNullOrWhiteSpace(errorMessage))
+            {
+                errorMessage =
+                    "ISPmanager РІРµСЂРЅСѓР» РѕС€РёР±РєСѓ Р±РµР· РѕРїРёСЃР°РЅРёСЏ.";
+            }
+
+            return ApiResult.Failure(
+                errorCode.Trim(),
+                errorMessage.Trim(),
+                document);
+        }
+    }
+
+    private static async Task<bool> DomainExistsAsync(
+        HttpClient client,
+        IspmanagerSettings settings,
+        string sessionId,
+        string domain,
+        CancellationToken cancellationToken)
+    {
+        var result = await CallAsync(
+            client,
+            settings,
+            sessionId,
+            "webdomain",
+            null,
+            cancellationToken);
+
+        EnsureSuccess(
+            result,
+            "РќРµ СѓРґР°Р»РѕСЃСЊ РїСЂРѕРІРµСЂРёС‚СЊ СЃРїРёСЃРѕРє WWW-РґРѕРјРµРЅРѕРІ");
+
+        if (result.Document is null)
+        {
+            return false;
+        }
+
+        var expectedDomain =
+            NormalizeDomain(domain);
+
+        return result.Document
+            .Descendants()
+            .Where(element =>
+                string.Equals(
+                    element.Name.LocalName,
+                    "name",
+                    StringComparison.OrdinalIgnoreCase))
+            .Select(element =>
+                NormalizeDomainSafe(element.Value))
+            .Any(value =>
+                string.Equals(
+                    value,
+                    expectedDomain,
+                    StringComparison.OrdinalIgnoreCase));
+    }
+
+    private static string? FindElementValue(
+        XElement parent,
+        string localName)
+    {
+        return parent
+            .Descendants()
+            .FirstOrDefault(element =>
+                string.Equals(
+                    element.Name.LocalName,
+                    localName,
+                    StringComparison.OrdinalIgnoreCase))
+            ?.Value;
+    }
+
+    private static void EnsureSuccess(
+        ApiResult result,
+        string operation)
+    {
+        if (result.Success)
+        {
+            return;
+        }
+
+        throw new InvalidOperationException(
+            $"{operation}. " +
+            $"РћС€РёР±РєР° {result.ErrorCode}: " +
+            result.ErrorMessage);
+    }
+
+    private static void ValidateSettings(
+        IspmanagerSettings settings,
+        string password)
+    {
+        if (!Uri.TryCreate(
+            settings.PanelUrl,
+            UriKind.Absolute,
+            out var panelUri) ||
+            (
+                panelUri.Scheme != Uri.UriSchemeHttps &&
+                panelUri.Scheme != Uri.UriSchemeHttp
+            ))
+        {
+            throw new InvalidOperationException(
+                "РЈРєР°Р¶РёС‚Рµ РєРѕСЂСЂРµРєС‚РЅС‹Р№ URL РїР°РЅРµР»Рё ISPmanager.");
+        }
+
+        if (string.IsNullOrWhiteSpace(settings.Login))
+        {
+            throw new InvalidOperationException(
+                "РЈРєР°Р¶РёС‚Рµ Р»РѕРіРёРЅ ISPmanager.");
+        }
+
+        if (string.IsNullOrEmpty(password))
+        {
+            throw new InvalidOperationException(
+                "Р’РІРµРґРёС‚Рµ РёР»Рё СЃРѕС…СЂР°РЅРёС‚Рµ РїР°СЂРѕР»СЊ ISPmanager.");
+        }
+
+        if (string.IsNullOrWhiteSpace(settings.Owner))
+        {
+            throw new InvalidOperationException(
+                "РЈРєР°Р¶РёС‚Рµ РІР»Р°РґРµР»СЊС†Р° WWW-РґРѕРјРµРЅР°.");
+        }
+
+        if (string.IsNullOrWhiteSpace(settings.PhpVersion))
+        {
+            throw new InvalidOperationException(
+                "РЈРєР°Р¶РёС‚Рµ РІРµСЂСЃРёСЋ PHP.");
+        }
+    }
+
+    private static string NormalizePanelUrl(
+        string panelUrl)
+    {
+        var value = panelUrl.Trim();
+
+        var fragmentIndex = value.IndexOf('#');
+
+        if (fragmentIndex >= 0)
+        {
+            value = value[..fragmentIndex];
+        }
+
+        value = value.TrimEnd('/');
+
+        if (!value.EndsWith(
+            "/ispmgr",
+            StringComparison.OrdinalIgnoreCase))
+        {
+            value += "/ispmgr";
+        }
+
+        return value;
+    }
+
+    private static string NormalizeDomain(
+        string input)
+    {
+        var value = input.Trim();
+
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            throw new InvalidOperationException(
+                "РќРµ СѓРєР°Р·Р°РЅ РґРѕРјРµРЅ РґР»СЏ СЃРѕР·РґР°РЅРёСЏ.");
+        }
+
+        if (!value.Contains(
+            "://",
+            StringComparison.Ordinal))
+        {
+            value = "https://" + value;
+        }
+
+        if (!Uri.TryCreate(
+            value,
+            UriKind.Absolute,
+            out var uri))
+        {
+            throw new InvalidOperationException(
+                $"РќРµРєРѕСЂСЂРµРєС‚РЅС‹Р№ РґРѕРјРµРЅ: {input}");
+        }
+
+        var host = uri.IdnHost
+            .Trim()
+            .TrimEnd('.')
+            .ToLowerInvariant();
+
+        if (host.StartsWith(
+            "www.",
+            StringComparison.OrdinalIgnoreCase))
+        {
+            host = host[4..];
+        }
+
+        if (string.IsNullOrWhiteSpace(host) ||
+            !host.Contains('.'))
+        {
+            throw new InvalidOperationException(
+                $"РќРµРєРѕСЂСЂРµРєС‚РЅС‹Р№ РґРѕРјРµРЅ: {input}");
+        }
+
+        return host;
+    }
+
+    private static string NormalizeDomainSafe(
+        string input)
+    {
+        try
+        {
+            return NormalizeDomain(input);
+        }
+        catch
+        {
+            return input
+                .Trim()
+                .TrimEnd('.')
+                .ToLowerInvariant();
+        }
+    }
+
+    private sealed class ApiResult
+    {
+        public bool Success { get; init; }
+
+        public string ErrorCode { get; init; } =
+            string.Empty;
+
+        public string ErrorMessage { get; init; } =
+            string.Empty;
+
+        public XDocument? Document { get; init; }
+
+        public static ApiResult SuccessResult(
+            XDocument document)
+        {
+            return new ApiResult
+            {
+                Success = true,
+                Document = document
+            };
+        }
+
+        public static ApiResult Failure(
+            string code,
+            string message,
+            XDocument? document = null)
+        {
+            return new ApiResult
+            {
+                Success = false,
+                ErrorCode = code,
+                ErrorMessage = message,
+                Document = document
+            };
+        }
+    }
+}

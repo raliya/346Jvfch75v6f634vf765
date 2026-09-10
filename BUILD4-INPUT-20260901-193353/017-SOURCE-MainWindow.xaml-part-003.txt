@@ -1,0 +1,196 @@
+ Grid.Column="0"
+                                   Margin="0,0,10,9"
+                                   VerticalAlignment="Center"
+                                   Text="Корень сайтов:"/>
+
+                        <TextBox x:Name="SshRemoteRootTextBox"
+                                 Grid.Row="5"
+                                 Grid.Column="1"
+                                 Margin="0,0,0,9"
+                                 Text="/var/www/www-root/data/www"/>
+
+                        <TextBlock Grid.Row="6"
+                                   Grid.Column="0"
+                                   Margin="0,0,10,9"
+                                   VerticalAlignment="Center"
+                                   Text="Владелец:"/>
+
+                        <TextBox x:Name="SshOwnerTextBox"
+                                 Grid.Row="6"
+                                 Grid.Column="1"
+                                 Margin="0,0,0,9"
+                                 Text="www-root"/>
+
+                        <TextBlock Grid.Row="7"
+                                   Grid.Column="0"
+                                   Margin="0,0,10,9"
+                                   VerticalAlignment="Center"
+                                   Text="Группа:"/>
+
+                        <TextBox x:Name="SshGroupTextBox"
+                                 Grid.Row="7"
+                                 Grid.Column="1"
+                                 Margin="0,0,0,9"
+                                 Text="www-root"/>
+
+                        <WrapPanel Grid.Row="8"
+                                   Grid.ColumnSpan="2"
+                                   Margin="0,4,0,10">
+
+                            <Button x:Name="SaveSshSettingsButton"
+                                    Width="170"
+                                    Margin="0,0,8,8"
+                                    Padding="10,6"
+                                    Click="SaveSshSettings_Click"
+                                    Content="Сохранить настройки"/>
+
+                            <Button x:Name="ReadSshFingerprintButton"
+                                    Width="190"
+                                    Margin="0,0,8,8"
+                                    Padding="10,6"
+                                    Click="ReadSshFingerprint_Click"
+                                    Content="Получить fingerprint"/>
+
+                            <Button x:Name="TestSshConnectionButton"
+                                    Width="190"
+                                    Margin="0,0,8,8"
+                                    Padding="10,6"
+                                    Click="TestSshConnection_Click"
+                                    Content="Проверить подключение"/>
+
+                            <Button x:Name="DeploySelectedSiteButton"
+                                    Width="220"
+                                    Margin="0,0,0,8"
+                                    Padding="10,6"
+                                    Click="DeploySelectedSite_Click"
+                                    Content="Загрузить выбранный сайт"/>
+                        </WrapPanel>
+
+                        <ProgressBar x:Name="Build3ProgressBar"
+                                     Grid.Row="9"
+                                     Grid.ColumnSpan="2"
+                                     Height="20"
+                                     Minimum="0"
+                                     Maximum="100"
+                                     Value="0"/>
+
+                        <Border Grid.Row="10"
+                                Grid.ColumnSpan="2"
+                                Margin="0,12,0,0"
+                                Padding="10"
+                                Background="#FFF1F1F1"
+                                BorderBrush="#FFD0D0D0"
+                                BorderThickness="1">
+                            <TextBlock x:Name="Build3StatusTextBlock"
+                                       TextWrapping="Wrap"
+                                       Text="Сборка 3 ещё не проверена."/>
+                        </Border>
+                    </Grid>
+                </ScrollViewer>
+            </TabItem>
+            <TabItem Header="Задания">
+                <DataGrid x:Name="JobsGrid"
+                          AutoGenerateColumns="False"
+                          IsReadOnly="True"
+                          CanUserAddRows="False"
+                          HeadersVisibility="Column"
+                          GridLinesVisibility="Horizontal">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Домен"
+                                            Width="180"
+                                            Binding="{Binding Domain}"/>
+
+                        <DataGridTextColumn Header="Статус"
+                                            Width="110"
+                                            Binding="{Binding Status}"/>
+
+                        <DataGridTemplateColumn Header="Прогресс"
+                                                Width="150">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <Grid Margin="4">
+                                        <ProgressBar Height="18"
+                                                     Minimum="0"
+                                                     Maximum="100"
+                                                     Value="{Binding Progress}"/>
+
+                                        <TextBlock HorizontalAlignment="Center"
+                                                   VerticalAlignment="Center"
+                                                   FontSize="11"
+                                                   Text="{Binding Progress,
+                                                       StringFormat={}{0}%}"/>
+                                    </Grid>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+
+                        <DataGridTextColumn Header="Сообщение"
+                                            Width="*"
+                                            Binding="{Binding Message}"/>
+
+                        <DataGridTextColumn Header="Результат"
+                                            Width="280"
+                                            Binding="{Binding OutputPath}"/>
+
+                        <DataGridTextColumn Header="База"
+                                            Width="130"
+                                            Binding="{Binding DatabaseName}"/>
+
+                        <DataGridTextColumn Header="Пользователь"
+                                            Width="130"
+                                            Binding="{Binding DatabaseUser}"/>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </TabItem>
+
+            <TabItem Header="Предпросмотр">
+                <TextBox x:Name="PreviewTextBox"
+                         Margin="8"
+                         IsReadOnly="True"
+                         AcceptsReturn="True"
+                         TextWrapping="Wrap"
+                         VerticalScrollBarVisibility="Auto"
+                         FontFamily="Consolas"
+                         Text="Выберите папки и нажмите «Предпросмотр»."/>
+            </TabItem>
+        </TabControl>
+
+        <GroupBox Grid.Row="4"
+                  Header="Журнал"
+                  Margin="0,0,0,8">
+            <DataGrid x:Name="LogsGrid"
+                      Margin="6"
+                      AutoGenerateColumns="False"
+                      IsReadOnly="True"
+                      CanUserAddRows="False"
+                      HeadersVisibility="Column"
+                      GridLinesVisibility="Horizontal">
+
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Время"
+                                        Width="145"
+                                        Binding="{Binding DisplayTime}"/>
+
+                    <DataGridTextColumn Header="Уровень"
+                                        Width="80"
+                                        Binding="{Binding Level}"/>
+
+                    <DataGridTextColumn Header="Домен"
+                                        Width="180"
+                                        Binding="{Binding Domain}"/>
+
+                    <DataGridTextColumn Header="Сообщение"
+                                        Width="*"
+                                        Binding="{Binding Message}"/>
+                </DataGrid.Columns>
+            </DataGrid>
+        </GroupBox>
+
+        <Border Grid.Row="5"
+                Padding="8"
+                Background="#FFF1F1F1"
+                BorderBrush="#FFD0D0D0"
+                BorderThickness="1">
+            <TextBlock x:Name="StatusTextBlock"
+                       Text="Готово"
+       

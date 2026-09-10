@@ -1,0 +1,2 @@
+C:\Users\User\Desktop\Adminki\Программа домены\Новая папка-deployment-fix-20260910-161748-847214\publish-deployment-fix\TextFileProcessor.pdb
+C:\Users\User\Desktop\Adminki\Программа домены\Новая папка-deployment-fix-20260910-161748-847214\publish-deployment-fix\TextFileProcessor.exe

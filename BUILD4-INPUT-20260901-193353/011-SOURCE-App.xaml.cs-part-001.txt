@@ -1,0 +1,20 @@
+ИСХОДНЫЙ ФАЙЛ
+
+Относительный путь:
+App.xaml.cs
+
+Полный путь:
+C:\Users\User\Desktop\Adminki\. Программа домены\Новая папка\App.xaml.cs
+
+Размер:
+100 байт
+
+СОДЕРЖИМОЕ
+
+using System.Windows;
+
+namespace TextFileProcessor;
+
+public partial class App : Application
+{
+}
