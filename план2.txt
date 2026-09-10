@@ -1,0 +1,1139 @@
+вот наш план!
+Понял. **Существующего проекта нет — создаём программу полностью с нуля.** Архив и старые исходники не нужны.
+
+Целевая конфигурация:
+
+```text
+Windows 10/11 x64
+.NET 8
+WPF
+Итоговая публикация: единый win-x64.exe
+```
+
+## Этапы разработки
+
+1. **Сборка 1:** интерфейс, домены, копирование, замены, `config.php`, поиск SQL, SQLite и журнал.
+2. **Сборка 2:** Playwright и создание WWW-домена в ISPmanager.
+3. **Сборка 3:** SSH/SFTP, загрузка содержимого папки без лишнего уровня.
+4. **Сборка 4:** создание БД, пользователя и импорт обработанного SQL.
+5. **Сборка 5:** получение двух ACME TXT и Spaceship API.
+6. **Сборка 6:** DNS-проверка, завершение SSL, восстановление после перезапуска и публикация.
+
+---
+
+# 1. Создание проекта
+
+Откройте PowerShell и выполните:
+
+```powershell
+cd "$env:USERPROFILE\Desktop"
+
+dotnet new sln -n TextFileProcessor
+dotnet new wpf -n TextFileProcessor -f net8.0-windows
+dotnet sln .\TextFileProcessor.sln add .\TextFileProcessor\TextFileProcessor.csproj
+
+cd .\TextFileProcessor
+```
+
+Установите пакеты:
+
+```powershell
+dotnet add package Microsoft.Data.Sqlite
+dotnet add package Microsoft.Playwright
+dotnet add package SSH.NET
+dotnet add package DnsClient
+```
+
+Проверьте создание проекта:
+
+```powershell
+dotnet restore
+dotnet build
+```
+
+Ожидаемый результат:
+
+```text
+Build succeeded.
+```
+
+---
+
+# 2. Создание каталогов
+
+Выполните из папки:
+
+```text
+Desktop\TextFileProcessor\TextFileProcessor
+```
+
+следующий скрипт:
+
+```powershell
+$folders = @(
+ "Data",
+ "Infrastructure",
+ "Models",
+ "Security",
+ "Services",
+ "ViewModels",
+ "Views",
+ "Styles"
+)
+
+foreach ($folder in $folders) {
+ New-Item -ItemType Directory -Path $folder -Force | Out-Null
+}
+```
+
+Итоговая структура проекта:
+
+```text
+TextFileProcessor/
+├── TextFileProcessor.sln
+└── TextFileProcessor/
+ ├── TextFileProcessor.csproj
+ ├── GlobalUsings.cs
+ ├── App.xaml
+ ├── App.xaml.cs
+ ├── MainWindow.xaml
+ ├── MainWindow.xaml.cs
+ │
+ ├── Data/
+ │ ├── AppDatabase.cs
+ │ └── DatabaseInitializer.cs
+ │
+ ├── Infrastructure/
+ │ ├── ObservableObject.cs
+ │ ├── RelayCommand.cs
+ │ └── AsyncRelayCommand.cs
+ │
+ ├── Models/
+ │ ├── DomainJob.cs
+ │ ├── JobStatus.cs
+ │ ├── ProcessingOptions.cs
+ │ ├── ProcessingResult.cs
+ │ ├── DatabaseCredentials.cs
+ │ ├── AcmeChallenge.cs
+ │ ├── DnsRecord.cs
+ │ └── ConnectionSettings.cs
+ │
+ ├── Security/
+ │ ├── DpapiSecretProtector.cs
+ │ └── SensitiveDataRedactor.cs
+ │
+ ├── Services/
+ │ ├── DomainValidationService.cs
+ │ ├── FileProcessingService.cs
+ │ ├── TextFileDetectionService.cs
+ │ ├── ConfigPhpParser.cs
+ │ ├── SqlFileLocator.cs
+ │ ├── JobStateService.cs
+ │ ├── LogService.cs
+ │ ├── IspmanagerAutomationService.cs
+ │ ├── IspmanagerDatabaseService.cs
+ │ ├── SftpDeploymentService.cs
+ │ ├── SpaceshipApiClient.cs
+ │ ├── PublicDnsCheckService.cs
+ │ └── CertificateCheckService.cs
+ │
+ ├── ViewModels/
+ │ └── MainViewModel.cs
+ │
+ ├── Views/
+ │ ├── ProjectView.xaml
+ │ ├── ConnectionsView.xaml
+ │ ├── SiteSettingsView.xaml
+ │ ├── JobsView.xaml
+ │ ├── DnsRecordsView.xaml
+ │ └── LogView.xaml
+ │
+ └── Styles/
+ ├── Colors.xaml
+ ├── Controls.xaml
+ └── Typography.xaml
+```
+
+---
+
+# 3. Файл `TextFileProcessor.csproj`
+
+Полностью замените содержимое файла:
+
+```text
+TextFileProcessor\TextFileProcessor.csproj
+```
+
+на:
+
+```xml
+<Project Sdk="Microsoft.NET.Sdk">
+
+ <PropertyGroup>
+ <OutputType>WinExe</OutputType>
+ <TargetFramework>net8.0-windows</TargetFramework>
+
+ <Nullable>enable</Nullable>
+ <ImplicitUsings>enable</ImplicitUsings>
+ <UseWPF>true</UseWPF>
+
+ <AssemblyName>TextFileProcessor</AssemblyName>
+ <RootNamespace>TextFileProcessor</RootNamespace>
+
+ <ApplicationManifest>app.manifest</ApplicationManifest>
+
+ <Platforms>AnyCPU;x64</Platforms>
+ <PlatformTarget>x64</PlatformTarget>
+ <Prefer32Bit>false</Prefer32Bit>
+
+ <PublishSingleFile>true</PublishSingleFile>
+ <SelfContained>true</SelfContained>
+ <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+ <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+ <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
+
+ <Version>1.0.0</Version>
+ <Company>Local</Company>
+ <Product>Domain Site Deployment Manager</Product>
+ </PropertyGroup>
+
+ <ItemGroup>
+ <PackageReference Include="DnsClient" Version="1.8.0" />
+ <PackageReference Include="Microsoft.Data.Sqlite" Version="9.0.0" />
+ <PackageReference Include="Microsoft.Playwright" Version="1.51.0" />
+ <PackageReference Include="SSH.NET" Version="2025.0.0" />
+ </ItemGroup>
+
+</Project>
+```
+
+Если NuGet установит более новые совместимые версии пакетов, можно оставить версии, выбранные командой `dotnet add package`.
+
+---
+
+# 4. Файл `GlobalUsings.cs`
+
+Создайте в корне проекта:
+
+```csharp
+global using System;
+global using System.Collections.Generic;
+global using System.Collections.ObjectModel;
+global using System.ComponentModel;
+global using System.Globalization;
+global using System.IO;
+global using System.Linq;
+global using System.Net;
+global using System.Net.Http;
+global using System.Runtime.CompilerServices;
+global using System.Text;
+global using System.Text.Json;
+global using System.Text.RegularExpressions;
+global using System.Threading;
+global using System.Threading.Tasks;
+global using System.Windows;
+global using System.Windows.Input;
+```
+
+---
+
+# 5. Файл `app.manifest`
+
+Создайте в корне проекта:
+
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<assembly manifestVersion="1.0"
+ xmlns="urn:schemas-microsoft-com:asm.v1">
+
+ <assemblyIdentity
+ version="1.0.0.0"
+ name="TextFileProcessor.app" />
+
+ <trustInfo xmlns="urn:schemas-microsoft-com:asm.v3">
+ <security>
+ <requestedPrivileges>
+ <requestedExecutionLevel
+ level="asInvoker"
+ uiAccess="false" />
+ </requestedPrivileges>
+ </security>
+ </trustInfo>
+
+ <compatibility xmlns="urn:schemas-microsoft-com:compatibility.v1">
+ <application>
+ <supportedOS Id="{4f476546-9372-4f98-8ff0-1d25fd4ba9a8}" />
+ <supportedOS Id="{8e0f7a12-bfb3-4fe8-b9a5-48fd50a15a9a}" />
+ </application>
+ </compatibility>
+
+</assembly>
+```
+
+Программа не будет требовать запуска от администратора.
+
+---
+
+# 6. Зафиксированная логика папок
+
+Пусть пользователь указал:
+
+```text
+Исходная папка:
+C:\Sites\Template
+
+Папка результата:
+C:\Sites\Result
+
+Домены:
+1234.ru
+5678.ru
+```
+
+Во время обработки создаются:
+
+```text
+C:\Sites\Result\.processing-1234.ru-<ID>\
+C:\Sites\Result\.processing-5678.ru-<ID>\
+```
+
+После успешных замен:
+
+```text
+C:\Sites\Result\1234.ru\
+C:\Sites\Result\5678.ru\
+```
+
+Содержимое:
+
+```text
+C:\Sites\Result\1234.ru\index.php
+C:\Sites\Result\1234.ru\config\config.php
+C:\Sites\Result\1234.ru\database.sql
+```
+
+Лишнего уровня не будет:
+
+```text
+C:\Sites\Result\1234.ru\1234.ru\
+```
+
+На сервер отправляется содержимое:
+
+```text
+C:\Sites\Result\1234.ru\*
+```
+
+в:
+
+```text
+/var/www/www-root/data/www/1234.ru/
+```
+
+Итог:
+
+```text
+/var/www/www-root/data/www/1234.ru/index.php
+/var/www/www-root/data/www/1234.ru/config/config.php
+```
+
+---
+
+# 7. Правила замен
+
+Для каждого задания:
+
+```text
+Искомый текст №1 → домен
+Искомый текст №2 → соответствующее значение поля №2
+```
+
+Замена №2 выполняется только при наличии обоих значений:
+
+```text
+Искомый текст №2 заполнен
+Значение №2 для домена заполнено
+```
+
+По умолчанию обрабатываются:
+
+```text
+.php
+.html
+.htm
+.txt
+.sql
+```
+
+Дополнительно можно включить:
+
+```text
+.css
+.js
+.json
+.xml
+.env
+.ini
+.conf
+```
+
+Даже при разрешённом расширении файл сначала проверяется на признаки бинарного содержимого.
+
+---
+
+# 8. Порядок одного задания
+
+Программа обрабатывает домены последовательно:
+
+```text
+1. Создать .processing-domain-ID
+2. Скопировать содержимое исходного корня
+3. Выполнить замены
+4. Проверить результаты
+5. Создать конечную папку domain
+6. Найти в ней config.php
+7. Прочитать заменённые name, user и pass
+8. Найти обработанный SQL
+9. Создать WWW-домен
+10. Создать базу и пользователя
+11. Загрузить содержимое папки сайта
+12. Импортировать обработанный SQL
+13. Запросить wildcard-сертификат
+14. Получить два TXT
+15. Добавить оба TXT через Spaceship
+16. Проверить публичный DNS
+17. Завершить выпуск сертификата
+18. Проверить HTTPS и SAN
+```
+
+Следующий домен не запускается, пока текущий не завершён либо пользователь явно не выбрал «Пропустить».
+
+Команда проверки созданного каркаса:
+
+```powershell
+dotnet restore
+dotnet build
+```
+
+После этого основой будет **Сборка 1**: полноценный интерфейс и локальная обработка сайтов. Все дальнейшие файлы создаются в новом проекте — никаких старых исходников не предполагается.
+Уточнение принято. Для каждого домена создаётся **одна отдельная папка с именем домена**, а на сервер переносится **содержимое этой папки**, без дополнительного вложенного каталога.
+
+## Пример локальной структуры
+
+Для списка:
+
+```text
+1234.ru
+5678.ru
+```
+
+результат будет:
+
+```text
+ПапкаРезультата\
+├── 1234.ru\
+│ ├── index.php
+│ ├── config\
+│ │ └── config.php
+│ ├── assets\
+│ └── database.sql
+│
+└── 5678.ru\
+ ├── index.php
+ ├── config\
+ │ └── config.php
+ ├── assets\
+ └── database.sql
+```
+
+Не должно получиться лишнего уровня:
+
+```text
+ПапкаРезультата\1234.ru\1234.ru\...
+```
+
+Программа копирует **содержимое выбранного корня исходного сайта** непосредственно в создаваемую папку домена.
+
+Перед запуском будет показан предварительный результат:
+
+```text
+Исходный корень:
+C:\...\Исходная папка\96377.cfd\96377.cfd\
+
+Конечный корень:
+C:\...\Результат\1234.ru\
+
+Стартовый файл:
+C:\...\Результат\1234.ru\index.php
+
+Конфигурация:
+C:\...\Результат\1234.ru\config\config.php
+```
+
+Это позволит обнаружить ошибочно выбранный внешний уровень папки до копирования.
+
+## Временные и конечные папки
+
+Во время обработки используются временные каталоги:
+
+```text
+ПапкаРезультата\.processing-1234.ru-<ID>\
+ПапкаРезультата\.processing-5678.ru-<ID>\
+```
+
+После успешного копирования и замен они атомарно переименовываются:
+
+```text
+.processing-1234.ru-<ID> → 1234.ru
+.processing-5678.ru-<ID> → 5678.ru
+```
+
+Количество конечных папок строго соответствует количеству уникальных доменов.
+
+---
+
+# `config.php`
+
+В каждой готовой папке будет свой обработанный `config.php`:
+
+```text
+1234.ru\config\config.php
+5678.ru\config\config.php
+```
+
+После замен программа отдельно читает из каждого файла:
+
+```php
+'name' => '...',
+'user' => '...',
+'pass' => '...',
+```
+
+Зафиксированное правило:
+
+- `name` — уникальное значение для каждого домена;
+- `user` — уникальное значение для каждого домена;
+- `pass` — одинаковый пароль во всех обработанных конфигурациях;
+- чтение выполняется только после всех замен;
+- исходный `config.php` не используется для создания базы;
+- пароль не записывается в журнал и SQLite.
+
+Перед созданием базы программа проверит отсутствие повторов `name` и `user` между заданиями. Если обнаружится совпадение, массовый запуск будет заблокирован.
+
+---
+
+# Размещение на сервере
+
+Для домена `1234.ru` итоговая структура должна быть:
+
+```text
+/var/www/www-root/data/www/1234.ru/
+├── index.php
+├── config/
+│ └── config.php
+├── assets/
+└── остальные файлы и папки сайта
+```
+
+Лишнего вложения быть не должно:
+
+```text
+/var/www/www-root/data/www/1234.ru/1234.ru/
+```
+
+То есть SFTP передаёт не сам локальный каталог как дополнительную папку, а его содержимое:
+
+```text
+Локально:
+C:\Результат\1234.ru\*
+
+На сервер:
+ /var/www/www-root/data/www/1234.ru/
+```
+
+## Безопасное развёртывание
+
+ISPmanager сначала создаёт:
+
+```text
+/var/www/www-root/data/www/1234.ru/
+```
+
+Затем программа:
+
+1. Загружает содержимое локальной папки во временный серверный каталог:
+
+```text
+/var/www/www-root/data/www/.upload-1234.ru-<ID>/
+```
+
+2. Проверяет количество и размеры файлов.
+3. Временно переименовывает каталог, созданный ISPmanager:
+
+```text
+1234.ru → .backup-1234.ru-<ID>
+```
+
+4. Переименовывает загруженный каталог:
+
+```text
+.upload-1234.ru-<ID> → 1234.ru
+```
+
+5. Устанавливает владельца и группу:
+
+```text
+www-root:www-root
+```
+
+6. Проверяет стартовую страницу.
+7. При ошибке возвращает резервную папку.
+
+В результате файлы сразу находятся внутри:
+
+```text
+/var/www/www-root/data/www/1234.ru/
+```
+
+## Обработка SQL-файла
+
+Обработанный SQL используется для импорта, но оставлять дамп в публичной папке небезопасно. Поэтому по умолчанию:
+
+- SQL определяется в локальной обработанной копии;
+- передаётся во временный закрытый каталог вне web-root либо импортируется через защищённый механизм ISPmanager;
+- после импорта временная серверная копия удаляется;
+- в публичном каталоге сайта `.sql` не остаётся.
+
+При этом локальный обработанный SQL сохраняется в:
+
+```text
+C:\Результат\1234.ru\...
+```
+
+для резервного восстановления.
+
+---
+
+# Окончательный порядок обработки
+
+Для каждого домена строго последовательно:
+
+1. Создать отдельную временную локальную папку задания:
+
+ ```text
+ .processing-1234.ru-<ID>
+ ```
+
+2. Скопировать в неё **содержимое выбранного корня исходного сайта**.
+
+3. Выполнить замены во всех разрешённых текстовых файлах.
+
+4. Проверить:
+ - результаты замен;
+ - наличие стартовой страницы;
+ - структуру каталогов;
+ - отсутствие лишнего уровня `1234.ru\1234.ru`.
+
+5. Переименовать временную папку в:
+
+ ```text
+ 1234.ru
+ ```
+
+6. Найти `config.php` в конечной обработанной копии.
+
+7. Прочитать обработанные `name`, `user` и `pass`.
+
+8. Найти или выбрать SQL-файл в обработанной копии.
+
+9. Создать WWW-домен в ISPmanager:
+
+ ```text
+ domain: 1234.ru
+ aliases: www.1234.ru *.1234.ru
+ owner: www-root
+ PHP: 8.3.8
+ ```
+
+10. Создать уникальные базу и пользователя.
+
+11. Загрузить содержимое локальной папки:
+
+ ```text
+ C:\Результат\1234.ru\*
+ ```
+
+ непосредственно в:
+
+ ```text
+ /var/www/www-root/data/www/1234.ru/
+ ```
+
+12. Импортировать обработанный SQL-файл в созданную базу.
+
+13. Запросить обязательный сертификат для:
+
+ ```text
+ 1234.ru
+ *.1234.ru
+ ```
+
+14. Получить два ACME TXT-значения.
+
+15. Добавить оба TXT через Spaceship API, не изменяя остальные DNS-записи.
+
+16. Проверить оба TXT через авторитетные NS, Cloudflare DNS и Google DNS.
+
+17. Продолжить выпуск сертификата в ISPmanager.
+
+18. Проверить SAN сертификата, HTTPS и перенаправление HTTP → HTTPS.
+
+Только после полного успешного завершения `1234.ru` программа переходит к следующему домену.
+Да, всё верно — вы сейчас запустили только **Сборку 1**. Поэтому поля Spaceship API в интерфейсе пока нет. Я преждевременно воспринял это как уже финальную версию.
+
+Текущий статус:
+
+- ✅ **Сборка 1** — локальное копирование, замены, поиск `config.php` и SQL, журнал, SQLite.
+- ⏭️ **Сборка 2** — Playwright и создание WWW-домена в ISPmanager.
+- ⏭️ **Сборка 3** — SSH/SFTP и загрузка файлов.
+- ⏭️ **Сборка 4** — создание БД и импорт SQL.
+- ⏭️ **Сборка 5** — Spaceship API и создание двух TXT-записей.
+- ⏭️ **Сборка 6** — проверка DNS, завершение SSL, восстановление заданий и единый `.exe`.
+
+В **Сборке 5** на экране **«Подключения»** появятся защищённые поля:
+
+```text
+Spaceship API Key
+Spaceship API Secret
+```
+
+Секрет будет храниться зашифрованно средствами Windows, не выводиться в журнал и не записываться открытым текстом в SQLite.
+
+**Сейчас API-ключ никуда вводить не нужно** и тем более не следует вставлять его непосредственно в исходный код или присылать сюда. Продолжаем по плану со **Сборки 2**, а существующий рабочий проект будем обновлять без повторного создания с нуля.
+
+
+домен типо добавился но его нету в списке и об этом вышла ошибка. Там как ввести все что нужно - поле домен, псевданимы, галочка протокола https, не кешировать - потом нажимается кнопка Создать, далее идет время загрузки и далее идет выпуск сертификата Let’s Encrypt и там выбрать (поставить галочку) нужно Wildcard сертификат и нажать кнопку Выпустить
+
+
+Мы с тобой работаем в PowerShell пришли полную команду
+
+
+прочти 
+https://www.ispmanager.ru/docs/ispmanager/vzaimodejstvie-cherez-api?ysclid=mtibh0zmg5508230941
+тут подробное управление панелью через API думаю так будет проще для нашего проекта
+
+
+
+Понял уточнение. SQL-файл — это дамп с данными, а реквизиты для создания новой БД находятся в config.php. Поэтому базу в ISPmanager всё-таки нужно сначала создать, а затем загрузить в неё SQL.
+
+Для домена casino71.cfd правильный порядок такой:
+
+В готовой папке найти файл:
+
+C:\Users\User\Desktop\Adminki\. Программа домены\работа\Результат\casino71.cfd\config\config.php
+
+Прочитать из обработанного config.php:
+
+'name' => 'имя_базы',
+'user' => 'пользователь_базы',
+'pass' => 'пароль_базы',
+
+В ISPmanager через db.edit создать БД с этими реквизитами:
+
+Имя БД — значение name;
+Пользователь БД — значение user;
+Пароль — значение pass.
+Найти один обработанный файл:
+
+*.sql
+
+во всей папке:
+
+C:\Users\User\Desktop\Adminki\. Программа домены\работа\Результат\casino71.cfd\
+
+После появления созданной БД в списке ISPmanager вызвать для неё:
+
+db.upload
+
+Загрузить найденный SQL-дамп в созданную БД.
+
+Правильная схема:
+
+config\config.php
+        ↓
+name + user + pass
+        ↓
+создание БД в ISPmanager
+        ↓
+поиск *.sql в готовой папке домена
+        ↓
+db.upload
+        ↓
+импорт SQL в созданную БД
+
+Важные правила:
+
+имя, пользователь и пароль не берутся из названия SQL-файла;
+SQL-файл сам по себе не создаёт запись БД в панели;
+используется только обработанный config.php из готовой папки домена;
+пароль не записывается в SQLite и журнал;
+если БД с таким именем уже существует, программа останавливается и предлагает «Пропустить» или «Импортировать в существующую» — без автоматического удаления;
+SQL не загружается в публичную папку сайта;
+после импорта временная серверная копия SQL удаляется.
+Таким образом, прежнее указание «БД создавать не нужно» отменяется: БД создаётся по реквизитам из config.php, а её содержимое загружается из *.sql.
+
+
+ окончательная логика такая:
+
+из обработанного config.php прочитать name, user, pass;
+создать в ISPmanager новую БД с этими реквизитами;
+найти *.sql в папке готового домена;
+загрузить дамп во вновь созданную БД.
+
+Сейчас сначала нужно получить точные параметры db.edit вашей версии ISPmanager. Они зависят от конфигурации панели. Следующая команда ничего не создаёт и не изменяет. Она использует уже сохранённый в приложении SSH fingerprint не может автоматически, поэтому OpenSSH должен быть предварительно доверен. Команда запросит пароль SSH и покажет описание db.edit без чтения секретов.
+
+& {
+    $ErrorActionPreference = "Stop"
+
+    $Server  = "185.115.33.18"
+    $SshPort = 22       # Если SSH использует другой порт — замените
+    $SshUser = "root"   # Если подключаетесь другим пользователем — замените
+
+    Write-Host "Получение параметров создания БД ISPmanager..." -ForegroundColor Cyan
+    Write-Host "Будет запрошен SSH-пароль. Он нигде не сохраняется." -ForegroundColor Yellow
+
+    & ssh.exe `
+        -p $SshPort `
+        -o StrictHostKeyChecking=accept-new `
+        "$SshUser@$Server" `
+        "/usr/local/mgr5/sbin/mgrctl -m ispmgr -i db.edit lang=ru"
+
+    if ($LASTEXITCODE -ne 0) {
+        throw "Не удалось получить описание db.edit. Код SSH: $LASTEXITCODE"
+    }
+}
+
+
+Проверка завершена успешно
+Домен:          casino71.cfd
+Config:         C:\Users\User\Desktop\Adminki\. Программа домены\работа\Результат\casino71.cfd\config\config.php
+Имя БД:         casino71cfd
+Пользователь:   casino71cfd
+Пароль:         [СКРЫТО, длина 10]
+SQL-файл:       C:\Users\User\Desktop\Adminki\. Программа домены\работа\Результат\casino71.cfd\96377cfd.sql
+Размер SQL:     5 862 байт
+
+Пароль не записан в файл или журнал.
+PS C:\Users\User\Desktop\Adminki\. Программа домены\Новая папка>
+
+
+& {
+    $ErrorActionPreference = "Stop"
+    Set-StrictMode -Version Latest
+
+    $SiteRoot = "C:\Users\User\Desktop\Adminki\. Программа домены\работа\Результат\casino71.cfd"
+    $ConfigPath = Join-Path $SiteRoot "config\config.php"
+
+    if (-not (Test-Path -LiteralPath $SiteRoot -PathType Container)) {
+        throw "Папка готового сайта не найдена: $SiteRoot"
+    }
+
+    if (-not (Test-Path -LiteralPath $ConfigPath -PathType Leaf)) {
+        throw "Обработанный config.php не найден: $ConfigPath"
+    }
+
+    $ConfigText = [System.IO.File]::ReadAllText($ConfigPath)
+
+    function Get-PhpConfigValue {
+        param(
+            [Parameter(Mandatory)]
+            [string] $Text,
+
+            [Parameter(Mandatory)]
+            [ValidateSet("name", "user", "pass")]
+            [string] $Key
+        )
+
+        # Поддерживаются строки:
+        # 'name' => 'value'
+        # "name" => "value"
+        $Pattern = "(?m)(?:'|`")" +
+                   [regex]::Escape($Key) +
+                   "(?:'|`")\s*=>\s*(?<quote>['`"])(?<value>(?:\\.|(?!\k<quote>).)*)\k<quote>"
+
+        $Match = [regex]::Match($Text, $Pattern)
+
+        if (-not $Match.Success) {
+            throw "В config.php не найдено значение '$Key' => '...'."
+        }
+
+        $Value = $Match.Groups["value"].Value
+
+        # Минимальное декодирование PHP-строк.
+        $Value = $Value.Replace("\\", "\")
+        $Value = $Value.Replace("\'", "'")
+        $Value = $Value.Replace('\"', '"')
+
+        if ([string]::IsNullOrWhiteSpace($Value)) {
+            throw "В config.php параметр '$Key' имеет пустое значение."
+        }
+
+        return $Value
+    }
+
+    $DatabaseName = Get-PhpConfigValue -Text $ConfigText -Key "name"
+    $DatabaseUser = Get-PhpConfigValue -Text $ConfigText -Key "user"
+    $DatabasePass = Get-PhpConfigValue -Text $ConfigText -Key "pass"
+
+    # Разрешаем безопасные имена MySQL.
+    if ($DatabaseName -notmatch '^[A-Za-z0-9_$-]{1,64}$') {
+        throw "Недопустимое имя БД в config.php: $DatabaseName"
+    }
+
+    if ($DatabaseUser -notmatch '^[A-Za-z0-9_$.-]{1,80}$') {
+        throw "Недопустимое имя пользователя БД в config.php: $DatabaseUser"
+    }
+
+    $SqlFiles = @(
+        Get-ChildItem `
+            -LiteralPath $SiteRoot `
+            -Recurse `
+            -File `
+            -Filter "*.sql" |
+        Sort-Object FullName
+    )
+
+    if ($SqlFiles.Count -eq 0) {
+        throw "В готовой папке не найден ни один файл *.sql: $SiteRoot"
+    }
+
+    if ($SqlFiles.Count -gt 1) {
+        Write-Host ""
+        Write-Host "Найдено несколько SQL-файлов:" -ForegroundColor Yellow
+
+        for ($Index = 0; $Index -lt $SqlFiles.Count; $Index++) {
+            Write-Host ("[{0}] {1} ({2:N0} байт)" -f `
+                ($Index + 1),
+                $SqlFiles[$Index].FullName,
+                $SqlFiles[$Index].Length)
+        }
+
+        do {
+            $Selection = Read-Host "Введите номер SQL-файла"
+            $ParsedSelection = 0
+
+            $ValidSelection =
+                [int]::TryParse($Selection, [ref]$ParsedSelection) -and
+                $ParsedSelection -ge 1 -and
+                $ParsedSelection -le $SqlFiles.Count
+
+        } until ($ValidSelection)
+
+        $SqlFile = $SqlFiles[$ParsedSelection - 1]
+    }
+    else {
+        $SqlFile = $SqlFiles[0]
+    }
+
+    Write-Host ""
+    Write-Host "Проверка завершена успешно" -ForegroundColor Green
+    Write-Host "Домен:          casino71.cfd"
+    Write-Host "Config:         $ConfigPath"
+    Write-Host "Имя БД:         $DatabaseName"
+    Write-Host "Пользователь:   $DatabaseUser"
+    Write-Host "Пароль:         [СКРЫТО, длина $($DatabasePass.Length)]"
+    Write-Host "SQL-файл:       $($SqlFile.FullName)"
+    Write-Host "Размер SQL:     $($SqlFile.Length.ToString('N0')) байт"
+    Write-Host ""
+    Write-Host "Пароль не записан в файл или журнал." -ForegroundColor Green
+
+    # Немедленно убрать ссылку на пароль после проверки.
+    $DatabasePass = $null
+}
+
+Команда создания БД будет строиться в таком виде, но названия параметров пока намеренно не подставляются наугад:
+
+config.php → name, user, pass
+               ↓
+mgrctl db.edit ... sok=ok
+               ↓
+проверка появления новой БД
+               ↓
+передача выбранного *.sql во временный закрытый каталог
+               ↓
+импорт в созданную БД
+               ↓
+удаление временного SQL с сервера
+
+
+
+Проверка завершена успешно
+Домен:          casino71.cfd
+Config:         C:\Users\User\Desktop\Adminki\. Программа домены\работа\Результат\casino71.cfd\config\config.php
+Имя БД:         casino71cfd
+Пользователь:   casino71cfd
+Пароль:         [СКРЫТО, длина 10]
+SQL-файл:       C:\Users\User\Desktop\Adminki\. Программа домены\работа\Результат\casino71.cfd\96377cfd.sql
+Размер SQL:     5 862 байт
+
+Пароль не записан в файл или журнал.
+PS C:\Users\User\Desktop\Adminki\. Программа домены\Новая папка>
+
+
+
+Warning: Permanently added '185.115.33.18' (ECDSA) to the list of known hosts.
+root@185.115.33.18's password:
+New database
+name               Name. Enter a database username
+owner              Owner. Select a control panel user who will be the owner of the database. Default: www-root. Possible values: www-root
+server             Database server. Select a database management server. Default: MySQL. Possible values: MySQL (MySQL (native))
+charset            Encoding . Select the default encoding that will be used for this database.. Default: utf8mb4. Possible values: armscii8, ascii, big5, binary, cp1250, cp1251, cp1256, cp1257, cp850, cp852, cp866, cp932, dec8, eucjpms, euckr, gb18030, gb2312, gbk, geostd8, greek, hebrew, hp8, keybcs2, koi8r, koi8u, latin1, latin2, latin5, latin7, macce, macroman, sjis, swe7, tis620, ucs2, ujis, utf16, utf16le, utf32, utf8mb3, utf8mb4
+user               User. Select the database user you want to assign to this database.. Default: *. Possible values: * (-- Create a new user --), 0bets0com, 0casinocfd, 1i3casino, 202608casino, 2536cfd, 2x2casino, 2x3.casino, 3678casino, 39icasino, 3j3.casino, 3xl-casino.cfd, 5741.casino, 5957casino, 67-casino.com, 69casino, 69ecasino, 6j6.casino, 6j9.casino, 7j7.casino, 7joycasinocom, 96377cfd, 9a0.casino, 9j9.casino, admira1click, all-casino.cfd, azino5clickkkk, bcgame2026com, bcgamecasinoxyz, bcgamelove, betfutebolcom, betsfootballcom, bettingonfootball, bettingonfootballcom, bonus-casino.cfd, bonus1lcom, bonuskazinocfd, bonuszaregistratsiyucfd, bystryyvyvodsredstvcfd, casadebetcom, cash-casino.cfd, casino-bonus.cfd, casino-cash.cfd, casino-free.cfd, casino-free.top, casino-games.cfd, casino-plays.cfd, casino-site-bonus.online, casino12cfd, casino19cfd, casino29cfd, casino2cfd, casino39cfd, casino49cfd, casino69.best, casino779cfd, casinos-bonus.top, casinos-cash.top, casinos-game.top, casinos-site.top, casinos2026cfd, casinowingames, casinozerkalocam, fbetscom, free1betcom, freecasinocfd, frispinybezdepozitacfd, fute7betcom, futebetcom, futeboloddscom, game-casino.cfd, igrovyeavtomatyonlayncfd, joycasino77casino, kazinoonlayncfd, l7777cfd, ljx.casino, melbetbetcasino, nodep-casino.cfd, ofisial.casino, ofitsialnyysaytkazinocfd, onbetscom, onlaynkazinocfd, pinup97casino, pinupcasino7best, pinupcasino7buzz, pinupcasino7click, pinupcasino7online, pinupcasino7site, playscasinocfd, privetstvennyybonuscfd, rotorix.casino, site-casino.cfd, stake356com, stake3best, stake73.casino, stake79casino, stakebonus9com, stakemirrorscasino, stavki-footbol.com, vtb24bankionline, xaf.casino, xxx-casino.cfd, z5t.casino, zerkalo7cam, zerkalo9cam, zerkalocfd, zerkaloonlaynkazinocfd
+username           Username. Enter the name for the database user . The value must contain printable ASCII characters.
+password           Password. Enter the password for the database user
+confirm            Confirmation. Re-type the password to ensure it is correct
+hide_remote_access hide_remote_access. Default: on
+remote_access      Remote access. Allow database users to access the database from remote servers. Default: off
+addr_list          Hosts. Specify a list of hosts that will be allowed to access the database. Otherwise, access from any host will be allowed. The value can be a domain name, an IP address (IPv4 or IPv6), or a network. The symbols % and _ are also allowed.
+PS C:\Users\User\Desktop\Adminki\. Программа домены\Новая папка>
+
+
+ПРОЕКТ: автоматизация переноса доменов
+
+ЗАВЕРШЕНО:
+Сборки 1–4.
+
+ТЕКУЩАЯ ЗАДАЧА:
+Реализовать Сборки 5 и 6 в существующем проекте, не создавать проект заново.
+
+СБОРКА 5:
+- поля Spaceship API Key и API Secret на экране «Подключения»;
+- секрет хранить через Windows DPAPI;
+- ключи и пароли не писать в журнал и SQLite открытым текстом;
+- получить ACME DNS-01 TXT-записи для Wildcard Let’s Encrypt;
+- создать две требуемые TXT-записи через Spaceship API;
+- не изменять остальные DNS-записи.
+
+СБОРКА 6:
+- проверить TXT на авторитетных NS и через публичные DNS;
+- дождаться распространения DNS;
+- продолжить выпуск сертификата в ISPmanager;
+- проверить сертификат для домена и *.домена;
+- проверить HTTPS;
+- восстановить незавершённые задания после перезапуска;
+- домены обрабатывать строго последовательно;
+- только после полного завершения одного домена переходить к следующему;
+- собрать единый EXE.
+
+ВАЖНО:
+Использовать API ISPmanager/SSH вместо Playwright там, где это надёжнее.
+Config и SQL относятся к завершённому этапу 4.
+Продолжаю. Сейчас нужна Сборка 7, которая объединит функциональность 5 и 6. Делать её вслепую поверх неизвестной структуры проекта опасно: необходимо увидеть текущие классы интерфейса, ISPmanager, очереди и проверки DNS.
+
+Важный момент: Spaceship API при обновлении DNS может ожидать полный набор записей зоны. Поэтому нельзя отправлять только две TXT-записи — иначе можно удалить остальные записи. Реализация должна выполнять:
+
+Получить текущий набор DNS-записей через Spaceship API.
+Добавить две ACME TXT-записи, не удаляя другие.
+Сохранить объединённый набор.
+Проверить наличие обеих TXT-записей.
+После выпуска сертификата удалить только созданные программой ACME-записи, сохранив остальные.
+Что войдёт в Сборку 7
+На экране «Подключения»:
+
+адрес ISPmanager, например https://185.4.66.211:1500/ispmgr;
+логин ISPmanager;
+пароль ISPmanager;
+Spaceship API Key;
+Spaceship API Secret;
+кнопки проверки обоих подключений;
+сохранение паролей и секретов через Windows DPAPI;
+маскирование секретов;
+запрет записи секретов в журнал и SQLite.
+На основном экране:
+
+большая кнопка «Запустить ВСЕ»;
+существующие отдельные кнопки останутся;
+кнопка остановки после текущего домена;
+последовательный режим — одновременно обрабатывается только один домен.
+Полный процесс для каждого домена:
+
+ISPmanager: начать выпуск wildcard-сертификата
+→ получить две DNS-01 TXT-записи
+→ Spaceship: прочитать всю DNS-зону
+→ добавить обе TXT без изменения остальных записей
+→ проверить авторитетные NS
+→ проверить публичные DNS
+→ дождаться распространения
+→ ISPmanager: продолжить выпуск
+→ проверить сертификат домена
+→ проверить сертификат *.домена
+→ проверить HTTPS
+→ удалить только временные ACME TXT
+→ сохранить результат
+→ перейти к следующему домену
+
+Подготовьте архив исходников
+
+
+отчеты по сброрке https://github.com/raliya/kdhGHf643tf76.git
+
+Запускаю полученную программу, на этапе загрузки и создания БД в панели идет ошибка 
+"Серверная команда завершилась кодом 1: ERROR exists(name) Name with 'casino71cfd'  already exists ISP manager не создал базу данных" база была создана, удалил в ошибке нажал ок и сразу вторая ошибка - "Spaceship API вернул HTTP 422 Unprocessable Entity. {"detail":"The request is invalid.","data":[{"field":"take","details":"The take field is required."},{"field":"skip","details":"The skip field is required."}]}"
+
+потом нажал отдельно Создать БД и импортировать SQL (заметь база данных была удалена) прилетает от программы следующая ошибка - Серверная команда завершилась с кодом 41 Созданная БД не прошла проверку подключения
+Я проверил БД casino71cfd создалась но не залился импорт. мешает какая то проверка.
+Как работать с такой программой - одни ошибки!
+исправь срочно!
+Документация по API тут https://docs.spaceship.dev/ 
+Если влруг нужно для инфы: руками менять\добавлять txt записи тут https://www.spaceship.com/application/domain-list-application/ вставляется домен и выбирается - Nameservers & DNS - Advanced DNS (https://www.spaceship.com/application/advanced-dns-application/manage/casino71.cfd/)
+Я выпустил API только для работы с ДНС (DNS Records Read Write) и вставлял в программу. может нужно полное управление а не только ДНС
+
+Да блин! мы делаем программу на виндовс через повершел тут для ознакомления! и txt файлы для освежения памяти твоей!
+сейчас перестало добавлять домен!
+так же как и ранее не добавляет базу!
+изучи все и пришли ответ!!!
+
+
+все исходники, отчеты, нужные файлы тут https://github.com/raliya/kdhGHf643tf76.git
+вникай читай и пришли что просил.
+пробежаться по списку указанных доменов и собрать их 2 Значения TXT-записи
+пример ссылка (домен пример)
+https://185.115.33.18:1500/ispmgr#/form?elid=casino-deposit.cfd&elname=casino-deposit.cfd&tconvert=punycode&func=webdomain.letsencrypt.txt&tab_id=111&tab_parent_id=17
+там 2 значения txt записей
+названия их одинаковы всегда: _acme-challenge
+Так вот взять их собрать у каждого домена по 2 значения и через API который я указываю - указал в поле программы перейти на https://www.spaceship.com/application/advanced-dns-application/manage/ДОМЕН
+ и заменить значения записей TXT там по умолчанию они есть но их значения нужно заменить на полученные в https://185.115.33.18:1500/ispmgr
+ 
+ 
+ 
+ вернемся к проекту "Программа для виндовс пишем на ПоверШелл" программа 
+1. не корректно загружает домены
+2. не создает и не загружает БД
+-что нужно железно реализовать:
+
+Добавить домен https://185.115.33.18:1500/ispmgr#/form?plid=&tconvert=punycode&func=site.edit&tab_id=26&tab_parent_id=23
+Доменное имя: exemle.com
+Псевдонимы сайта: www.exemle.com *.exemle.com
+далее нажать "Создать"
+далее перенаправляет на страницу https://185.115.33.18:1500/ispmgr#/form?aliases=www.exemle.com%20*.exemle.com&crtname=exemle.com_le1&domain_name=exemle.com&email=webmaster@exemle.com&from_webdomain=on&username=www-root&func=letsencrypt.generate&tab_id=26&tab_parent_id=23
+там выбрать Wildcard сертификат и нажать "Выпустить"
+
+Добавить БД взяв ее с Папки результатов (у каждого домена своя папка) в папке C:\Users\User\Desktop\Adminki\Программа домены\работа\Результат\bet123.cfd\config
+(пример) config.php взять данные БД
+ 'db' => [
+     'host' => 'localhost',
+     'name' => 'ххх',
+     'user' => 'ххх',
+     'pass' => 'ххх',
+ ],
+перейти на панель управления сайтов в нашем случае сейчас это https://185.115.33.18:1500/ispmgr#/list?clickstat=yes&p_num=1&func=webdomain&tab_id=23
+нажать Создать Базу данных (https://185.115.33.18:1500/ispmgr#/form?plid=&func=db.edit&tab_id=28&tab_parent_id=23) ввести данные из файла config.php и нажать кнопку "создать" Далее загрузить в созданную БД sql дамп файл взятый с Папки результатов (у каждого домена своя папка) в папке C:\Users\User\Desktop\Adminki\Программа домены\работа\Результат\bet123.cfd\
+(пример)
+Эти 2 проблемы не доделаны в программе до сих пор
+Давай граммотно все доделаем с тобой. вот вся информация о программе,- ее пишем на PowerShell на ПК виндовс10
+исходники и полную всю информацию я загрузил сюда: https://github.com/raliya/kdhGHf643tf76.git
+изучи все, там вся инфа
+Работаем командами в ПоверШел, присылай умные полные команды
+ 
+ 
+ 

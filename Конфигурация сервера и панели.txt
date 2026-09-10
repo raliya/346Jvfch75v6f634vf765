@@ -1,0 +1,67 @@
+Веб-сервер (WWW) https://185.115.33.18:1500/ispmgr
+Apache MPM-ITK 2.4.37-65.module_el8.10.0+3874+c2064c23.2, PHP module 7.2.24-1.module_el8.3.0+2010+7c76a223, PHP-FPM 7.2.24-1.module_el8.3.0+2010+7c76a223, awstats 7.9-1.el8, logrotate 3.14.0-6.el8, nginx 1.14.1-9.module_el8.3.0+2165+af250afe.alma
+рекомендуемый
+Почтовый сервер (SMTP/POP3/IMAP)
+Dovecot 2.3.16-5.el8, Exim 4.98-2.el8, RoundCube 1.5.5-1.el8, sieve 2.3.16-5.el8
+рекомендуемый
+Сервер имен (DNS)
+BIND 9.11.36-16.el8_10.2
+рекомендуемый
+FTP-сервер
+ProFTP 1.3.6e-7.el8
+рекомендуемый
+Сервер СУБД MySQL
+MySQL 8.0.36-1.module_el8.9.0+3735+82bd6c11
+рекомендуемый
+Веб-интерфейс администрирования MySQL (phpMyAdmin)
+phpMyAdmin 5.2.1-1.el8
+Дисковые квоты
+quota 4.04-14.el8
+рекомендуемый
+Альтернативная версия PHP 5.3
+PHP 5.3 Apache module, PHP 5.3 PHP-FPM, PHP 5.3 common
+Альтернативная версия PHP 5.4
+PHP 5.4 Apache module, PHP 5.4 PHP-FPM, PHP 5.4 common
+Альтернативная версия PHP 5.5
+PHP 5.5 Apache module, PHP 5.5 PHP-FPM, PHP 5.5 common
+Альтернативная версия PHP 5.6
+PHP 5.6 Apache module, PHP 5.6 PHP-FPM, PHP 5.6 common
+Альтернативная версия PHP 7.0
+PHP 7.0 Apache module, PHP 7.0 PHP-FPM, PHP 7.0 common
+Альтернативная версия PHP 7.1
+PHP 7.1 Apache module, PHP 7.1 PHP-FPM, PHP 7.1 common
+Альтернативная версия PHP 7.2
+PHP 7.2 Apache module, PHP 7.2 PHP-FPM, PHP 7.2 common
+Альтернативная версия PHP 7.3
+PHP 7.3 Apache module, PHP 7.3 PHP-FPM, PHP 7.3 common
+Альтернативная версия PHP 7.4
+PHP 7.4 Apache module, PHP 7.4 PHP-FPM, PHP 7.4 common
+Альтернативная версия PHP 8.0
+PHP 8.0 Apache module, PHP 8.0 PHP-FPM, PHP 8.0 common
+Альтернативная версия PHP 8.1
+PHP 8.1 Apache module, PHP 8.1 PHP-FPM, PHP 8.1 common
+Альтернативная версия PHP 8.2
+PHP 8.2 Apache module, PHP 8.2 PHP-FPM, PHP 8.2 common
+Альтернативная версия PHP 8.3
+PHP 8.3 Apache module, PHP 8.3 PHP-FPM, PHP 8.3 common
+Fail2ban
+fail2ban
+рекомендуемый
+Ansible (установка CMS)
+Ansible
+рекомендуемый
+Node.js
+
+
+Информация о продукте
+Панель управления
+ispmanager Host
+Операционная система
+AlmaLinux 8.10.1.el8 (x86_64)
+Репозиторий
+ispmanager-6-5.445
+Версия COREmanager
+5.445.1-2026.09.02_12:58
+Версия панели
+6.150.3-2026.09.02_13:15 (Актуальная)
+

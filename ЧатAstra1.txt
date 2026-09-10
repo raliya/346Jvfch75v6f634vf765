@@ -1,0 +1,1615 @@
+еще раз прочти это сообщение и сделай как сказал - изучи:
+https://github.com/raliya/kdhGHf643tf76.git - это для ОЗНОКОМЛЕНИЯ ЧТОБ ПРОБОЛЖИТЬ
+
+вернемся к проекту "Программа для виндовс пишем на ПоверШелл" программа
+1. не корректно загружает домены
+2. не создает и не загружает БД
+-что нужно железно реализовать:
+
+Добавить домен https://185.115.33.18:1500/ispmgr#/form?plid=&tconvert=punycode&func=site.edit&tab_id=26&tab_parent_id=23
+До...
+Развернуть
+GPT-6 Astra
+GPT-6 Astra
+Навык активирован: page_content
+get_page_content
+Содержимое страницы
+get_page_content
+Содержимое страницы
+get_page_content
+Содержимое страницы
+get_page_content
+Содержимое страницы
+get_page_content
+Содержимое страницы
+get_page_content
+Содержимое страницы
+get_page_content
+Содержимое страницы
+get_page_content
+Содержимое страницы
+get_page_content
+Содержимое страницы
+Размышление
+
+
+
+
+Открыл репозиторий и прочитал текущий код, отвечающий за создание сайтов, БД и работу с сертификатами. Предыдущие ответы были не по вашему проекту: вместо изучения исходников я предложил шаблоны. Исправляю подход — продолжаем существующую программу, а не пишем отдельную автоматизацию Selenium.
+
+Что установлено по исходникам
+В репозитории приложение C# / WPF, .NET 8, а PowerShell используется для внесения изменений и сборки. Продолжим именно так.
+
+Прочитал:
+
+Services/IspmanagerAutomationService.cs;
+Services/DatabaseDeploymentService.cs;
+MainWindow.Build7.cs;
+MainWindow.Build10.cs;
+FIX_INPUT.txt, ispmanager-acme-devel.xml и часть материалов предыдущего исправления BUILD9.
+Архивы и все исторические копии целиком не проверял. Ниже — выводы именно по текущим файлам, а не по предположениям.
+
+1. Создание сайта не завершает ваш сценарий
+Сейчас CreateWebDomainAsync() отправляет:
+
+["site_name"] = domain,
+["site_aliases"] = aliases,
+["site_ssl"] = "on",
+["site_cache"] = "off"
+
+Но затем только проверяет наличие имени в списке сайтов.
+
+В этом методе:
+
+нет вызова letsencrypt.generate;
+нет выбора Wildcard;
+нет проверки сохранённых псевдонимов;
+существующий домен сразу считается успешным, даже если его настройки не соответствуют заданию;
+settings.Owner проверяется, но в запрос создания не передаётся.
+site_ssl=on не означает, что Wildcard-сертификат выпущен.
+
+При этом заменять site_name на domain_name вслепую нельзя: параметры страницы выпуска сертификата не доказывают, как называется поле формы создания сайта.
+
+2. Реквизиты БД читаются не из блока db
+В DatabaseDeploymentService.cs:
+
+var databaseName = ReadPhpValue(configText, "name");
+var databaseUser = ReadPhpValue(configText, "user");
+var databasePassword = ReadPhpValue(configText, "pass");
+
+ReadPhpValue() ищет первое совпадение во всём config.php. Если выше блока db есть другой name, программа может взять его.
+
+Кроме того, host вообще не читается. Серверный клиент MySQL запускается с настройками подключения по умолчанию.
+
+3. Ошибка подключения ошибочно трактуется как отсутствие БД
+Текущий порядок:
+
+SELECT 1 не прошёл
+→ пробовать db.edit с elid
+→ при любой ошибке редактирования пробовать создание
+
+Это неправильно. Ошибка подключения может означать неверный пароль, другой сервер, отсутствие прав или недоступный MySQL — не только отсутствие базы.
+
+Именно такой порядок способен приводить к exists(name).
+
+Дополнительно:
+
+сервер БД жёстко задан как server="MySQL";
+используется непроверенный для вашей формы elid=имя_БД;
+stderr проверки подключения подавляется;
+после любой неудачи программа сообщает о несовпадении пароля, не установив настоящую причину.
+4. Импорт SQL написан, но до него можно не дойти
+Сервис уже умеет:
+
+находить SQL в папке результата;
+загружать его через SFTP в закрытый временный каталог;
+запускать импорт на сервере;
+проверять код завершения.
+Поэтому отдельный mysql.exe на Windows и открытие MySQL наружу для существующей архитектуры не нужны.
+
+Исправлять необходимо подготовку БД и проверку доступа перед импортом. Также нужна защита от непреднамеренного повторного импорта в уже заполненную базу.
+
+5. Общий запуск может продолжать работу после ошибки
+В текущем MainWindow.Build7.cs общий процесс вызывает обработчики async void, ждёт изменения _isRunning и увеличивает счётчик выполненных этапов.
+
+Ожидание завершения не означает получение результата операции. Нужно вызывать методы, возвращающие Task, и останавливать последовательность при ошибке.
+
+6. Проверка DNS в BUILD10 частично отключена
+В Build10VerifyAcmeRecords() проверки заменены комментариями, но вызывающий код продолжает писать «обновлены и проверены».
+
+Это нужно исправить. Для Wildcard необходима DNS-01-проверка; нажатие «Выпустить» может только запустить процесс и привести к ожиданию TXT.
+
+Что делаем сейчас
+Исходники у меня уже есть — повторно присылать их не нужно. Не хватает фактической схемы трёх форм вашей установленной версии ISPmanager.
+
+В репозитории есть ответ webdomain.letsencrypt.txt, но это не схема создания сайта, выпуска сертификата или создания БД.
+
+Чтобы больше не подбирать названия параметров наугад, ниже — полная команда диагностики через уже используемый программой API.
+
+Она:
+
+работает в Windows PowerShell 5.1 и PowerShell 7;
+авторизуется вашим логином;
+запрашивает site.edit, letsencrypt.generate, db.edit без sok=ok;
+сохраняет имена полей, подписи и варианты выбора;
+не создаёт сайты, БД и сертификаты;
+не отправляет SQL;
+не сохраняет пароль или идентификатор сессии в отчёт;
+не изменяет исходники.
+Запускайте в новом окне PowerShell, особенно если ранее выполняли команды, отключающие проверку TLS.
+
+Полностью вставьте этот блок в PowerShell
+& {
+    $ErrorActionPreference = 'Stop'
+
+    Add-Type -AssemblyName System.Net.Http
+
+    $reportDirectory = Join-Path `
+        ([Environment]::GetFolderPath('Desktop')) `
+        ('ISPmanager-Schema-' + (Get-Date -Format 'yyyyMMdd-HHmmss') +
+         '-' + [Guid]::NewGuid().ToString('N').Substring(0, 6))
+
+    New-Item -ItemType Directory -Path $reportDirectory | Out-Null
+
+    $panelText = Read-Host @'
+Адрес панели с действительным HTTPS-сертификатом
+Enter = https://185.115.33.18:1500/ispmgr
+'@
+
+    if ([string]::IsNullOrWhiteSpace($panelText)) {
+        $panelText = 'https://185.115.33.18:1500/ispmgr'
+    }
+
+    $panelUri = $null
+    if (-not [Uri]::TryCreate(
+        $panelText.Trim(),
+        [UriKind]::Absolute,
+        [ref]$panelUri
+    )) {
+        throw 'Некорректный адрес панели.'
+    }
+
+    if ($panelUri.Scheme -ne 'https' -or $panelUri.UserInfo) {
+        throw 'Нужен HTTPS-адрес без логина и пароля внутри URL.'
+    }
+
+    $builder = [UriBuilder]::new($panelUri)
+    $builder.Query = ''
+    $builder.Fragment = ''
+
+    $panelPath = $builder.Path.TrimEnd('/')
+    if (-not $panelPath.EndsWith(
+        '/ispmgr',
+        [StringComparison]::OrdinalIgnoreCase
+    )) {
+        $panelPath += '/ispmgr'
+    }
+
+    $builder.Path = $panelPath
+    $panelUrl = $builder.Uri.AbsoluteUri
+
+    $domain = (Read-Host 'Домен из папки результата, например bet123.cfd').Trim()
+    $domain = $domain.TrimEnd('.')
+
+    try {
+        $domain = ([Globalization.IdnMapping]::new()).
+            GetAscii($domain).ToLowerInvariant()
+    }
+    catch {
+        throw 'Не удалось преобразовать доменное имя.'
+    }
+
+    $domainPattern = '^(?=.{1,253}$)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$'
+
+    if ($domain -notmatch $domainPattern) {
+        throw 'Укажите только доменное имя, без https://, пути и *.'
+    }
+
+    $owner = Read-Host 'Владелец сайта в ISPmanager; Enter = www-root'
+    if ([string]::IsNullOrWhiteSpace($owner)) {
+        $owner = 'www-root'
+    }
+    $owner = $owner.Trim()
+
+    $credential = Get-Credential -Message 'Логин и пароль ISPmanager'
+    if ($null -eq $credential) {
+        throw 'Авторизация отменена.'
+    }
+
+    $handler = [System.Net.Http.HttpClientHandler]::new()
+
+    # Не отправляем учётные данные по перенаправлению на другой адрес.
+    $handler.AllowAutoRedirect = $false
+
+    # Проверка сертификата НЕ отключается.
+    $client = [System.Net.Http.HttpClient]::new($handler)
+    $client.Timeout = [TimeSpan]::FromSeconds(90)
+    $client.DefaultRequestHeaders.UserAgent.ParseAdd(
+        'TextFileProcessor-SchemaDiagnostics/1.0'
+    )
+
+    function Invoke-IspReadForm {
+        param(
+            [Parameter(Mandatory = $true)]
+            [hashtable] $Parameters
+        )
+
+        $dictionary =
+            [Collections.Generic.Dictionary[string,string]]::new()
+
+        foreach ($key in $Parameters.Keys) {
+            $dictionary.Add([string]$key, [string]$Parameters[$key])
+        }
+
+        $content = [System.Net.Http.FormUrlEncodedContent]::new(
+            $dictionary
+        )
+        $response = $null
+
+        try {
+            $response = $client.PostAsync(
+                $panelUrl,
+                $content
+            ).GetAwaiter().GetResult()
+
+            if (-not $response.IsSuccessStatusCode) {
+                throw ('Панель вернула HTTP {0}. Проверьте адрес и доступ.' -f
+                    [int]$response.StatusCode)
+            }
+
+            $body = $response.Content.ReadAsStringAsync().
+                GetAwaiter().GetResult()
+
+            $xmlSettings = [System.Xml.XmlReaderSettings]::new()
+            $xmlSettings.DtdProcessing =
+                [System.Xml.DtdProcessing]::Prohibit
+            $xmlSettings.XmlResolver = $null
+
+            $stringReader = [System.IO.StringReader]::new($body)
+            $xmlReader = $null
+
+            try {
+                $xmlReader = [System.Xml.XmlReader]::Create(
+                    $stringReader,
+                    $xmlSettings
+                )
+                $document = [System.Xml.XmlDocument]::new()
+                $document.XmlResolver = $null
+                $document.Load($xmlReader)
+            }
+            finally {
+                if ($null -ne $xmlReader) {
+                    $xmlReader.Dispose()
+                }
+                $stringReader.Dispose()
+            }
+
+            if ($document.DocumentElement.LocalName -ne 'doc') {
+                throw 'Вместо API XML получена другая страница.'
+            }
+
+            $apiError = $document.SelectSingleNode('/doc/error')
+            if ($null -ne $apiError) {
+                # Сырой ответ не выводим: он может содержать реквизиты.
+                throw ('ISPmanager вернул ошибку для функции {0}. ' +
+                       'Проверьте её доступность для этой учётной записи.' -f
+                       $Parameters['func'])
+            }
+
+            return ,$document
+        }
+        finally {
+            if ($null -ne $response) {
+                $response.Dispose()
+            }
+            $content.Dispose()
+        }
+    }
+
+    function ConvertTo-SafeFormSchema {
+        param(
+            [System.Xml.XmlDocument] $Document,
+            [string] $FunctionName
+        )
+
+        $labels = @{}
+
+        foreach ($message in $Document.SelectNodes(
+            '/doc/messages/msg[@name]'
+        )) {
+            $labels[$message.GetAttribute('name')] = $message.InnerText
+        }
+
+        $fields = @(
+            foreach ($node in $Document.SelectNodes(
+                '/doc/metadata/form//*[@name]'
+            )) {
+                $name = $node.GetAttribute('name')
+
+                [pscustomobject]@{
+                    Element = $node.LocalName
+                    Name    = $name
+                    Type    = $node.GetAttribute('type')
+                    Label   = $labels[$name]
+                }
+            }
+        )
+
+        $lists = @(
+            foreach ($list in $Document.SelectNodes('/doc/slist')) {
+                $name = $list.GetAttribute('name')
+
+                if ($name -match '(?i)pass|secret|token|auth|session') {
+                    continue
+                }
+
+                [pscustomobject]@{
+                    Name = $name
+                    Options = @(
+                        foreach ($option in $list.SelectNodes('./val')) {
+                            [pscustomobject]@{
+                                Key  = $option.GetAttribute('key')
+                                Text = $option.InnerText
+                            }
+                        }
+                    )
+                }
+            }
+        )
+
+        # Только явно разрешённые значения по умолчанию.
+        # Пароли, auth, cookie и другие произвольные данные сюда не входят.
+        $allowedDefaults = @(
+            'site_name', 'site_aliases', 'site_ssl', 'site_cache',
+            'domain_name', 'aliases', 'owner', 'username', 'user',
+            'server', 'charset', 'wildcard', 'cert_type',
+            'crtname', 'email', 'from_webdomain'
+        )
+
+        $defaults = [ordered]@{}
+
+        foreach ($name in $allowedDefaults) {
+            $node = $Document.SelectSingleNode('/doc/' + $name)
+
+            if ($null -ne $node) {
+                $defaults[$name] = $node.InnerText
+            }
+        }
+
+        [pscustomobject]@{
+            Function = $FunctionName
+            Fields   = $fields
+            Lists    = $lists
+            Defaults = $defaults
+        }
+    }
+
+    $sessionId = $null
+    $plainPassword = $null
+    $authParameters = $null
+
+    try {
+        Write-Host "`nАвторизация..." -ForegroundColor Cyan
+
+        $plainPassword = $credential.GetNetworkCredential().Password
+
+        $authParameters = @{
+            out      = 'xml'
+            func     = 'auth'
+            username = $credential.UserName
+            password = $plainPassword
+        }
+
+        $authDocument = Invoke-IspReadForm -Parameters $authParameters
+        $authNode = $authDocument.SelectSingleNode('/doc/auth')
+
+        if ($null -eq $authNode) {
+            throw 'ISPmanager не вернул идентификатор API-сессии.'
+        }
+
+        $sessionId = $authNode.GetAttribute('id')
+
+        if ([string]::IsNullOrWhiteSpace($sessionId)) {
+            $sessionId = $authNode.InnerText.Trim()
+        }
+
+        if ([string]::IsNullOrWhiteSpace($sessionId)) {
+            throw 'Получен пустой идентификатор API-сессии.'
+        }
+
+        $authParameters.Clear()
+        $plainPassword = $null
+        $authDocument = $null
+        $authNode = $null
+
+        $requests = @(
+            @{
+                Function = 'site.edit'
+                Extra = @{
+                    plid     = ''
+                    tconvert = 'punycode'
+                }
+            },
+            @{
+                Function = 'letsencrypt.generate'
+                Extra = @{
+                    domain_name    = $domain
+                    aliases        = "www.$domain *.$domain"
+                    crtname        = "${domain}_le1"
+                    email          = "webmaster@$domain"
+                    from_webdomain = 'on'
+                    username       = $owner
+                }
+            },
+            @{
+                Function = 'db.edit'
+                Extra = @{
+                    plid = ''
+                }
+            }
+        )
+
+        foreach ($request in $requests) {
+            $functionName = $request.Function
+
+            Write-Host (
+                'Чтение схемы {0}, без отправки формы...' -f $functionName
+            ) -ForegroundColor Cyan
+
+            $parameters = @{
+                out  = 'devel'
+                lang = 'ru'
+                auth = $sessionId
+                func = $functionName
+            }
+
+            foreach ($key in $request.Extra.Keys) {
+                $parameters[$key] = $request.Extra[$key]
+            }
+
+            try {
+                $document = Invoke-IspReadForm -Parameters $parameters
+
+                $schema = ConvertTo-SafeFormSchema `
+                    -Document $document `
+                    -FunctionName $functionName
+
+                if (@($schema.Fields).Count -eq 0) {
+                    throw 'Панель не вернула описание полей формы.'
+                }
+
+                $file = Join-Path $reportDirectory (
+                    $functionName + '.schema.json'
+                )
+
+                $schema |
+                    ConvertTo-Json -Depth 12 |
+                    Set-Content -LiteralPath $file -Encoding UTF8
+
+                Write-Host "Сохранено: $file" -ForegroundColor Green
+            }
+            catch {
+                Write-Warning (
+                    'Не удалось получить {0}: {1}' -f
+                    $functionName, $_.Exception.Message
+                )
+            }
+            finally {
+                $parameters.Clear()
+            }
+        }
+
+        Write-Host "`nДиагностика закончена." -ForegroundColor Green
+        Write-Host "Папка отчётов: $reportDirectory"
+        Write-Host 'Ни одна форма создания не отправлялась.'
+        Write-Host 'Проверьте JSON-файлы перед отправкой в чат.'
+    }
+    finally {
+        if ($null -ne $authParameters) {
+            $authParameters.Clear()
+        }
+
+        $sessionId = $null
+        $plainPassword = $null
+        $credential = $null
+
+        $client.Dispose()
+    }
+}
+
+Если получите ошибку проверки сертификата, не отключайте её: используйте DNS-имя панели, соответствующее сертификату, либо установите доверие к проверенному сертификату/центру сертификации.
+
+Что прислать после команды
+Три созданных файла:
+
+site.edit.schema.json
+letsencrypt.generate.schema.json
+db.edit.schema.json
+
+Если какая-либо схема не получена — соответствующее предупреждение из PowerShell. Пароль панели, содержимое config.php, cookie и SQL-дамп присылать не нужно.
+
+По этим схемам можно подготовить уже адресный PowerShell-патч существующего проекта: с резервной копией, проверкой замен, сборкой в отдельную папку и без удаления текущего рабочего EXE.
+
+Итог сейчас: ошибки в коде найдены, архитектура проекта установлена. Исправления ещё не применены и работа на сервере не проверена. Выдавать очередной скрипт с угаданными полями за «железно рабочее решение» я не буду.
+
+вот эти три файла:
+https://github.com/raliya/kdhGHf643tf76/blob/main/db.edit.schema.json
+https://github.com/raliya/kdhGHf643tf76/blob/main/letsencrypt.generate.schema.json
+https://github.com/raliya/kdhGHf643tf76/blob/main/site.edit.schema.json
+GPT-6 Astra
+GPT-6 Astra
+get_page_content
+Содержимое страницы
+get_page_content
+Содержимое страницы
+get_page_content
+Содержимое страницы
+get_page_content
+Содержимое страницы
+get_page_content
+Содержимое страницы
+get_page_content
+Содержимое страницы
+get_page_content
+Содержимое страницы
+get_page_content
+Содержимое страницы
+get_page_content
+Содержимое страницы
+get_page_content
+Содержимое страницы
+Размышление
+
+
+
+
+
+
+
+
+
+
+
+Прочитал все три файла и сопоставил их с текущими сервисами в репозитории. Теперь названия полей подтверждены, а не предполагаются.
+
+Главные результаты:
+
+Операция	Что действительно принимает ваша панель
+Домен	site_name, site_aliases, site_owner
+Выбор Let’s Encrypt при создании сайта	site_ssl_cert=letsencrypt, а не site_ssl=on
+Отключение кеширования	site_srv_cache=off, а не site_cache=off
+Wildcard	letsencrypt.generate, wildcard=on, dns_check=on, enable_cert=on
+Новая БД и новый пользователь	db.edit, user=*, username, password, confirm
+Новая БД с существующим пользователем	db.edit, user=имя_существующего_пользователя
+Важная находка: в ваших схемах уже присутствуют и пользователь bet123cfd, и база bet123cfd->MySQL. Следовательно, повторять для них «создать нового пользователя» неправильно. Но наличие БД ещё не подтверждает правильность пароля или успешный импорт.
+
+Ниже — PowerShell-патч существующего приложения, не отдельная программа.
+
+Что он меняет
+Исправляет параметры создания сайта.
+Проверяет сохранение доменного имени, владельца и псевдонимов.
+Отправляет запрос на Wildcard-сертификат.
+Читает реквизиты только из массива db, без исполнения PHP.
+Создаёт БД через HTTPS API ISPmanager вместо неисправной команды mgrctl с паролем.
+Выбирает существующего пользователя, если он уже есть.
+Оставляет загрузку дампа через существующий SSH/SFTP-сервис с проверкой SSH-ключа.
+Передаёт MySQL реквизиты через закрытый файл настроек, не через аргумент --password.
+Не импортирует дамп поверх непустой БД.
+Не сбрасывает пароли существующих пользователей.
+Границы исправления: запрос сертификата и фактический выпуск — разные этапы. Если DNS обслуживает Spaceship, потребуются TXT-записи. Этот патч не объявляет сертификат выпущенным сразу после отправки запроса и не меняет DNS-зону.
+
+1. Закройте программу и вставьте весь блок в PowerShell
+Команда запросит папку, где находится TextFileProcessor.csproj, сделает отдельную рабочую копию, внесёт изменения и соберёт EXE в ней. Исходная папка и старый EXE останутся нетронутыми.
+
+Нужен установленный .NET 8 SDK. Старые BUILD7.ps1 / BUILD9.ps1 после этого не запускайте: они могут восстановить прежний код.
+
+& {
+    $ErrorActionPreference = 'Stop'
+
+    function Step([string]$Text) {
+        Write-Host "`n=== $Text ===" -ForegroundColor Cyan
+    }
+
+    function Replace-One {
+        param(
+            [string]$Text,
+            [string]$Pattern,
+            [string]$Replacement,
+            [string]$Description
+        )
+
+        $rx = [regex]::new(
+            $Pattern,
+            [System.Text.RegularExpressions.RegexOptions]::Singleline
+        )
+
+        $matches = $rx.Matches($Text)
+
+        if ($matches.Count -ne 1) {
+            throw (
+                "Остановлено: '{0}'. Найдено совпадений: {1}, ожидалось 1. " +
+                "Локальная версия отличается от изученной; исходная папка не изменена."
+            ) -f $Description, $matches.Count
+        }
+
+        $m = $matches[0]
+
+        return $Text.Substring(0, $m.Index) +
+            $Replacement +
+            $Text.Substring($m.Index + $m.Length)
+    }
+
+    $utf8 = [System.Text.UTF8Encoding]::new($false)
+
+    function Write-Utf8([string]$Path, [string]$Text) {
+        [System.IO.File]::WriteAllText($Path, $Text, $utf8)
+    }
+
+    Step 'Проверка окружения'
+
+    if (-not (Get-Command dotnet -ErrorAction SilentlyContinue)) {
+        throw 'Не найден dotnet. Установите .NET 8 SDK x64.'
+    }
+
+    $sdks = @(& dotnet --list-sdks)
+
+    if ($LASTEXITCODE -ne 0 -or -not ($sdks -match '^8\.')) {
+        throw 'Для этого патча нужен установленный .NET 8 SDK.'
+    }
+
+    $rootText = Read-Host 'Полный путь к папке с TextFileProcessor.csproj'
+    $rootText = $rootText.Trim().Trim('"')
+
+    $root = (Resolve-Path -LiteralPath $rootText).Path
+    $project = Join-Path $root 'TextFileProcessor.csproj'
+
+    if (-not (Test-Path -LiteralPath $project -PathType Leaf)) {
+        throw "Не найден: $project"
+    }
+
+    $required = @(
+        'Services\IspmanagerAutomationService.cs',
+        'Services\DatabaseDeploymentService.cs',
+        'MainWindow.Build4.cs'
+    )
+
+    foreach ($relative in $required) {
+        if (-not (Test-Path -LiteralPath (Join-Path $root $relative))) {
+            throw "Не найден файл проекта: $relative"
+        }
+    }
+
+    $stamp = (Get-Date -Format 'yyyyMMdd-HHmmss') +
+        '-' + [Guid]::NewGuid().ToString('N').Substring(0, 6)
+
+    $parent = Split-Path -Parent $root
+    $leaf = Split-Path -Leaf $root
+    $work = Join-Path $parent ($leaf + '-deployment-fix-' + $stamp)
+
+    Step 'Создание отдельной рабочей копии'
+
+    New-Item -ItemType Directory -Path $work | Out-Null
+
+    & robocopy $root $work /E /R:1 /W:1 /XJ /NFL /NDL /NJH /NJS `
+        /XD .git bin obj publish Результат `
+        /XF '*.bak' '*.backup-*' '*.zip'
+
+    $copyCode = $LASTEXITCODE
+
+    if ($copyCode -ge 8) {
+        throw "Ошибка копирования robocopy: $copyCode. Исходная папка не изменена."
+    }
+
+    $ispPath = Join-Path $work 'Services\IspmanagerAutomationService.cs'
+    $dbPath = Join-Path $work 'Services\DatabaseDeploymentService.cs'
+    $uiPath = Join-Path $work 'MainWindow.Build4.cs'
+    $helperPath = Join-Path $work 'Services\DeploymentSchemaFix.cs'
+    $parserPath = Join-Path $work 'Services\DeploymentDbConfig.cs'
+
+    if (Test-Path -LiteralPath $helperPath) {
+        throw 'Этот патч уже присутствует в выбранной папке.'
+    }
+
+    Step 'Исправление сервиса ISPmanager'
+
+    $isp = [IO.File]::ReadAllText($ispPath)
+
+    $newCreateMethod = @'
+    public Task<IspmanagerOperationResult> CreateWebDomainAsync(
+        IspmanagerSettings settings,
+        string password,
+        string domain,
+        CancellationToken cancellationToken)
+    {
+        return DeploymentSchemaFix.EnsureSiteAsync(
+            settings, password, domain, cancellationToken);
+    }
+
+'@
+
+    $isp = Replace-One $isp `
+        'public async Task<IspmanagerOperationResult> CreateWebDomainAsync\(.*?(?=    private static HttpClient CreateClient)' `
+        $newCreateMethod `
+        'Замена CreateWebDomainAsync'
+
+    $newClient = @'
+    internal static HttpClient CreateClient(IspmanagerSettings settings)
+    {
+        if (!Uri.TryCreate(settings.PanelUrl, UriKind.Absolute, out var uri) ||
+            uri.Scheme != Uri.UriSchemeHttps ||
+            !string.IsNullOrEmpty(uri.UserInfo))
+        {
+            throw new InvalidOperationException(
+                "Для ISPmanager нужен HTTPS URL без реквизитов внутри адреса.");
+        }
+
+        var handler = new HttpClientHandler
+        {
+            AllowAutoRedirect = false
+        };
+
+        // Проверка TLS обязательна. IgnoreCertificateErrors не применяется.
+        var client = new HttpClient(handler)
+        {
+            Timeout = RequestTimeout
+        };
+        client.DefaultRequestHeaders.UserAgent.ParseAdd(
+            "TextFileProcessor-DeploymentFix/1.0");
+        return client;
+    }
+
+'@
+
+    $isp = Replace-One $isp `
+        'private static HttpClient CreateClient\(.*?(?=    private static async Task<string> AuthenticateAsync)' `
+        $newClient `
+        'HTTPS-клиент'
+
+    $accessChanges = @(
+        @('private static async Task<string> AuthenticateAsync',
+          'internal static async Task<string> AuthenticateAsync'),
+        @('private static async Task<ApiResult> CallAsync',
+          'internal static async Task<ApiResult> CallAsync'),
+        @('private static void EnsureSuccess',
+          'internal static void EnsureSuccess'),
+        @('private static string NormalizeDomain(',
+          'internal static string NormalizeDomain('),
+        @('private sealed class ApiResult',
+          'internal sealed class ApiResult')
+    )
+
+    foreach ($change in $accessChanges) {
+        $isp = Replace-One $isp `
+            ([regex]::Escape($change[0])) `
+            $change[1] `
+            $change[0]
+    }
+
+    Write-Utf8 $ispPath $isp
+
+    Step 'Добавление строгого чтения config.php'
+
+    $parser = @'
+using System.Text;
+using System.Text.RegularExpressions;
+
+namespace TextFileProcessor.Services;
+
+internal sealed record DeploymentDbConfig(
+    string Host, string Name, string User, string Password)
+{
+    // Лексический разбор: комментарии и строковые литералы не смешиваются.
+    private static readonly Regex Tokens = new(
+        """
+        /\*[\s\S]*?\*/|//[^\r\n]*|\#[^\r\n]*|'(?:\%%MATH_BLOCK_0%%)*'|"(?:\%%MATH_BLOCK_1%%)*"|=>|\S
+        """,
+        RegexOptions.CultureInvariant,
+        TimeSpan.FromSeconds(3));
+
+    internal static DeploymentDbConfig Read(string php)
+    {
+        var tokens = Tokens.Matches(php)
+            .Cast<Match>()
+            .Select(m => m.Value)
+            .Where(t => !t.StartsWith("/*", StringComparison.Ordinal) &&
+                        !t.StartsWith("//", StringComparison.Ordinal) &&
+                        !t.StartsWith("#", StringComparison.Ordinal))
+            .ToList();
+
+        var positions = new List<int>();
+
+        for (var i = 0; i + 2 < tokens.Count; i++)
+        {
+            if ((tokens[i] == "'db'" || tokens[i] == "\"db\"") &&
+                tokens[i + 1] == "=>" &&
+                tokens[i + 2] == "[")
+            {
+                positions.Add(i + 3);
+            }
+        }
+
+        if (positions.Count != 1)
+            throw new InvalidOperationException(
+                "Ожидался ровно один литеральный массив 'db' => [...]. " +
+                "PHP-код не выполнялся.");
+
+        var values = new Dictionary<string, string>(StringComparer.Ordinal);
+        var p = positions[0];
+
+        while (true)
+        {
+            if (p >= tokens.Count)
+                throw new InvalidOperationException("Массив db не закрыт.");
+
+            if (tokens[p] == "]")
+                break;
+
+            var key = Decode(tokens[p++]);
+
+            if (p >= tokens.Count || tokens[p++] != "=>")
+                throw new InvalidOperationException("Некорректный элемент массива db.");
+
+            if (p >= tokens.Count)
+                throw new InvalidOperationException("В массиве db отсутствует значение.");
+
+            var value = Decode(tokens[p++]);
+
+            if (!values.TryAdd(key, value))
+                throw new InvalidOperationException(
+                    "Повторяющийся ключ в массиве db: " + key);
+
+            if (p >= tokens.Count)
+                throw new InvalidOperationException("Массив db не закрыт.");
+
+            if (tokens[p] == "]")
+                break;
+
+            if (tokens[p++] != ",")
+                throw new InvalidOperationException(
+                    "В db поддерживаются только строковые литералы. " +
+                    "Конкатенация, переменные и функции не вычисляются.");
+        }
+
+        string Required(string key)
+        {
+            if (!values.TryGetValue(key, out var value) ||
+                string.IsNullOrWhiteSpace(value))
+                throw new InvalidOperationException(
+                    "В массиве db отсутствует непустой параметр: " + key);
+            return value;
+        }
+
+        var result = new DeploymentDbConfig(
+            Required("host"), Required("name"),
+            Required("user"), Required("pass"));
+
+        // В полученной схеме зарегистрирован локальный MySQL (native).
+        if (result.Host != "localhost" && result.Host != "127.0.0.1")
+            throw new InvalidOperationException(
+                "db.host не соответствует локальному MySQL из схемы панели. " +
+                "Удалённый сервер автоматически не подставляется.");
+
+        if (!Regex.IsMatch(result.Name, @"^[A-Za-z0-9_.-]{1,64}$"))
+            throw new InvalidOperationException("Недопустимое имя базы данных.");
+
+        if (!Regex.IsMatch(result.User, @"^[A-Za-z0-9_.-]{1,32}$"))
+            throw new InvalidOperationException(
+                "Недопустимое имя пользователя MySQL: разрешено до 32 символов.");
+
+        if (result.Password.Length > 1024 ||
+            result.Password.Any(char.IsControl))
+            throw new InvalidOperationException(
+                "Пароль БД содержит неподдерживаемые управляющие символы.");
+
+        return result;
+    }
+
+    private static string Decode(string token)
+    {
+        if (token.Length < 2 ||
+            (token[0] != '\'' && token[0] != '"') ||
+            token[^1] != token[0])
+            throw new InvalidOperationException(
+                "В db ожидался строковый литерал PHP.");
+
+        var quote = token[0];
+        var result = new StringBuilder();
+
+        for (var i = 1; i < token.Length - 1; i++)
+        {
+            var c = token[i];
+
+            if (quote == '"' && c == '$')
+                throw new InvalidOperationException(
+                    "Интерполяция переменных PHP в db не поддерживается.");
+
+            if (c != '\\')
+            {
+                result.Append(c);
+                continue;
+            }
+
+            if (++i >= token.Length - 1)
+                throw new InvalidOperationException("Незавершённая escape-последовательность.");
+
+            var next = token[i];
+
+            if (quote == '\'')
+            {
+                if (next == '\\' || next == '\'')
+                    result.Append(next);
+                else
+                    result.Append('\\').Append(next);
+                continue;
+            }
+
+            switch (next)
+            {
+                case '\\': result.Append('\\'); break;
+                case '"': result.Append('"'); break;
+                case '$': result.Append('$'); break;
+                case 'n': result.Append('\n'); break;
+                case 'r': result.Append('\r'); break;
+                case 't': result.Append('\t'); break;
+                case 'v': result.Append('\v'); break;
+                case 'f': result.Append('\f'); break;
+                case 'e': result.Append((char)27); break;
+                default:
+                    if (next == 'x' || next == 'u' ||
+                        (next >= '0' && next <= '7'))
+                        throw new InvalidOperationException(
+                            "Числовые escape-последовательности PHP в db не поддерживаются.");
+                    result.Append('\\').Append(next);
+                    break;
+            }
+        }
+
+        return result.ToString();
+    }
+
+    internal static string ClientOptions(
+        string host, string user, string password)
+    {
+        static string Quote(string value) =>
+            "\"" + value.Replace("\\", "\\\\", StringComparison.Ordinal)
+                       .Replace("\"", "\\\"", StringComparison.Ordinal) + "\"";
+
+        return "[client]\n" +
+               "host=" + Quote(host) + "\n" +
+               "user=" + Quote(user) + "\n" +
+               "password=" + Quote(password) + "\n" +
+               "default-character-set=utf8mb4\n";
+    }
+}
+'@
+
+    Write-Utf8 $parserPath $parser
+
+    Step 'Добавление операций по подтверждённым схемам'
+
+    $helper = @'
+using System.Net.Http;
+using System.Security.Cryptography;
+using System.Text;
+using System.Xml.Linq;
+using TextFileProcessor.Models;
+using static TextFileProcessor.Services.IspmanagerAutomationService;
+
+namespace TextFileProcessor.Services;
+
+internal static class DeploymentSchemaFix
+{
+    private static readonly SemaphoreSlim SiteGate = new(1, 1);
+
+    private sealed class Api : IDisposable
+    {
+        private readonly HttpClient client;
+        private readonly IspmanagerSettings settings;
+        private readonly string session;
+        private readonly string password;
+
+        private Api(
+            HttpClient client, IspmanagerSettings settings,
+            string session, string password)
+        {
+            this.client = client;
+            this.settings = settings;
+            this.session = session;
+            this.password = password;
+        }
+
+        internal static async Task<Api> Open(
+            IspmanagerSettings settings, string password,
+            CancellationToken ct)
+        {
+            if (string.IsNullOrWhiteSpace(settings.Login) ||
+                string.IsNullOrWhiteSpace(settings.Owner) ||
+                string.IsNullOrEmpty(password))
+                throw new InvalidOperationException(
+                    "Заполните логин, владельца и пароль ISPmanager.");
+
+            var client = CreateClient(settings);
+            try
+            {
+                var session = await AuthenticateAsync(
+                    client, settings, password, ct);
+                return new Api(client, settings, session, password);
+            }
+            catch
+            {
+                client.Dispose();
+                throw;
+            }
+        }
+
+        internal async Task<XDocument> Call(
+            string function, Dictionary<string, string>? parameters,
+            CancellationToken ct)
+        {
+            var result = await CallAsync(
+                client, settings, session, function, parameters, ct);
+
+            if (!result.Success)
+            {
+                // Не включаем XML или значения параметров в исключение.
+                var error = result.Document?.Root?.Element("error");
+                var type = error?.Attribute("type")?.Value ?? result.ErrorCode;
+                var field = error?.Attribute("object")?.Value ?? "";
+                var text = $"ISPmanager: {function}; ошибка {type}; поле {field}.";
+
+                foreach (var secret in new[] { password, session })
+                    if (!string.IsNullOrEmpty(secret))
+                        text = text.Replace(secret, "[СКРЫТО]", StringComparison.Ordinal);
+
+                throw new InvalidOperationException(text);
+            }
+
+            if (result.Document?.Root?.Name.LocalName != "doc")
+                throw new InvalidOperationException(
+                    "ISPmanager не вернул ожидаемый XML-документ doc.");
+
+            return result.Document;
+        }
+
+        public void Dispose() => client.Dispose();
+    }
+
+    private static string Value(XDocument doc, string name) =>
+        doc.Root?.Element(name)?.Value ?? "";
+
+    private static HashSet<string> Options(XDocument doc, string name) =>
+        (doc.Root?.Elements("slist")
+            .Where(x => (string?)x.Attribute("name") == name)
+            .Elements("val")
+            .Select(x => (string?)x.Attribute("key") ?? "")
+            ?? Enumerable.Empty<string>())
+        .ToHashSet(StringComparer.Ordinal);
+
+    private static Dictionary<string, string> FormValues(XDocument doc)
+    {
+        var result = new Dictionary<string, string>(StringComparer.Ordinal);
+        var controls = doc.Root?.Element("metadata")?.Element("form")?
+            .Descendants()
+            .Where(e => e.Name.LocalName is "input" or "select" or "textarea")
+            .Select(e => (string?)e.Attribute("name"))
+            .Where(n => !string.IsNullOrEmpty(n))
+            .Distinct() ?? Enumerable.Empty<string?>();
+
+        foreach (var name in controls)
+        {
+            if (name is null ||
+                name.Contains("pass", StringComparison.OrdinalIgnoreCase) ||
+                name.Contains("confirm", StringComparison.OrdinalIgnoreCase))
+                continue;
+
+            var value = doc.Root?.Element(name);
+            if (value is not null)
+                result[name] = value.Value;
+        }
+
+        return result;
+    }
+
+    internal static async Task<IspmanagerOperationResult> EnsureSiteAsync(
+        IspmanagerSettings settings, string password,
+        string domain, CancellationToken ct)
+    {
+        domain = NormalizeDomain(domain);
+        await SiteGate.WaitAsync(ct);
+
+        try
+        {
+            using var api = await Api.Open(settings, password, ct);
+            var list = await api.Call("webdomain", null, ct);
+
+            var exists = list.Root!.Elements("elem").Any(e =>
+                string.Equals(e.Element("name")?.Value?.TrimEnd('.'),
+                    domain, StringComparison.OrdinalIgnoreCase));
+
+            var request = new Dictionary<string, string>
+            {
+                ["out"] = "devel",
+                ["tconvert"] = "punycode"
+            };
+            if (exists)
+                request["elid"] = domain;
+            else
+                request["plid"] = "";
+
+            var form = await api.Call("site.edit", request, ct);
+            var fields = FormValues(form);
+            var expectedOwner = settings.Owner.Trim();
+
+            if (exists &&
+                !string.Equals(Value(form, "site_owner"), expectedOwner,
+                    StringComparison.Ordinal))
+                throw new InvalidOperationException(
+                    "Владелец существующего сайта не совпадает с настройками. " +
+                    "Автоматическая смена владельца запрещена.");
+
+            if (!exists && !Options(form, "site_owner").Contains(expectedOwner))
+                throw new InvalidOperationException(
+                    "Владелец отсутствует в списке site_owner панели.");
+
+            var aliases = Value(form, "site_aliases")
+                .Split(new[] { ' ', '\r', '\n', '\t', ',' },
+                    StringSplitOptions.RemoveEmptyEntries)
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+            var changed = aliases.Add("www." + domain);
+            changed |= aliases.Add("*." + domain);
+
+            fields["out"] = "xml";
+            fields["sok"] = "ok";
+            fields["tconvert"] = "punycode";
+            fields["site_name"] = domain;
+            fields["site_owner"] = expectedOwner;
+            fields["site_aliases"] = string.Join(" ", aliases);
+
+            if (exists)
+            {
+                fields["elid"] = domain;
+            }
+            else
+            {
+                fields["plid"] = "";
+                fields["site_ssl_cert"] = "letsencrypt";
+                fields["site_srv_cache"] = "off";
+                fields["site_script_selector"] = "*";
+                fields["lp_db_source"] = "db_not_use";
+                fields["site_email"] = "webmaster@" + domain;
+            }
+
+            if (!exists || changed)
+                await api.Call("site.edit", fields, ct);
+
+            var check = await api.Call("site.edit",
+                new Dictionary<string, string>
+                {
+                    ["out"] = "devel",
+                    ["elid"] = domain,
+                    ["tconvert"] = "punycode"
+                }, ct);
+
+            var savedAliases = Value(check, "site_aliases")
+                .Split(new[] { ' ', '\r', '\n', '\t', ',' },
+                    StringSplitOptions.RemoveEmptyEntries)
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+            if (!string.Equals(Value(check, "site_name"), domain,
+                    StringComparison.OrdinalIgnoreCase) ||
+                Value(check, "site_owner") != expectedOwner ||
+                !savedAliases.Contains("www." + domain) ||
+                !savedAliases.Contains("*." + domain))
+                throw new InvalidOperationException(
+                    "Не подтверждено сохранение имени, владельца или псевдонимов сайта.");
+
+            var stateDirectory = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                "TextFileProcessor", "deployment-certificate-requests");
+
+            Directory.CreateDirectory(stateDirectory);
+
+            var panel = new UriBuilder(settings.PanelUrl)
+            {
+                Query = "",
+                Fragment = ""
+            }.Uri.AbsoluteUri.TrimEnd('/');
+
+            var stateKey = Convert.ToHexString(SHA256.HashData(
+                Encoding.UTF8.GetBytes(panel + "\n" + expectedOwner + "\n" + domain)));
+
+            var stateFile = Path.Combine(stateDirectory, stateKey + ".state");
+
+            if (File.Exists(stateFile))
+            {
+                var state = await File.ReadAllTextAsync(stateFile, ct);
+
+                if (state == "submitted")
+                    return new IspmanagerOperationResult
+                    {
+                        Success = true,
+                        Message = $"Сайт {domain} и псевдонимы проверены. " +
+                            "Запрос Wildcard ранее отправлен этим модулем. " +
+                            "Повторный выпуск не запускался; проверьте статус сертификата в панели."
+                    };
+
+                throw new InvalidOperationException(
+                    "Для этого домена сохранён незавершённый запрос сертификата. " +
+                    "Его исход неизвестен: проверьте ISPmanager перед повторным выпуском. " +
+                    "Файл состояния: " + stateFile);
+            }
+
+            var certificateParameters = new Dictionary<string, string>
+            {
+                ["out"] = "devel",
+                ["username"] = expectedOwner,
+                ["domain_name"] = domain,
+                ["aliases"] = $"www.{domain} *.{domain}",
+                ["crtname"] = domain + "_le1",
+                ["email"] = "webmaster@" + domain,
+                ["from_webdomain"] = "on",
+                ["wildcard"] = "on",
+                ["dns_check"] = "on",
+                ["enable_cert"] = "on"
+            };
+
+            var certificateForm = await api.Call(
+                "letsencrypt.generate", certificateParameters, ct);
+
+            var certificateFields = FormValues(certificateForm);
+            foreach (var pair in certificateParameters)
+                certificateFields[pair.Key] = pair.Value;
+
+            certificateFields["out"] = "xml";
+            certificateFields["sok"] = "ok";
+
+            // Записываем намерение до сетевой мутации.
+            // При таймауте не отправляем повторный запрос автоматически.
+            using (var stream = new FileStream(
+                stateFile, FileMode.CreateNew, FileAccess.Write, FileShare.None))
+            {
+                var bytes = Encoding.UTF8.GetBytes("outcome-unknown");
+                stream.Write(bytes, 0, bytes.Length);
+                stream.Flush(true);
+            }
+
+            await api.Call("letsencrypt.generate", certificateFields, ct);
+            await File.WriteAllTextAsync(stateFile, "submitted", ct);
+
+            return new IspmanagerOperationResult
+            {
+                Success = true,
+                Message = $"Сайт {domain}, владелец и псевдонимы проверены. " +
+                    "Запрос Wildcard отправлен в ISPmanager. " +
+                    "Выпуск сертификата ещё не подтверждён: проверьте DNS-01/TXT и статус панели."
+            };
+        }
+        finally
+        {
+            SiteGate.Release();
+        }
+    }
+
+    internal static async Task<bool> EnsureDatabaseAsync(
+        IspmanagerSettings settings, string panelPassword,
+        DeploymentDbConfig db, CancellationToken ct)
+    {
+        using var api = await Api.Open(settings, panelPassword, ct);
+
+        // В полученной схеме site.edit список lp_db_source содержит
+        // реальные ключи вида database->MySQL.
+        var siteForm = await api.Call("site.edit",
+            new Dictionary<string, string>
+            {
+                ["out"] = "devel",
+                ["plid"] = "",
+                ["site_owner"] = settings.Owner.Trim()
+            }, ct);
+
+        var databases = Options(siteForm, "lp_db_source");
+
+        if (!databases.Contains("db_not_use"))
+            throw new InvalidOperationException(
+                "Панель не вернула ожидаемый список баз lp_db_source.");
+
+        if (databases.Contains(db.Name + "->MySQL"))
+            return false;
+
+        var form = await api.Call("db.edit",
+            new Dictionary<string, string>
+            {
+                ["out"] = "devel",
+                ["plid"] = "",
+                ["owner"] = settings.Owner.Trim(),
+                ["server"] = "MySQL"
+            }, ct);
+
+        if (!Options(form, "server").Contains("MySQL") ||
+            !Options(form, "owner").Contains(settings.Owner.Trim()) ||
+            !Options(form, "charset").Contains("utf8mb4"))
+            throw new InvalidOperationException(
+                "Схема db.edit не подтвердила сервер, владельца или utf8mb4.");
+
+        var users = Options(form, "user");
+        if (!users.Contains("*"))
+            throw new InvalidOperationException(
+                "Панель не вернула ожидаемый список пользователей БД.");
+
+        var parameters = new Dictionary<string, string>
+        {
+            ["sok"] = "ok",
+            ["name"] = db.Name,
+            ["owner"] = settings.Owner.Trim(),
+            ["server"] = "MySQL",
+            ["charset"] = "utf8mb4",
+            ["remote_access"] = "off"
+        };
+
+        if (users.Contains(db.User))
+        {
+            parameters["user"] = db.User;
+        }
+        else
+        {
+            parameters["user"] = "*";
+            parameters["username"] = db.User;
+            parameters["password"] = db.Password;
+            parameters["confirm"] = db.Password;
+        }
+
+        try
+        {
+            await api.Call("db.edit", parameters, ct);
+        }
+        finally
+        {
+            parameters.Clear();
+        }
+
+        var check = await api.Call("site.edit",
+            new Dictionary<string, string>
+            {
+                ["out"] = "devel",
+                ["plid"] = "",
+                ["site_owner"] = settings.Owner.Trim()
+            }, ct);
+
+        if (!Options(check, "lp_db_source").Contains(db.Name + "->MySQL"))
+            throw new InvalidOperationException(
+                "Команда создания БД отправлена, но база не найдена в списке панели. " +
+                "Повторное создание автоматически не выполняется.");
+
+        return true;
+    }
+}
+'@
+
+    Write-Utf8 $helperPath $helper
+
+    Step 'Исправление создания БД и импорта'
+
+    $db = [IO.File]::ReadAllText($dbPath)
+
+    $deployMethod = @'
+    public async Task<DatabaseDeploymentResult> DeployAsync(
+        SshDeploymentSettings settings,
+        string sshPassword,
+        string localSiteDirectory,
+        IProgress<DatabaseDeploymentProgress>? progress,
+        CancellationToken cancellationToken,
+        IspmanagerSettings ispSettings,
+        string ispPassword)
+    {
+        settings.Validate(sshPassword);
+
+        if (string.IsNullOrWhiteSpace(localSiteDirectory))
+            throw new InvalidOperationException("Не указана локальная папка сайта.");
+
+        var siteDirectory = Path.GetFullPath(localSiteDirectory);
+        if (!Directory.Exists(siteDirectory))
+            throw new DirectoryNotFoundException("Не найдена папка результата.");
+
+        var configPath = Path.Combine(siteDirectory, "config", "config.php");
+        if (!File.Exists(configPath))
+            throw new FileNotFoundException("Не найден config/config.php.", configPath);
+
+        var config = DeploymentDbConfig.Read(
+            await File.ReadAllTextAsync(configPath, cancellationToken));
+
+        var sqlFile = FindSqlFile(siteDirectory);
+        if (new FileInfo(sqlFile).Length == 0)
+            throw new InvalidOperationException("SQL-дамп пуст.");
+
+        if (!string.Equals(settings.Owner.Trim(), ispSettings.Owner.Trim(),
+                StringComparison.Ordinal))
+            throw new InvalidOperationException(
+                "Владельцы в настройках SSH и ISPmanager должны совпадать.");
+
+        progress?.Report(new DatabaseDeploymentProgress(
+            10, "Проверка БД через ISPmanager API. Пароли не изменяются."));
+
+        var created = await DeploymentSchemaFix.EnsureDatabaseAsync(
+            ispSettings, ispPassword, config, cancellationToken);
+
+        var deployed = await Task.Run(
+            () => DeployCore(
+                settings, sshPassword,
+                config.Name, config.User, config.Password, config.Host,
+                sqlFile, progress, cancellationToken),
+            cancellationToken);
+
+        return new DatabaseDeploymentResult
+        {
+            DatabaseName = deployed.DatabaseName,
+            DatabaseUser = deployed.DatabaseUser,
+            SqlFile = deployed.SqlFile,
+            DatabaseWasCreated = created
+        };
+    }
+
+'@
+
+    $db = Replace-One $db `
+        'public async Task<DatabaseDeploymentResult> DeployAsync\(.*?(?=    private static DatabaseDeploymentResult DeployCore)' `
+        $deployMethod `
+        'DeployAsync'
+
+    $db = Replace-One $db `
+        'string databasePassword,\s*string sqlFile,' `
+        "string databasePassword,`r`n        string databaseHost,`r`n        string sqlFile," `
+        'Передача db.host в SSH-импорт'
+
+    $db = Replace-One $db `
+        'new UTF8Encoding\(false\)\.GetBytes\(\s*databasePassword\)' `
+        'new UTF8Encoding(false).GetBytes(DeploymentDbConfig.ClientOptions(databaseHost, databaseUser, databasePassword))' `
+        'Закрытый файл реквизитов MySQL'
+
+    $remoteMethod = @'
+    private static string CreateRemoteScript(
+        string databaseName,
+        string databaseUser,
+        string owner,
+        string remoteSql,
+        string remoteSecret)
+    {
+        return
+$$"""
+#!/bin/sh
+set -eu
+umask 077
+DATABASE_NAME={{ShellQuote(databaseName)}}
+REMOTE_SQL={{ShellQuote(remoteSql)}}
+OPTIONS_FILE={{ShellQuote(remoteSecret)}}
+ERROR_FILE="${OPTIONS_FILE}.error"
+unset MYSQL_PWD MYSQL_HOST MYSQL_TCP_PORT MYSQL_UNIX_PORT
+
+if command -v mysql >/dev/null 2>&1; then
+    DB_CLIENT=mysql
+elif command -v mariadb >/dev/null 2>&1; then
+    DB_CLIENT=mariadb
+else
+    echo "MYSQL_CLIENT_NOT_FOUND" >&2
+    exit 34
+fi
+
+if ! command -v flock >/dev/null 2>&1; then
+    echo "FLOCK_NOT_FOUND: нужен flock для защиты от параллельного импорта." >&2
+    exit 35
+fi
+
+test -s "$REMOTE_SQL"
+test -s "$OPTIONS_FILE"
+
+STATE="$HOME/.local/state/text-file-processor-db"
+mkdir -p -- "$STATE"
+chmod 700 -- "$STATE"
+exec 9>"$STATE/$DATABASE_NAME.lock"
+
+if ! flock -n 9; then
+    echo "DATABASE_BUSY: для этой БД уже выполняется импорт." >&2
+    exit 36
+fi
+
+mysql_error()
+{
+    code="$(sed -n 's/.*ERROR %%MATH_INLINE_4%%.*/\1/p' "$ERROR_FILE" | head -n 1)"
+    echo "MYSQL_ERROR ${code:-unknown}: операция $1." >&2
+    case "$code" in
+        1045) echo "Доступ отклонён. Проверьте пароль и учётную запись; пароль не сбрасывался." >&2 ;;
+        1044) echo "У пользователя недостаточно прав на указанную БД." >&2 ;;
+        1049) echo "MySQL не нашёл указанную БД на выбранном сервере." >&2 ;;
+        2002|2003) echo "Не удалось подключиться к MySQL на db.host." >&2 ;;
+    esac
+}
+
+QUERY="SELECT
+(SELECT COUNT(*) FROM information_schema.tables WHERE table_schema=DATABASE()) +
+(SELECT COUNT(*) FROM information_schema.routines WHERE routine_schema=DATABASE()) +
+(SELECT COUNT(*) FROM information_schema.events WHERE event_schema=DATABASE())"
+
+if ! OBJECTS="$(
+    "$DB_CLIENT" --defaults-file="$OPTIONS_FILE" \
+        --connect-timeout=10 --batch --skip-column-names \
+        --database="$DATABASE_NAME" \
+        --execute="$QUERY" 2>"$ERROR_FILE"
+)"; then
+    mysql_error "проверка подключения и объектов БД"
+    exit 41
+fi
+
+case "$OBJECTS" in
+    ''|*[!0-9]*)
+        echo "INVALID_OBJECT_COUNT: проверка пустоты БД не подтверждена." >&2
+        exit 42
+        ;;
+esac
+
+if [ "$OBJECTS" -ne 0 ]; then
+    echo "DATABASE_NOT_EMPTY: импорт остановлен, существующие объекты не изменены." >&2
+    exit 43
+fi
+
+if ! "$DB_CLIENT" --defaults-file="$OPTIONS_FILE" \
+    --connect-timeout=10 --default-character-set=utf8mb4 \
+    --database="$DATABASE_NAME" \
+    < "$REMOTE_SQL" >"${OPTIONS_FILE}.output" 2>"$ERROR_FILE"; then
+    mysql_error "импорт SQL"
+    echo "Возможен частичный импорт. Автоматический повтор запрещён." >&2
+    exit 44
+fi
+
+if ! TABLES="$(
+    "$DB_CLIENT" --defaults-file="$OPTIONS_FILE" \
+        --connect-timeout=10 --batch --skip-column-names \
+        --database="$DATABASE_NAME" \
+        --execute="SELECT COUNT(*) FROM information_schema.tables WHERE table_schema=DATABASE()" \
+        2>"$ERROR_FILE"
+)"; then
+    mysql_error "проверка после импорта"
+    exit 45
+fi
+
+case "$TABLES" in
+    ''|*[!0-9]*|0)
+        echo "IMPORT_NOT_VERIFIED: после импорта не подтверждено наличие таблиц." >&2
+        exit 46
+        ;;
+esac
+
+echo "SQL_IMPORT_OK"
+""";
+    }
+
+'@
+
+    $db = Replace-One $db `
+        'private static string CreateRemoteScript\(.*?(?=    private static string ReadPhpValue)' `
+        $remoteMethod `
+        'Серверный импорт без mgrctl'
+
+    # Не сохраняем исходное исключение с потенциальными секретами в InnerException.
+    $db = Replace-One $db `
+        'throw new InvalidOperationException\(\s*safeMessage,\s*exception\);' `
+        'throw new InvalidOperationException(safeMessage);' `
+        'Удаление небезопасного InnerException'
+
+    Write-Utf8 $dbPath $db
+
+    Step 'Подключение реквизитов панели к кнопке БД'
+
+    $ui = [IO.File]::ReadAllText($uiPath)
+
+    $newCall = @'
+await _databaseDeploymentService.DeployAsync(
+                    settings,
+                    sshPassword,
+                    selectedJob.OutputPath,
+                    progress,
+                    cancellation.Token,
+                    new IspmanagerSettings
+                    {
+                        PanelUrl = IspmanagerUrlTextBox.Text.Trim(),
+                        Login = IspmanagerLogin
+
+Продолжить
