@@ -1,0 +1,855 @@
+Last login: Thu Sep 10 19:19:51 BST 2026 on pts/1                                                       
+Last failed login: Thu Sep 10 19:20:44 BST 2026 from 138.226.239.233 on ssh:notty                       
+There was 1 failed login attempt since the last successful login.                                       
+[root@mail ~]# sudo /usr/local/mgr5/sbin/mgrctl -m ispmgr webdomain.edit out=devel                      
+<?xml version="1.0" encoding="UTF-8"?>                                                                  
+<doc lang="en" func="webdomain.edit" binary="/ispmgr" host="http://" themename="dragon" features="daf3e4
+01006b52d7112a0e8757f72122" notify="" theme="/manimg/dragon/" css="main.css" logo="logo-ispmgr.svg" dark
+logo="dark-logo.svg" smalllogo="small-logo-ispmgr.svg" darksmalllogo="dark-small-logo.svg" logolink="" f
+avicon="favicon-ispmgr.ico" localdir="default/" allow_change_colors="on"><metadata name="webdomain.edit"
+ type="form" mgr="ispmgr" decorated="yes"><form><page name="domain"><field name="changed_fields_f" fullw
+idth="yes"><input type="hidden" name="has_changed_fields"><if empty="yes" hide="changed_fields_f"/></inp
+ut><img name="p-info" img="p-info" width="16" height="16" sprite="yes" spritesvg="yes"/><textdata name="
+cont_changed_fields" type="data"/></field><field name="name"><input type="text" name="name" required="ye
+s" check="domain" setvalues="yes" convert="punycode" maxlength="254"/><input type="hidden" name="currnam
+e"/><input type="hidden" name="limit_ssl" limit="yes"><if empty="yes" hide="secure" shadow="yes"/><if em
+pty="yes" hide="ssl_cert"/><if empty="yes" hide="nginx_proxy" shadow="yes"/><if empty="yes" hide="redire
+ct_http"/></input><input type="hidden" name="limit_cgi" limit="yes"><if empty="yes" hide="cgi" shadow="y
+es"/><if empty="yes" hide="cgi_ext"/></input><input type="hidden" name="php_enable"><if empty="yes" hide
+="php" shadow="yes"/><if empty="yes" hide="php_mode"/><if empty="yes" hide="php_apache_version"/><if emp
+ty="yes" hide="php_cgi_version"/><if empty="yes" hide="php_fpm_version"/><if value="yes" hide="semantic_
+url"/></input><input type="hidden" name="limit_phpcomposer" limit="yes"><if empty="yes" hide="phpcompose
+r"/></input><input type="hidden" name="limit_nodejs" limit="yes"><if empty="yes" hide="nodejs" shadow="y
+es"/><if empty="yes" hide="nodejs_version"/><if empty="yes" hide="nodejs_server"/><if empty="yes" hide="
+nodejs_version_info"/></input><input type="hidden" name="nodejs_has_problem"><if empty="no" hide="nodejs
+" shadow="yes"/></input><input type="hidden" name="limit_python" limit="yes"><if empty="yes" hide="pytho
+n" shadow="yes"/><if empty="yes" hide="python_version"/><if empty="yes" hide="python_mode"/></input><inp
+ut type="hidden" name="limit_modsecurity" limit="yes"><if empty="yes" hide="modsecurity_mode"/><if empty
+="yes" hide="modsecurity_on_banner_f"/><if empty="yes" hide="modsecurity_ruleset"/><if empty="yes" hide=
+"modsecurity_url_banner_f"/><if empty="yes" hide="modsecurity_url"/><if empty="yes" hide="modsecurity_up
+date_link"/><if empty="yes" hide="modsecurity_update_success_banner_f"/><if empty="yes" hide="modsecurit
+y_no_update_banner_f"/><if empty="yes" hide="modsecurity_custom_remove_f"/><if empty="yes" hide="modsecu
+rity_custom_file"/><if empty="yes" hide="modsecurity_rules"/><if empty="yes" hide="modsecurity_addon_fil
+e"/></input><input type="hidden" name="limit_modsecurity_custom" limit="yes"><if empty="yes" hide="modse
+curity_ruleset" shadow="yes"/><if empty="yes" hide="modsecurity_url_banner_f"/><if empty="yes" hide="mod
+security_url"/><if empty="yes" hide="modsecurity_update_link"/><if empty="yes" hide="modsecurity_update_
+success_banner_f"/><if empty="yes" hide="modsecurity_no_update_banner_f"/><if empty="yes" hide="modsecur
+ity_custom_remove_f"/><if empty="yes" hide="modsecurity_custom_file"/><if empty="yes" hide="modsecurity_
+rules"/><if empty="yes" hide="modsecurity_addon_file"/></input></field><field name="aliases"><input type
+="text" name="aliases" zoom="5" check="domain" checkargs="allowaster" convert="punycode"/></field><field
+ name="home" remove_if="edit"><input type="text" name="home" check="path" required="yes" setvalues="yes"
+/></field><field name="public_docroot"><input type="text" name="public_docroot" check="path" setvalues="
+yes"><if empty="no" hide="autosubdomain" shadow="yes"/><if empty="yes" hide="autosubdomain_locked_banner
+"/></input></field><field name="script_selector" remove_if="edit"><select name="script_selector"/><input
+ type="hidden" name="last_selected_script"/></field><field name="owner" remove_if="edit" level="reseller
++"><select name="owner" setvalues="yes" sorted="asc"/></field><field name="ipsrc"><select name="ipsrc"><
+if value="auto" hide="ipaddrs"/></select></field><field name="ipaddrs"><select name="ipaddrs" type="mult
+iple" required="yes"/></field><field name="email"><input type="text" name="email" required="yes" check="
+email" convert="punycode" setvalues="yes"/><input type="hidden" name="cancreatebox" remove_if="edit"><if
+ empty="yes" hide="emailcreate"/><if empty="yes" hide="passwd"/><if empty="yes" hide="confirm"/></input>
+</field><field name="emailcreate" remove_if="edit"><input type="checkbox" name="emailcreate"><if value="
+off" hide="passwd"/><if value="off" hide="confirm"/></input></field><field name="passwd" remove_if="edit
+"><input type="password" checkpasswd="confirm" required="yes" name="passwd" check="password"/></field><f
+ield name="confirm" remove_if="edit"><input type="password" name="confirm"/></field><field name="charset
+"><select name="charset" maxlength="16"><if value="off" hide="charset_i"/></select></field><field name="
+charset_i" fullwidth="yes"><textdata name="charset_info" type="msg"/></field><field name="dirindex"><inp
+ut type="text" name="dirindex" zoom="5" check="path"/></field><field name="secure"><input type="checkbox
+" name="secure" duty="ssl" setvalues="yes" maxlength="3"><if value="off" hide="ssl_cert"/><if value="off
+" hide="redirect_http"/><if value="off" hide="hsts"/><if value="off" hide="nginx_proxy" shadow="yes"/></
+input></field><field name="hsts"><input type="checkbox" name="hsts" maxlength="3"/></field><field name="
+redirect_http"><input type="checkbox" name="redirect_http" maxlength="3"/></field><field name="ssl_port"
+><input type="hidden" name="ssl_port"/></field><field name="ssl_cert"><select name="ssl_cert" maxlength=
+"255"/></field><field name="nginx_proxy" level="admin+"><select name="nginx_proxy" maxlength="16"><if va
+lue="proxy_disable" hide="nginx_proxy_warn"/></select></field><field name="nginx_proxy_warn" level="admi
+n+"><textdata name="nginx_proxy_warn_msg" type="banner" status="warning"/></field><field name="ssi"><inp
+ut type="checkbox" name="ssi" maxlength="3"/></field><field name="redirect_www"><select name="redirect_w
+ww" maxlength="16"/></field><field name="foreground" level="admin super"><input type="checkbox" name="fo
+reground" maxlength="3"><if value="on" hide="autosubdomain"/></input></field><field name="foreground_i" 
+fullwidth="yes" level="admin super"><textdata name="foreground_info" warning="yes" type="msg"/></field><
+field name="techdomain"><input type="hidden" name="techdomain_inaccess"><if empty="no" hide="techdomain"
+/></input><input type="text" name="techdomain_name" readonly="yes"/><input type="checkbox" name="techdom
+ain" maxlength="3"/></field><field name="ddosshield"><input type="checkbox" name="ddosshield" maxlength=
+"3"><if value="off" hide="fwddos"/><if value="off" hide="nginx_limitrequest"/><if value="off" hide="ngin
+x_burstrequest"/><if value="off" hide="openlitespeed_limitrequest"/><if value="off" hide="openlitespeed_
+bandwidth"/></input></field></page><page name="features"><field name="hide_autosubdomain"><input type="h
+idden" name="hide_autosubdomain"><if empty="no" hide="autosubdomain"/></input></field><field name="autos
+ubdomain_locked_banner" fullwidth="yes" noname="yes"><textdata name="autosubdomain_locked_msg" type="ban
+ner" status="info"/></field><field name="autosubdomain"><select name="autosubdomain" setvalues="yes" max
+length="20"/></field><field name="php"><input type="checkbox" name="php" duty="php" setvalues="yes" maxl
+ength="3"><if value="off" hide="php_mode"/><if value="off" hide="basedir"/><if value="off" hide="php_cgi
+_version"/><if value="off" hide="php_fpm_version"/><if value="off" hide="php_apache_version"/><if value=
+"off" hide="php_native_version"/><if value="off" hide="php_cloudlinux_version"/><if value="off" hide="ph
+p_lsapi_version"/><if value="off" hide="phpcomposer"/><if value="off" hide="php_bin_path_info"/><if valu
+e="off" hide="semantic_url"/><else hide="nodejs"/><else hide="nodejs_version"/><else hide="nodejs_server
+"/><else hide="nodejs_use_port"/><else hide="nodejs_port"/><else hide="nodejs_socket"/><else hide="nodej
+s_version_info"/><else hide="nodejs_bin_path_info"/><else hide="nodejs_npm_path_info"/><else hide="pytho
+n"/><else hide="python_version"/><else hide="python_mode"/><else hide="python_use_port"/><else hide="pyt
+hon_bin_path_info"/><else hide="python_pip_path_info"/><else hide="python_server_path"/><else hide="pyth
+on_server_args"/><else hide="python_port"/><else hide="python_socket"/></input></field><field name="php_
+mode"><select name="php_mode" setvalues="yes" maxlength="32"><if value="php_mode_fcgi_nginxfpm" hide="cg
+i"/><if value="php_mode_fcgi_nginxfpm" hide="cgi_ext"/><if value="php_mode_fcgi_nginxfpm" hide="php_cgi_
+version"/><if value="php_mode_fcgi_nginxfpm" hide="php_apache_version"/><if value="php_mode_fcgi_nginxfp
+m" hide="php_cloudlinux_version"/><if value="php_mode_fcgi_nginxfpm" hide="php_lsapi_version"/><if value
+="php_mode_fcgi_nginxfpm" hide="basedir"/><if value="php_mode_mod" hide="php_cgi_version"/><if value="ph
+p_mode_mod" hide="php_fpm_version"/><if value="php_mode_mod" hide="php_cloudlinux_version"/><if value="p
+hp_mode_mod" hide="php_lsapi_version"/><if value="php_mode_mod" hide="semantic_url"/><if value="php_mode
+_cgi" hide="php_apache_version"/><if value="php_mode_cgi" hide="php_fpm_version"/><if value="php_mode_cg
+i" hide="php_native_version"/><if value="php_mode_cgi" hide="php_lsapi_version"/><if value="php_mode_cgi
+" hide="basedir"/><if value="php_mode_cgi" hide="semantic_url"/><if value="php_mode_fcgi_apache" hide="p
+hp_apache_version"/><if value="php_mode_fcgi_apache" hide="php_fpm_version"/><if value="php_mode_fcgi_ap
+ache" hide="php_native_version"/><if value="php_mode_fcgi_apache" hide="basedir"/><if value="php_mode_fc
+gi_apache" hide="php_lsapi_version"/><if value="php_mode_fcgi_apache" hide="semantic_url"/><if value="ph
+p_mode_lsapi" hide="php_cgi_version"/><if value="php_mode_lsapi" hide="php_apache_version"/><if value="p
+hp_mode_lsapi" hide="php_cloudlinux_version"/><if value="php_mode_lsapi" hide="php_fpm_version"/><if val
+ue="php_mode_lsapi" hide="php_native_version"/><if value="php_mode_lsapi" hide="semantic_url"/></select>
+</field><field name="semantic_url"><input type="checkbox" name="semantic_url" maxlength="3"/></field><fi
+eld name="basedir" level="admin+"><input type="checkbox" name="basedir" maxlength="3"/></field><field na
+me="php_cgi_version"><select name="php_cgi_version" sorted="asc" setvalues="yes" maxlength="32"><if valu
+e="isp-php52" hide="phpcomposer"/></select></field><field name="php_apache_version"><select name="php_ap
+ache_version" setvalues="yes" sorted="asc"><if value="isp-php52" hide="phpcomposer"/></select></field><f
+ield name="php_fpm_version"><select name="php_fpm_version" setvalues="yes" sorted="asc"/></field><field 
+name="php_bin_path_info" fullwidth="yes" labelsize="small"><textdata name="php_bin_path_info" type="data
+" copy="yes"/></field><field name="cgi"><input type="checkbox" name="cgi" duty="cgi" setvalues="yes" max
+length="3"><if value="off" hide="cgi_ext"/></input></field><field name="cgi_ext"><input type="text" name
+="cgi_ext" zoom="5" check="path"/></field><field name="nodejs"><input type="checkbox" name="nodejs" duty
+="nodejs" maxlength="3"><if value="off" hide="nodejs_version"/><if value="off" hide="nodejs_server"/><if
+ value="off" hide="nodejs_use_port"/><if value="off" hide="nodejs_port"/><if value="off" hide="nodejs_so
+cket"/><if value="off" hide="nodejs_version_info"/><if value="off" hide="nodejs_bin_path_info"/><if valu
+e="off" hide="nodejs_npm_path_info"/><else hide="python"/><else hide="python_version"/><else hide="pytho
+n_mode"/><else hide="python_use_port"/><else hide="python_bin_path_info"/><else hide="python_pip_path_in
+fo"/><else hide="python_server_path"/><else hide="python_server_args"/><else hide="python_port"/><else h
+ide="python_socket"/></input><input type="hidden" name="hide_nodejs_port"><if empty="yes" hide="nodejs_p
+ort"/></input><input type="hidden" name="hide_nodejs_socket"><if empty="yes" hide="nodejs_socket"/></inp
+ut></field><field name="show_nodejs_version_info"><input type="hidden" name="show_nodejs_version_info"/>
+</field><field name="nodejs_version"><select name="nodejs_version" setvalues="yes"/></field><field name=
+"nodejs_bin_path_info" fullwidth="yes" labelsize="small"><textdata name="nodejs_bin_path_info" type="dat
+a" copy="yes"/></field><field name="nodejs_npm_path_info" fullwidth="yes" labelsize="small"><textdata na
+me="nodejs_npm_path_info" type="data" copy="yes"/></field><field name="nodejs_use_port"><input type="che
+ckbox" name="nodejs_use_port"><if value="off" hide="nodejs_port"/><else hide="nodejs_socket"/></input></
+field><field name="nodejs_port"/><field name="nodejs_socket"/><field name="nodejs_server"><input type="h
+idden" name="nodejs_server" check="path"/></field><field name="skip_processing_nodejs_app"><input type="
+hidden" name="skip_processing_nodejs_app"/></field></page><page name="logs"><field name="log_access"><in
+put type="checkbox" name="log_access" setvalues="yes" maxlength="3"><if value="off" hide="analyzer"/><if
+ value="off" hide="analyzer_period"/><if value="off" hide="analyzer_lang"/><if value="off" hide="analyze
+r_secure"/><if value="off" hide="analyzer_passwd"/><if value="off" hide="analyzer_confirm"/></input></fi
+eld><field name="log_error"><input type="checkbox" name="log_error" setvalues="yes" maxlength="3"/><inpu
+t type="hidden" name="show_params"><if empty="yes" hide="rotation_period"/><if empty="yes" hide="rotatio
+n_size"/><if empty="yes" hide="rotation_count"/></input></field><field name="rotation_period"><select na
+me="rotation_period" setvalues="yes" maxlength="32"><if value="by_size"/><else hide="rotation_size"/></s
+elect></field><field name="rotation_size"><input type="text" name="rotation_size" check="int" checkargs=
+"1,2000" required="yes"/><desc name="mb"/></field><field name="rotation_count"><input type="text" name="
+rotation_count" check="int" checkargs="0,1000" unlimit=""/></field><field name="analyzer"><select name="
+analyzer" setvalues="yes" maxlength="32"><if value="off" hide="analyzer_period"/><if value="off" hide="a
+nalyzer_lang"/><if value="off" hide="analyzer_secure"/><if value="off" hide="analyzer_passwd"/><if value
+="off" hide="analyzer_confirm"/></select></field><field name="analyzer_period"><select name="analyzer_pe
+riod" maxlength="32"/></field><field name="analyzer_lang"><select name="analyzer_lang" maxlength="16"/><
+/field><field name="analyzer_secure"><input type="checkbox" name="analyzer_secure"><if value="off" hide=
+"analyzer_passwd"/><if value="off" hide="analyzer_confirm"/></input></field><field name="analyzer_passwd
+"><input type="password" checkpasswd="analyzer_confirm" name="analyzer_passwd" required="yes"/></field><
+field name="analyzer_confirm"><input type="password" name="analyzer_confirm"/></field></page><page name=
+"optimization"><field name="srv_gzip"><input type="checkbox" name="srv_gzip" maxlength="3"><if value="of
+f" hide="gzip_level"/><if value="off" hide="gzip_types"/></input></field><field name="gzip_level"><slide
+r name="gzip_level" step="1" min="1" max="9" required="yes"/></field><field name="srv_cache"><input type
+="checkbox" name="srv_cache" maxlength="3"><if value="off" hide="expire_times"/><if value="off" hide="ex
+pire_period"/></input></field><field name="expire_times"><select name="expire_times" required="yes"><if 
+value="expire_times_max" hide="expire_period"/></select></field><field name="expire_period"><input type=
+"text" name="expire_period" check="int" checkargs="0,365" required="yes"/></field><field name="nginx_sta
+tic_ext"><textarea name="nginx_static_ext" rows="5" check="staticext"/></field></page><page name="ddospa
+ge"><field name="fwddos" fullwidth="yes"><textdata name="wddos" type="msg" warning="yes" html="yes"/></f
+ield><field name="nginx_limitrequest"><input type="text" name="nginx_limitrequest" check="int" checkargs
+="2,10000" setvalues="yes" required="yes"/></field><field name="nginx_burstrequest"><input type="text" n
+ame="nginx_burstrequest" check="int" checkargs="2,10000" required="yes"/></field></page><buttons><button
+ name="ok" type="ok"/><button name="cancel" type="cancel"/></buttons></form></metadata><messages name="w
+ebdomain.edit" checked="daf3e401006b52d7112a0e8757f72122"><msg name="quarter">quarter </msg><msg name="h
+alfyear">half a year </msg><msg name="year">year </msg><msg name="month">Month</msg><msg name="week">wee
+k </msg><msg name="hint_periodend">End date of the range</msg><msg name="hint_periodstart">Start date</m
+sg><msg name="currentmonth">current month</msg><msg name="currentweek">current week</msg><msg name="curr
+entyear">current year</msg><msg name="hint_period">Select a period to generate the report </msg><msg nam
+e="lastday">previous day</msg><msg name="lastmonth">previous month</msg><msg name="lastweek">previous we
+ek</msg><msg name="lastyear">previous year</msg><msg name="nodate">whole period</msg><msg name="other">a
+ny period</msg><msg name="period">Period</msg><msg name="today">current day</msg><msg name="msg_show_mor
+e">More</msg><msg name="msg_ide_uploadfile">Upload file to the editor</msg><msg name="msg_andmorefile">a
+nd more __value__ </msg><msg name="msg_removefile">Delete </msg><msg name="msg_expand">Expand</msg><msg 
+name="msg_collapse">Collapse</msg><msg name="hint_next_disabled">The form cannot be sent because of the 
+invalid values </msg><msg name="select_option_not_found">Not found</msg><msg name="hint_ok_disabled">The
+ form cannot be sent because of the invalid values </msg><msg name="progress_groupedit">Processing the  
+'__param__' element</msg><msg name="placeholder_mixed_msg">Different values </msg><msg name="hint_help_l
+inks">Show useful links </msg><msg name="tip_help_links">Click the icon to display useful links </msg><m
+sg name="dashboard">Dashboard</msg><msg name="hint_pin">Pin tab </msg><msg name="hint_unpin">Unpin tab <
+/msg><msg name="msg_formlist_filter_notfound">No results were found </msg><msg name="msg_tab_loading">Lo
+ading...</msg><msg name="confirm">Confirmation</msg><msg name="hint_takefavorite">Add to Favorites</msg>
+<msg name="hint_takeunfavorite">Remove from Menu</msg><msg name="msg_select_all">Select all</msg><msg na
+me="msg_back">&lt;&lt; Back</msg><msg name="msg_ok">Create </msg><msg name="msg_moreinfo">Details</msg><
+msg name="msg_calendar">Show calendar</msg><msg name="msg_cancel">Close</msg><msg name="msg_need_execute
+_func">Execute the function: </msg><msg name="msg_user_not_found">Function is not available for admin. T
+ry using su </msg><msg name="dismiss">Hide</msg><msg name="expert_fields_info">This form contains fields
+ that can be shown only in expert mode. New fields are not shown because they are hidden by additional s
+ettings associated with values of other form's fields.</msg><msg name="filterclear">Clear</msg><msg name
+="filterfind">Apply</msg><msg name="filtername">Filter</msg><msg name="filtersave">Save</msg><msg name="
+hint_autocomplete">Use a massage from the template</msg><msg name="hint_confirm">Re-type the password to
+ ensure it is correct</msg><msg name="hint_copylink">Copy the link to the form</msg><msg name="hint_help
+">Go to the Documentation page </msg><msg name="hint_quote">Quote the selected text </msg><msg name="hin
+t_reload">Update form</msg><msg name="hint_savedmessage">Use a massage from the template</msg><msg name=
+"moreinfo">Details</msg><msg name="msg_autocomplete">Auto complete </msg><msg name="msg_choosefile">Sele
+ct file</msg><msg name="msg_default">Default</msg><msg name="msg_disabled">    In progress...</msg><msg 
+name="msg_finish">Finish</msg><msg name="msg_genpwd">Generate a password</msg><msg name="msg_hideoptiona
+l">Hide additional fields </msg><msg name="msg_ide_exitfullscreen">Exit fullscreen</msg><msg name="msg_i
+de_font">Font</msg><msg name="msg_ide_fullscreen">Fullscreen</msg><msg name="msg_ide_gutter">Show gutter
+</msg><msg name="msg_ide_invisibles">Show invisibles</msg><msg name="msg_ide_keybindig">Key binding</msg
+><msg name="msg_ide_mode">Mode</msg><msg name="msg_ide_softwrap">Soft Wrap</msg><msg name="msg_ide_theme
+">Theme</msg><msg name="msg_minus">Unselect </msg><msg name="msg_next">Next &gt;&gt; </msg><msg name="ms
+g_noquote">Select the text you want to quote </msg><msg name="msg_openurl">Open in a new window</msg><ms
+g name="msg_plus">Select all </msg><msg name="msg_possible_val">Possible values</msg><msg name="msg_pwch
+eck_donotmatch">Passwords do not match </msg><msg name="msg_pwcheck_good">Good</msg><msg name="msg_pwche
+ck_short">Too weak </msg><msg name="msg_pwcheck_strong">Strong</msg><msg name="msg_pwcheck_weak">Weak </
+msg><msg name="msg_quote">Quote </msg><msg name="msg_savedmessage">Auto complete</msg><msg name="msg_sec
+">sec.</msg><msg name="msg_showoptional">Show additional fields </msg><msg name="msg_showpwd">Show/hide 
+password</msg><msg name="msg_unlimit">Set the unlimited value </msg><msg name="msg_valuechangedbyvalidat
+or">The value has been changed by validator</msg><msg name="msg_wizard_step">Step</msg><msg name="msg_zo
+om">Resize the field</msg><msg name="null">-- none --</msg><msg name="passwd">Administrator's email pass
+word</msg><msg name="tip_textarea_resize">Click-and drag the textarea to resize it</msg><msg name="title
+_filter">Filter</msg><msg name="msg_notavailablefile">Unable to upload file</msg><msg name="msg_notsuppo
+rtedfile">The file format is not supported</msg><msg name="hint_textdata_copy">Copy</msg><msg name="msg_
+textdata_copied">Copied</msg><msg name="msg_save">Save</msg><msg name="msg_create">Create </msg><msg nam
+e="modsecurity_custom_remove_link">Remove</msg><msg name="modsecurity_custom_remove_f">Custom rules</msg
+><msg name="modsecurity_addon_file">Add your own rules to the set</msg><msg name="hint_modsecurity_rules
+">If any of the rules cause errors in the site operation, they can be excluded. To exclude a rule, find 
+the desired rule ID in the list and uncheck it.</msg><msg name="modsecurity_rules">Rules used</msg><msg 
+name="modsecurity_custom_file">Upload a custom ruleset</msg><msg name="modsecurity_no_update_banner">The
+ current version of the rules is used. No update is required.</msg><msg name="modsecurity_update_success
+_banner">The rules have been successfully updated.</msg><msg name="modsecurity_update_link">Update the r
+ules</msg><msg name="hint_modsecurity_url">Specify the external source URL. The archive with the ruleset
+ must be in the public domain.</msg><msg name="modsecurity_url">External source URL</msg><msg name="mods
+ecurity_url_banner">After changing the URL, the rules from the previous source will be removed and repla
+ced with the new ones.</msg><msg name="custom">Upload from a local computer</msg><msg name="url">Downloa
+d from an external source</msg><msg name="admin">Administrator ruleset</msg><msg name="owasp">OWASP</msg
+><msg name="comodo">COMODO</msg><msg name="hint_modsecurity_ruleset">Select an available ruleset or down
+load your own from an external source or local computer.</msg><msg name="modsecurity_ruleset">Ruleset</m
+sg><msg name="hint_wday6">Select the check box to start the task every Saturday </msg><msg name="hideout
+">Do not email report </msg><msg name="hint_wday5">Select the check box to start the task every Friday <
+/msg><msg name="hint_wday4">Select the check box to start the task every Thursday </msg><msg name="hint_
+wday3">Select the check box to start the task every Wednesday </msg><msg name="hint_wday2">Select the ch
+eck box to start the task every Tuesday </msg><msg name="hint_wday1">Select the check box to start the t
+ask every Monday</msg><msg name="hint_wday0">Select the check box to start the task every Sunday </msg><
+msg name="hint_mailto">You can enter an e-mail address using the global setting button of the cronjob mo
+dule. Afterwards you can receive information by e-mail about a cronjob.</msg><msg name="mailto">Email</m
+sg><msg name="command">Command:</msg><msg name="description">Description:</msg><msg name="hint_active">W
+ebsite status </msg><msg name="active">Status</msg><msg name="crontask">Crob job</msg><msg name="desc_ti
+me_hour">hours </msg><msg name="desc_time_min">minutes </msg><msg name="desc_wday0">Sunday</msg><msg nam
+e="desc_wday1">Monday</msg><msg name="desc_wday2">Tuesday</msg><msg name="desc_wday3">Wednesday</msg><ms
+g name="desc_wday4">Thursday</msg><msg name="desc_wday5">Friday</msg><msg name="desc_wday6">Saturday</ms
+g><msg name="every_day">daily</msg><msg name="every_hour">every hour</msg><msg name="every_month">monthl
+y</msg><msg name="every_week">weekly</msg><msg name="every_year">yearly</msg><msg name="hint_command">En
+ter the path to the script that you want to be executed by the cronjob.</msg><msg name="hint_description
+">This field can be used for additional information about this cron job </msg><msg name="hint_hideout">C
+heck the box if you do not want to receive the output of this cron job by email.</msg><msg name="hint_in
+put_dmonth">Enter the days this cronjob needs to be executed. Format: * - all days of month</msg><msg na
+me="hint_input_dweek">Enter the days of a week this cronjob needs to be executed.Format: * - all days of
+ week</msg><msg name="hint_input_hour">Enter the hours this cronjob needs to be executed. Format: * - al
+l hours</msg><msg name="hint_input_min">Enter the minutes this cronjob needs to be executed. Format: * -
+ for all minutes</msg><msg name="hint_input_month">Enter the days this cronjob needs to be executed. For
+mat: * - all months</msg><msg name="hint_month">Select a month to start cron job</msg><msg name="hint_mo
+nth_day">Select day of month to run the cron job</msg><msg name="hint_run_every">Select the main time fr
+ame this cron job will be executed.</msg><msg name="hint_schedule_type">You can configure the settings o
+f a cronjob in basic or in expert mode. The expert mode has more options but you need to have more knowl
+edge about cronjobs to be able to use the expert mode.                                                  
+</msg><msg name="hint_servertime">The current server date and time.</msg><msg name="hint_time_hour">Ente
+r the hour this cron job will be executed (value 0 -23).</msg><msg name="hint_time_min">Enter the minute
+ this cron job will be executed (value 0 - 59).</msg><msg name="input_dmonth">Days of month</msg><msg na
+me="input_dweek">Days of week</msg><msg name="input_hour">Hours</msg><msg name="input_min">Minutes</msg>
+<msg name="input_month">Months</msg><msg name="key_reboot">while reboot</msg><msg name="month1">January<
+/msg><msg name="month10">October</msg><msg name="month11">November</msg><msg name="month12">December</ms
+g><msg name="month2">February</msg><msg name="month3">March</msg><msg name="month4">April</msg><msg name
+="month5">May</msg><msg name="month6">June</msg><msg name="month7">July</msg><msg name="month8">August</
+msg><msg name="month9">September</msg><msg name="month_day">Day of month</msg><msg name="run_every">Run<
+/msg><msg name="schedule_type">Scheduler</msg><msg name="servertime">Server date and time</msg><msg name
+="short_desc_wday0">Sun</msg><msg name="short_desc_wday1">Mon</msg><msg name="short_desc_wday2">Tue</msg
+><msg name="short_desc_wday3">Wed</msg><msg name="short_desc_wday4">Thu</msg><msg name="short_desc_wday5
+">Fri</msg><msg name="short_desc_wday6">Sat</msg><msg name="time_hour">Time</msg><msg name="title_new">N
+ew website</msg><msg name="type_basic">basic mode</msg><msg name="type_expert">expert mode</msg><msg nam
+e="schedule_type_custom">custom</msg><msg name="schedule_type_every_day">daily</msg><msg name="schedule_
+type_every_hour">every hour</msg><msg name="schedule_type_every_min">every minute</msg><msg name="schedu
+le_type_every_month">monthly</msg><msg name="schedule_type_every_week">weekly</msg><msg name="schedule_t
+ype_every_year">yearly</msg><msg name="schedule_type_key_reboot">while reboot</msg><msg name="ar">العربي
+ة</msg><msg name="bg">Български</msg><msg name="cn">中文(简体)</msg><msg name="cz">Český</msg><msg name="de"
+>Deutsch</msg><msg name="en">English</msg><msg name="es">Español</msg><msg name="et">Eesti keel</msg><ms
+g name="fi">Suomi</msg><msg name="fr">Français</msg><msg name="hu">Magyar</msg><msg name="hy">հայերեն</m
+sg><msg name="id" added="common">Id</msg><msg name="it">Italiano</msg><msg name="jp">日本語</msg><msg name=
+"ku">کوردی</msg><msg name="kk">Қазақ тілі</msg><msg name="lt">lietuviu</msg><msg name="nl">Nederlands</m
+sg><msg name="pl">Polski</msg><msg name="pt">Português</msg><msg name="pt_BR">Português (brasileiro)</ms
+g><msg name="ro">Română</msg><msg name="ru">Русский</msg><msg name="tr">Türkçe</msg><msg name="th">ภาษาไ
+ทย</msg><msg name="uk">Українська</msg><msg name="xx">Developer</msg><msg name="zh">中文</msg><msg name="k
+o">한국어</msg><msg name="be">Беларускі</msg><msg name="hint_add_to_favorite">Add to favorite paths</msg><m
+sg name="hint_remove_from_favorite">Remove from favorite paths</msg><msg name="table_settings_show_colum
+ns">Show columns:</msg><msg name="filter_delimiter_~">contains</msg><msg name="table_settings_select_all
+">Select all</msg><msg name="table_settings_extended">Extended settings</msg><msg name="path_copy_to_buf
+fer">The path has been copied to clipboard</msg><msg name="table_settings">Table settings</msg><msg name
+="table_settings_select">Select</msg><msg name="table_settings_reset">Reset</msg><msg name="progress_gro
+up_step">Group operation in progress. Please wait. '__param__' element is being processed </msg><msg nam
+e="pagernext">Next page</msg><msg name="msg_selected">Selected items</msg><msg name="msg_nosel">Not sele
+cted </msg><msg name="msg_pager_count">Number per page </msg><msg name="hint_reloadlist">Update data</ms
+g><msg name="pagershow">Show</msg><msg name="msg_pager">Pages</msg><msg name="msg_totalelem">, ... (TOTA
+L __s__ elements)</msg><msg name="tip_typo">Found a typo? Select the text and press Ctrl+Enter</msg><msg
+ name="filteredit">Edit</msg><msg name="filterhead">Filter :</msg><msg name="filterremove">Reset filters
+</msg><msg name="hint_autoupdate_stop">Cancel auto-update of the list</msg><msg name="hint_export">Save 
+in CSV</msg><msg name="hint_print">Print this page</msg><msg name="hint_selectall">Select all the list e
+lements. You can press CTRL+SHIFT+A</msg><msg name="msg_cant_dwn_dir">Cannot upload the folder </msg><ms
+g name="msg_has_colums">Table has the following columns:</msg><msg name="msg_has_funcs">Functions for li
+st management:</msg><msg name="msg_total">Total</msg><msg name="msg_tsetting">Adjust the table settings 
+</msg><msg name="notactive">The service is not active </msg><msg name="pagerfrom">of</msg><msg name="pag
+erline">lines per page</msg><msg name="pagerok">Ok</msg><msg name="pagerpage">Page</msg><msg name="hint_
+autoupdate_resume">Enable auto-update of the list</msg><msg name="autoupdate_off">off</msg><msg name="au
+toupdate_value">__value__ sec</msg><msg name="tip_filter">Click to filter the list</msg><msg name="tip_m
+bar_pin">You can hide the menu to expand view area</msg><msg name="tip_msort">Click the column heading t
+o sort the list. Click the heading and press and hold Ctrl to sort the information by several columns</m
+sg><msg name="tip_sort">Click the column heading to sort the list. Click the heading and press and hold 
+Ctrl to sort the information by several columns</msg><msg name="tip_title_reload">Click the heading for 
+data update</msg><msg name="switch_table_view">Switch table view</msg><msg name="expand_row">Expand row<
+/msg><msg name="collapse_row">Collapse row</msg><msg name="expand_all_rows">Expand all rows</msg><msg na
+me="collapse_all_rows">Collapse all rows</msg><msg name="context_menu">Context menu</msg><msg name="tabl
+e_search">Table search</msg><msg name="sort">Sorting</msg><msg name="sort_column">__index__ column</msg>
+<msg name="sort_apply">Apply</msg><msg name="sort_reset">Reset</msg><msg name="sort_close">Close</msg><m
+sg name="sort_add_column">Add column</msg><msg name="sort_asc">In ascending order</msg><msg name="sort_d
+sc">In descending order</msg><msg name="hint_p_comment">Comment: __value__</msg><msg name="comment">Comm
+ent</msg><msg name="hint_comment">Enter detailed description, notes, etc. </msg><msg name="hint_name_go"
+>Open website in a browser</msg><msg name="msg_header_confirm_delete">Website removal</msg><msg name="ms
+g_ok_confirm_delete">Delete</msg><msg name="semantic_url">Enable human-readable URL processing</msg><msg
+ name="hint_semantic_url">Enable human readable URL processing </msg><msg name="hint_p_secure">SSL is ac
+tive for this web-domain</msg><msg name="php_bin_path_info">Path to PHP interpreter:</msg><msg name="nod
+ejs_bin_path_info">Path to Node.js interpreter:</msg><msg name="nodejs_npm_path_info">Path to Npm packag
+e manager:</msg><msg name="hint_p_php_status">PHP script processing is enabled.                         
+__value__</msg><msg name="python_pip_path_info">Path to Pip package manager:</msg><msg name="python_bin_
+path_info">Path to Python interpreter:</msg><msg name="toggle_confirm_active_off">Will be disabled:</msg
+><msg name="toggle_confirm_active_on">Will be enabled:</msg><msg name="hint_p_ssl_le_processing">SSL cer
+tificate issuance in progress</msg><msg name="hint_p_ssl_issued_error">SSL certificate issue failed</msg
+><msg name="hint_p_ssl_status_le_processing_has_error">An error occurred during the issuance of SSL cert
+ificate __value__. Fix the error to complete the process successfully</msg><msg name="short_context_npm_
+installed">View Node.js packages</msg><msg name="hint_p_ssl_issued_success">SSL certificate __value__</m
+sg><msg name="ssl_success_info">__name__ is valid until __date__</msg><msg name="ssl_expired_info">__nam
+e__ expired on __date__</msg><msg name="hint_p_ssl_not_used">No SSL certificate found</msg><msg name="hi
+nt_p_ssl_status_le_issued_error">Failed to issue SSL certificate __value__</msg><msg name="hint_ssl">SSL
+ site certificate status</msg><msg name="msg_ok_confirm_context_python_restart">Restart</msg><msg name="
+msg_ok_confirm_context_npm_install">Install</msg><msg name="msg_ok_confirm_context_python_install">Insta
+ll</msg><msg name="msg_ok_confirm_context_restart">Restart</msg><msg name="ssl">SSL</msg><msg name="msg_
+ok_confirm_context_phpcomposer_install">Install</msg><msg name="short_context_python_shell">Shell client
+</msg><msg name="msg_confirm_context_python_install">You are starting pip install. The dependencies spec
+ified in the requirements.txt configuration file for the website will be installed:</msg><msg name="shor
+t_context_python_pkgs_installed">Browsing Python packages</msg><msg name="hint_p_python_status_6">Python
+ application is in the process of starting </msg><msg name="short_context_python_install">Pip install</m
+sg><msg name="short_context_python_restart">Restart (Python)</msg><msg name="msg_confirm_context_python_
+restart">You are restarting the Python handler for the site:</msg><msg name="hint_p_python_status_9">Pyt
+hon script processing enabled</msg><msg name="mode_python_cgi">Python CGI</msg><msg name="hint_p_python_
+status_8">pip install command in progress</msg><msg name="hint_p_python_status_7">Python processing stop
+ped</msg><msg name="hint_p_python_status_3">Python application restart in progress</msg><msg name="hint_
+p_python_status_2">Starting a Python application failed with an error</msg><msg name="hint_p_python_stat
+us_1">Python application started successfully.                                                          
+__value__</msg><msg name="hint_p_python_status_0">Python application installation in progress</msg><msg 
+name="hint_p_python_status_5">Stopping Python application in progress</msg><msg name="mode_python_server
+">Python</msg><msg name="python_port_suffix">Port: __port__. </msg><msg name="python_socket_suffix">Sock
+et: __socket__. </msg><msg name="hint_p_phpcomposer_status_setup">PHP Composer installation in progress<
+/msg><msg name="short_cloudflare_usersettings">User</msg><msg name="hint_cloudflare_usersettings">Connec
+t Cloudflare user</msg><msg name="short_context_phpcomposer_install">PHP Composer install</msg><msg name
+="hint_p_phpcomposer_status_setup_error">An error occurred during the PHP Composer installation. More in
+formation in the Notifications section</msg><msg name="short_context_phpcomposer_shell">Shell client</ms
+g><msg name="hint_p_phpcomposer_status_installing">Installing PHP Composer dependencies in progress</msg
+><msg name="short_context_phpcomposer_pkgs_installed">View PHP-composer packages</msg><msg name="msg_con
+firm_context_phpcomposer_install">You are starting phpcomposer. The dependencies defined in the composer
+.json configuration file for the website will be installed:</msg><msg name="hint_p_phpcomposer_status_er
+ror">An error occurred while running PHP Composer. More information in the Notifications section</msg><m
+sg name="short_context_nodejs_shell">Shell client</msg><msg name="php_mode">PHP mode</msg><msg name="hin
+t_php_mode">Select the PHP mode for this WWW-domain.</msg><msg name="short_context_npm_install">Npm inst
+all</msg><msg name="mode_nodejs_handler">Node.js</msg><msg name="hint_handler">Handler for website</msg>
+<msg name="msg_confirm_context_npm_install">You are starting npm install. The dependencies specified in 
+the package.json configuration file for the website will be installed:</msg><msg name="handler">Handler<
+/msg><msg name="hint_p_nodejs_status_5">Disabling Node.js</msg><msg name="hint_p_nodejs_status_0">Instal
+ling Node.js</msg><msg name="msg_confirm_context_restart">Node.js handler for the site will be restarted
+:</msg><msg name="hint_p_nodejs_status_2">Node.js startup error. Click for details.</msg><msg name="hint
+_p_nodejs_status_4">Executing the npm install command</msg><msg name="short_context_restart">Restart (No
+de.js)</msg><msg name="hint_p_nodejs_status_3">Restarting Node.js</msg><msg name="hint_p_nodejs_status_7
+">Node.js is suspended</msg><msg name="nodejs_port_suffix">Port: __port__.</msg><msg name="hint_p_nodejs
+_status_1">The Node.js application has started successfully.                                            
+__value__</msg><msg name="hint_p_nodejs_status_6">Starting Node.js</msg><msg name="nodejs_socket_suffix"
+>Socket: __socket__.</msg><msg name="short_userplain">Configuration files</msg><msg name="php_handler_pr
+efix">PHP</msg><msg name="hint_userplain">Edit configuration files of the website </msg><msg name="mode_
+no_handler">Not used </msg><msg name="toggle_hint_active_on">The website is enabled</msg><msg name="togg
+le_hint_active_off">The website is disabled</msg><msg name="short_outside">Additional information </msg>
+<msg name="database_db_not_assigned">Not used</msg><msg name="hint_database">Database connected to the w
+ebsite </msg><msg name="database">Database</msg><msg name="sitepro_constructor_button">Site builder</msg
+><msg name="hint_go_db_disabled">Cannot go to PHPMyAdmin/PHPPgAdmin because the database is not assigned
+ to the website</msg><msg name="short_go_db">Open the database web interface</msg><msg name="hint_go_db"
+>Go to PHPMyAdmin/PHPPgAdmin (depending on the database type) as the user with the highest level of acce
+ss</msg><msg name="short_context_resume">Enable </msg><msg name="short_context_suspend">Disable </msg><m
+sg name="short_context_php">PHP settings </msg><msg name="short_context_su">Log in as user </msg><msg na
+me="hint_delete">Delete website</msg><msg name="hint_journal">Site log</msg><msg name="short_journal">Lo
+g </msg><msg name="short_plugins">Plugins</msg><msg name="short_su">Log in as owner</msg><msg name="hint
+_p_webscript_status_installing">CMS installation in progress</msg><msg name="hint_php">Check the box to 
+activate PHP for this WWW-domain.</msg><msg name="short_php">PHP</msg><msg name="hint_new_site">Create a
+ new site</msg><msg name="short_management">Edit</msg><msg name="common_msg_hint_back">Back to the list 
+of websites</msg><msg name="short_site_settings">Website settings</msg><msg name="short_new_site">Fine-t
+une your site configuration.</msg><msg name="hint_site_settings">Change the website settings</msg><msg n
+ame="common_msg_short_back">Back</msg><msg name="nginx_proxy_resolve">One or a few aliases of domain '__
+domain__' lead to incorrect IP addresses. Nginx proxying is not working. Please check your alerts to get
+ more information.</msg><msg name="hint_p_nginx_proxy">Access to the panel by site name is enabled</msg>
+<msg name="short_cloudflare">Cloudflare</msg><msg name="short_cloudflare.admin_list">Cloudflare</msg><ms
+g name="hint_p_cloudflare">Connected to Cloudflare </msg><msg name="hint_cloudflare">Cloudflare</msg><ms
+g name="hint_cloudflare.admin_list">Cloudflare</msg><msg name="hint_pass">Transfer website to another us
+er</msg><msg name="hint_p_datapass_to">The website is being transferred to the new owner '__value__'. Cl
+ick this icon to see the list of data transfer processes</msg><msg name="short_pass">Change owner</msg><
+msg name="hint_p_ddosguard_wait_no_domain">Missing domain on the server </msg><msg name="hint_p_ddosguar
+d_ok_on">No issues with DDoS-GUARD service </msg><msg name="hint_p_ddosguard_wait_delete">Awaiting licen
+se deleting </msg><msg name="hint_ddosguard">DDoS-GUARD settings for protection against DDoS</msg><msg n
+ame="hint_p_ddosguard_no_on">Click on the icon to view the list of issues </msg><msg name="short_ddosgua
+rd">DDoS-GUARD</msg><msg name="hint_p_ddosguard_work_on">License is installed for the domain name </msg>
+<msg name="hint_p_ddosguard_no_license_on">License deleted </msg><msg name="hint_p_ddosguard_wait_create
+">Awaiting license </msg><msg name="hint_p_ddosguard_no_user_on">Issues with DDoS-GUARD module. Please c
+ontact your administrator. </msg><msg name="php_mode_php_mode_lsapi">LSAPI</msg><msg name="title_bad">Li
+st of websites with errors in properties</msg><msg name="short_happyfilter">Filter by user</msg><msg nam
+e="hint_happyfilter">Filter by owner</msg><msg name="php_version">PHP version</msg><msg name="hint_php_v
+ersion">PHP version used for processing website scripts</msg><msg name="msg_help_links">&lt;a href="http
+s://www.ispmanager.com/docs/ispmanager/web-server-configuration" target="_blank"&gt;Web server configura
+tion&lt;/a&gt;                                                                                          
+                                                                                                        
+        &lt;a href="https://www.ispmanager.com/docs/ispmanager/php-modes" target="_blank"&gt;PHP modes&l
+t;/a&gt;                                                                                                
+                                                                                                        
+        &lt;a href="https://www.ispmanager.com/docs/ispmanager/website-statistics" target="_blank"&gt;We
+bsite statistics&lt;/a&gt;                                                                              
+                                                                                                        
+        &lt;a href="https://www.ispmanager.com/docs/ispmanager/how-to-create-a-website-on-the-server-wit
+h-ispmanager" target="_blank"&gt;How to create a website&lt;/a&gt;                                      
+                                                                                                        
+        &lt;a href="https://www.ispmanager.com/docs/ispmanager/enable-compression" target="_blank"&gt;En
+able compression&lt;/a&gt;                                                                              
+                                                                                                        
+        &lt;a href="https://www.ispmanager.com/docs/ispmanager/template-engine-for-configuration-files" 
+target="_blank"&gt;Template engine for configuration files&lt;/a&gt;                                    
+                                                                                                        
+        &lt;a href="https://www.ispmanager.com/docs/ispmanager/manual-modification-of-web-server-configu
+ration-fi" target="_blank"&gt;Manual modification of web server configuration files&lt;/a&gt;           
+                                                                                                        
+        &lt;a href="https://www.ispmanager.com/docs/ispmanager/ddos-protection" target="_blank"&gt;DDoS 
+protection&lt;/a&gt;</msg><msg name="hint_p_techdomain">The website is associated with the technical dom
+ain __value__</msg><msg name="php_mode_php_mode_mod">Apache</msg><msg name="php_mode_php_mode_cgi">CGI</
+msg><msg name="php_mode_php_mode_fcgi_apache">FastCGI (Apache)</msg><msg name="php_mode_php_mode_nophp">
+PHP disabled </msg><msg name="php_mode_php_mode_fcgi_nginxfpm">FastCGI (Nginx + PHP-FPM)</msg><msg name=
+"hint_go">Open the selected website in a browser. </msg><msg name="short_go">Open website in browser</ms
+g><msg name="module_description">'Site' is a set of static pages and scripts accessible from the Interne
+t by a specific domain name. The ispmanager control panel allows you to perform various operations on si
+tes and customize their parameters.                                                                     
+                                                                                                        
+Users can also create domains, if more than one domain is specified in the sites field when creating a n
+ew user. Both administrator and user have the ability to create new domains independently, the process o
+f domain creation for administrator and user is the same (except for some features that are available on
+ly to the server administrator).</msg><msg name="docroot">Root directory</msg><msg name="hint_apps">List
+ of installed and available web applications</msg><msg name="hint_diraccess">Password protect the websit
+e directories</msg><msg name="hint_docroot">Enter the path to the website directory</msg><msg name="hint
+_error">Open an overwiew of the error pages of the selected domain or add new error pages.</msg><msg nam
+e="hint_file">Open the website directory in the file manager</msg><msg name="hint_ipaddr">IP addresses a
+ssigned to this website</msg><msg name="hint_name">Enter the domain name that users can use to access th
+e information on the Internet</msg><msg name="hint_owner">Select the website owner</msg><msg name="hint_
+p_cgi">This option allows to activate CGI scripts for this web-domain</msg><msg name="hint_p_foreground"
+>This website has top-priority</msg><msg name="hint_p_php">PHP script processing is enabled.            
+__value__</msg><msg name="hint_plain">Edit site configuration files</msg><msg name="hint_prop">Current s
+tatus of the website</msg><msg name="hint_redirect">List of redirects </msg><msg name="hint_stat">View t
+he website access statistics. Enter the password to access, if needed.</msg><msg name="ipaddr">IP addres
+ses</msg><msg name="msg_confirm_delete">Will be deleted:</msg><msg name="msg_confirm_resume">Will be ena
+bled:</msg><msg name="msg_confirm_suspend">Will be disabled:</msg><msg name="msg_error_access">You have 
+insufficient permissions to access the website</msg><msg name="prop">Parameters</msg><msg name="short_ap
+ps">CMS</msg><msg name="short_diraccess">Access limits</msg><msg name="short_error">Error pages</msg><ms
+g name="short_file">Site files</msg><msg name="short_plain">Configuration files</msg><msg name="short_re
+direct">Redirects settings</msg><msg name="short_resume">Enable</msg><msg name="short_stat">Statistics</
+msg><msg name="short_suspend">Disable</msg><msg name="msg_confirm_active_off">Will be enabled:</msg><msg
+ name="msg_confirm_active_on">Will be disabled:</msg><msg name="msg_ok_confirm_active_off">Enable</msg><
+msg name="msg_ok_confirm_active_on">Disable</msg><msg name="msg_confirm_context_resume">Will be enabled:
+</msg><msg name="msg_confirm_context_suspend">Will be disabled:</msg><msg name="msg_header_confirm_activ
+e_off">Enabling website</msg><msg name="msg_header_confirm_active_on">Disabling website</msg><msg name="
+msg_header_confirm_context_resume">Enabling website</msg><msg name="msg_header_confirm_context_suspend">
+Disabling website</msg><msg name="msg_header_confirm_resume">Enabling website</msg><msg name="msg_header
+_confirm_suspend">Disabling website</msg><msg name="msg_ok_confirm_context_resume">Enable</msg><msg name
+="msg_ok_confirm_context_suspend">Disable</msg><msg name="msg_ok_confirm_resume">Enable</msg><msg name="
+msg_ok_confirm_suspend">Disable</msg><msg name="msg_header_confirm_context_phpcomposer_install">Installi
+ng dependencies</msg><msg name="msg_header_confirm_context_npm_install">Installing dependencies</msg><ms
+g name="msg_header_confirm_context_restart">Restarting handler</msg><msg name="msg_banner_confirm_delete
+">If there is no backup, website recovery will not be possible.</msg><msg name="short_context_restore">R
+estore website from a copy</msg><msg name="short_context_backup">Create a backup copy of the website</ms
+g><msg name="hint_p_backup_status_restore">Restoring the website from a backup copy</msg><msg name="hint
+_p_backup_status_backup">Website backup is running</msg><msg name="msg_header_confirm_context_python_ins
+tall">Installing dependencies</msg><msg name="msg_header_confirm_context_python_restart">Restarting hand
+ler</msg><msg name="toggle_ok_confirm_active_on">Enable</msg><msg name="toggle_ok_confirm_active_off">Di
+sable</msg><msg name="toggle_header_confirm_active_on">Enabling website</msg><msg name="toggle_header_co
+nfirm_active_off">Disabling website</msg><msg name="toggle_banner_confirm_active_off">When you disable t
+he site, the handlers are stopped and requests to the site are no longer processed.</msg><msg name="msg_
+banner_confirm_suspend">When you disable the site, the handlers are stopped and requests to the site are
+ no longer processed.</msg><msg name="msg_banner_confirm_active_on">When you disable the site, the handl
+ers are stopped and requests to the site are no longer processed.</msg><msg name="msg_banner_confirm_con
+text_suspend">When you disable the site, the handlers are stopped and requests to the site are no longer
+ processed.</msg><msg name="hint_su">Log in as owner</msg><msg name="hint_edit">Change website parameter
+s</msg><msg name="hint_suspend">Disable website</msg><msg name="hint_resume">Enable website</msg><msg na
+me="hint_new">Create new website</msg><msg name="short_new">Create a site</msg><msg name="short_context_
+sitepro">Open website in the site builder</msg><msg name="hint_sitepro">Open website in the site builder
+</msg><msg name="short_sitepro">Builder</msg><msg name="rights_context_python_shell">Python shell-client
+</msg><msg name="rights_context_phpcomposer_shell">PHP Composer shell-client</msg><msg name="rights_cont
+ext_nodejs_shell">Node.js shell-client</msg><msg name="hint_p_blackwall_protection_online">The full Blac
+kwall protection for the site is enabled</msg><msg name="hint_p_blackwall_protection_paused">Blackwall m
+onitoring enabled for the site</msg><msg name="hint_p_blackwall_protection_disabled">Blackwall protectio
+n disabled</msg><msg name="short_blackwall_rules_edit">Blackwall traffic filtering rules</msg><msg name=
+"short_blackwall_webdomain_stat">Blackwall site security statistics</msg><msg name="short_blackwall_webd
+omain_events">Blackwall site security events</msg><msg name="btnbannerheader_new_site">Set up manually</
+msg><msg name="btnbannerheader_wp_site">WordPress</msg><msg name="short_wp_site">Install the latest vers
+ion of WordPress with the selected theme.</msg><msg name="short_context_userplain">PHP Composer configur
+ation file</msg><msg name="short_blackwall_custom_rules">Custom filtering rules</msg><msg name="short_wo
+rdpress_info">WordPress</msg><msg name="hint_create_site">Create a new site</msg><msg name="short_create
+_site">Create a site</msg><msg name="hint_p_webproxy">The site has been redirected to the __value__ IP a
+ddress. To cancel the redirect, enable the site.</msg><msg name="hint_p_ssl_status_le_processing_need_tx
+t">To continue the issuance of SSL certificate __value__, add TXT records</msg><msg name="hint_p_ssl_exp
+ired">SSL certificate __value__</msg><msg name="short_context_clone">Clone site</msg><msg name="btnbanne
+rheader_nodejs_site">Node.js project</msg><msg name="short_nodejs_site">Load the code, install dependenc
+ies, and run the project.</msg><msg name="hint_p_nodejs_status_11">Run setup is required. Click to set t
+he run parameters and start the project.</msg><msg name="hint_p_nodejs_status_12">Installation of Node.j
+s dependencies completed with errors. Click for more details.</msg><msg name="hint_p_nodejs_status_13">T
+he command run before launching the site ended with an error. Click for more details.</msg><msg name="sh
+ort_context_nodejs_params">Run settings (Node.js)</msg><msg name="aiwordpress">AI WordPress</msg><msg na
+me="short_aiwordpress">Create a WordPress site with AI Assistant.</msg><msg name="btnbannerheader_aiword
+press">AI WordPress</msg><msg name="short_aiwordpress_start">AI WordPress Assistant</msg><msg name="hint
+_p_aiwordpress">This site was created using AI WordPress. Click to go to the assistant.</msg><msg name="
+no_installed_aiwordpress_plugin">The AI WordPress plugin is not installed for the site. Generation attem
+pt has already been completed.</msg><msg name="rights_new_site">Creating a website — custom setting of p
+arameters</msg><msg name="rights_nodejs_site">Creating a Node.js project — downloading code, installing 
+dependencies and starting the project</msg><msg name="hint_filter" added="common">You can specify select
+ion criteria for this list. They will be applied every time the list is displayed until the filter is re
+moved or modified </msg><msg name="msg_confirm_delimiter" added="common">,</msg><msg name="name" added="
+common">Name</msg><msg name="owner" added="common">Owner</msg><msg name="short_delete" added="common">De
+lete</msg><msg name="short_edit" added="common">Edit</msg><msg name="short_filter" added="common">Filter
+</msg><msg name="msg_error_php_max_version">Unable to install CMS: PHP version __value__ or lower is req
+uired</msg><msg name="msg_error_webscript_sql_mode_needed">Unable to install CMS: the following modes ar
+e disabled on the MySQL server: __value__. Enabling them automatically may lead to the failure of other 
+websites. Enable these modes manually or select a different MySQL server.</msg><msg name="msg_error_webs
+cript_php_mode">Unable to install CMS: the selected PHP version is not supported. Adjust the PHP mode fo
+r the site.</msg><msg name="msg_error_webscript_sql_mode_restricted">Unable to install CMS: the followin
+g modes are enabled on the MySQL server: __value__. Disabling them automatically may lead to the failure
+ of other websites. Disable these modes manually or select a different MySQL server.</msg><msg name="msg
+_error_webscript_php_extension">Unable to install CMS: enable the following extensions for the selected 
+version __version__: __value__</msg><msg name="msg_error_db_version">Unable to install CMS: __value__ or
+ higher is required</msg><msg name="msg_error_php_version">Unable to install CMS: PHP version __value__ 
+or higher is required</msg><msg name="msg_error_wrong_db_type">Unable to install CMS: database server ty
+pe does not match. __value__ is required.</msg><msg name="msg_error_php_required">Unable to install CMS:
+ PHP is unavailable for the selected website</msg><msg name="msg_error_webscript_site_param">Unable to i
+nstall CMS: site parameter '__param__' must be set to '__expected__' (current value: '__actual__').</msg
+><msg name="msg_error_webscript_php_composer">Unable to install CMS: the selected CMS requires PHP Compo
+ser. Enable PHP Composer for the site.</msg><msg name="msg_error_webscript_semantic_url">The selected CM
+S requires human-readable URL processing. Enable human-readable URL processing for the site.</msg><msg n
+ame="msg_error_autosubdomain_locked_by_public_docroot">Auto-subdomains cannot be enabled while the site 
+has a public directory set. Clear it to change auto-subdomains.</msg><msg name="msg_error_webscript_word
+press_already_installed">WordPress is already installed for the site __value__. To install, remove WordP
+ress and manually clear all files.</msg><msg name="hint_nodejs_bin_path_info">Full path to Node.js inter
+preter:</msg><msg name="hint_php_bin_path_info">Full path to PHP interpreter</msg><msg name="hint_python
+_pip_path_info">Full path to Pip packet manager:</msg><msg name="hint_python_bin_path_info">Full path to
+ Python interpreter:</msg><msg name="hint_nodejs_npm_path_info">Full path to Npm package manager:</msg><
+msg name="hint_python_server_args">List of arguments to be passed to the server on startup</msg><msg nam
+e="hint_python_socket">The path to the site's socket. The socket must be created by a Python application
+</msg><msg name="python_mode">Application mode</msg><msg name="python_port">Port</msg><msg name="python_
+version">Python version </msg><msg name="hint_python_server_path">Path to the application server file re
+lative to the site's home directory</msg><msg name="hint_python_port">Python site port </msg><msg name="
+hint_python_mode">Select the operating mode of the Python application.</msg><msg name="python_server_arg
+s">Server arguments </msg><msg name="hint_python_version">Select a Python version</msg><msg name="hint_p
+ython">Use Python for a website</msg><msg name="python_mode_server">Python web server</msg><msg name="py
+thon_mode_cgi">CGI (Apache + Python)</msg><msg name="python">Python</msg><msg name="python_socket">Socke
+t </msg><msg name="python_server_path">Path to server </msg><msg name="python_use_port">Use port </msg><
+msg name="hint_python_use_port">Select this option to assign an available unprivileged port for the webs
+ite. Otherwise, the website will run via socket </msg><msg name="hint_nginx_static_ext">List of file ext
+ensions for Nginx caching. Extensions must be separated by commas. If the field is left blank, the defau
+lt extensions from the configuration file will be added</msg><msg name="nginx_static_ext">File extension
+s for caching </msg><msg name="phpcomposer">Use PHP Composer</msg><msg name="hint_phpcomposer">Allow usi
+ng PHP Composer to manage PHP dependencies</msg><msg name="nodejs_version_info_msg">The latest version o
+f Node.js available for this OS: __max_ver__</msg><msg name="hint_openlitespeed_limitrequest">Specifies 
+the maximum number of requests from a single IP address that can be processed in one second. When this l
+imit is reached, all future requests are blocked until the next second</msg><msg name="hint_openlitespee
+d_bandwidth">The maximum allowable bandwidth per IP address. The actual bandwidth may be slightly higher
+ than this setting for efficiency reasons. The value will be rounded up in 4KB increments. Set the value
+ to 0 to disable</msg><msg name="bytes_per_sec">byte/sec</msg><msg name="openlitespeed_bandwidth">Bandwi
+dth</msg><msg name="openlitespeed_limitrequest">Requests per second</msg><msg name="hint_nodejs_use_port
+">Select this option to assign an available unprivileged port for the website. Otherwise, the website wi
+ll run via socket</msg><msg name="hint_nodejs_socket">The path to the website socket. The socket must be
+ created by a Node.js application </msg><msg name="hint_nodejs_server">Enter the path to the Node.js ser
+ver file that is relative to the website home directory</msg><msg name="nodejs_version">Node.js version<
+/msg><msg name="hint_nodejs">Use Node.js for website</msg><msg name="nodejs_server">Path to server</msg>
+<msg name="hint_nodejs_version">Select Node.js version</msg><msg name="nodejs_socket">Socket </msg><msg 
+name="hint_nodejs_port">Website port on Node.js</msg><msg name="nodejs_use_port">Use port</msg><msg name
+="nodejs">Node.js</msg><msg name="nodejs_port">Port</msg><msg name="hint_pagespeed">Enabling the option 
+will connect the module to increase page load speed</msg><msg name="pagespeed">PageSpeed Module </msg><m
+sg name="notify_form_deprecated">The form is out of date but you have the plugins that may work with err
+ors on the new form</msg><msg name="hint_proxy_redirect">Select the check box to open the control panel 
+when trying to open the domain name. Otherwise, the website will open.</msg><msg name="proxy_redirect">P
+roxy requests to panel</msg><msg name="nginx_proxy_ip">Nginx-proxy IP address</msg><msg name="shadow_hin
+t_nginx_proxy">Cannot be used without an SSL certificate.</msg><msg name="hint_nginx_proxy_ip">Enter the
+ IP address for proxy</msg><msg name="hint_nginx_proxy">Configuring access to the control panel via the 
+website's domain name. &lt;br/&gt;Disabled – access to the panel by the domain of the site is disabled; 
+&lt;br/&gt;Access panel at https://"domainname" – panel will be accessed instead of site by the site's d
+omain name; &lt;br/&gt;Access panel at https://"domainname"/ispmgr – website will open at the domain, th
+e control panel will be accessed at domain/ispmgr .</msg><msg name="nginx_proxy">Access to ispmanager by
+ site name</msg><msg name="hint_hsts">Select this check box to enable encrypted connection via HTTPS in 
+order to ensure better security </msg><msg name="hsts">HSTS</msg><msg name="hint_php_lsapi_version">Sele
+ct the PHP version you want to use for this WWW-domain.</msg><msg name="php_mode_lsapi">LSAPI</msg><msg 
+name="php_lsapi_version">PHP LSAPI version</msg><msg name="basedir">Use open_basedir </msg><msg name="hi
+nt_basedir">When checked, the php_admin_value open_basedir parameter corresponds to a home directory. Wh
+en unchecked, it equals "none"</msg><msg name="php_apache_version">PHP version (Apache module)</msg><msg
+ name="php_fpm_version">PHP version (PHP-FPM) </msg><msg name="hint_php_cloudlinux_version">The PHP vers
+ion that is used by this WWW-domain. You can change the PHP version using the module PHP settings.</msg>
+<msg name="hint_php_apache_version">PHP version, which is used in the "PHP as an Apache module" mode. On
+ly server administrator can set up alternative PHP versions </msg><msg name="hint_php_fpm_version">PHP v
+ersion, which is used in the "FastCGI(Nginx + PHP-FPM)" mode. Only server administrator can set up alter
+native PHP versions. You can change a PHP version for PHP-FPM in the "PHP" module </msg><msg name="php_c
+loudlinux_version">PHP version</msg><msg name="foreground_info">Configuration of auto-subdomains is not 
+available for prioritized websites </msg><msg name="letsencrypt">Let’s Encrypt certificate</msg><msg nam
+e="script_selector">Select a script </msg><msg name="hint_script_selector">List of scripts for installat
+ion </msg><msg name="*">Do not install </msg><msg name="descr_changed_fields">Values in the following fi
+elds have been changed: </msg><msg name="hint_nginx_limitrequest">Enter the number of connections that a
+re allowed from the same IP address per second.</msg><msg name="hint_nginx_burstrequest">Maximum peak at
+tack size</msg><msg name="wddos">&lt;b&gt;ATTENTION!&lt;b/&gt;&lt;br/&gt;With DDoS protection activated,
+ any IP address can be blocked.&lt;br/&gt;An IP address will be blocked for 5 minutes on all ports if th
+e conditions are met..&lt;br/&gt;If your own IP address is blocked, you have to wait until the black has
+ been removed.&lt;/b&gt;</msg><msg name="hint_ddosshield">Enabling DDoS attack protection</msg><msg name
+="ddosshield">Enable DDoS protection </msg><msg name="nginx_burstrequest">Maximum peak attack size </msg
+><msg name="nginx_limitrequest">Requests per second </msg><msg name="ddospage">DDoS protection</msg><msg
+ name="charset_info">If PHP is activated for your website, in the PHP settings module you can set pages 
+encoding </msg><msg name="hint_passwd">Enter the password to administrator's email</msg><msg name="hint_
+emailcreate">Create an administrator's email when creating a site</msg><msg name="expire_times_m">min</m
+sg><msg name="srv_gzip">Compression (GZIP)</msg><msg name="expire_period">Period value</msg><msg name="s
+rv_cache">Cache configuration</msg><msg name="hint_gzip_level">Set the content compression level: 1 - mi
+nimum, 9 - maximum. Higher values use more system resources. The optimal value is 5.</msg><msg name="exp
+ire_times_d">day</msg><msg name="hint_srv_gzip">Check the box to enable static content compressie (GZIP)
+ for this WWW-domain.</msg><msg name="hint_srv_cache">Check the box to activate caching for this WWW-dom
+ain.</msg><msg name="expire_times">Caching period (TTL)</msg><msg name="expire_times_max">unlimited</msg
+><msg name="expire_times_s">sec</msg><msg name="optimization">Website optimization </msg><msg name="expi
+re_times_h">hour</msg><msg name="gzip_level">Compression level </msg><msg name="hint_expire_period">Ente
+r the cache duration value (1 - 59 for seconds and minutes, 1 - x for hours and days).</msg><msg name="h
+int_expire_times">Select the caching period (TTL)</msg><msg name="techdomain">Assign to technical domain
+ </msg><msg name="hint_techdomain">If a site is assigned to a technical domain, clicking a URL of the te
+chnical domain will open the site. Only one user site can be assigned to the technical domain. Selecting
+ the checkbox for the website will clear the similar checkbox of a different site.</msg><msg name="hint_
+php_native_version">Select the PHP version you want to use for this WWW-domain.</msg><msg name="php_nati
+ve_version">PHP version </msg><msg name="php_mode_nophp">PHP is disabled </msg><msg name="hint_php_cgi_v
+ersion">The version of PHP used to process scripts in CGI mode. Installation of alternative PHP versions
+ is available to the server administrator</msg><msg name="php_cgi_version">PHP version (CGI)</msg><msg n
+ame="native">Default</msg><msg name="hint_ssi">Check the box to enable SSI (Server Side Includes) proces
+sing by the web server</msg><msg name="ssi">SSI</msg><msg name="hint_redirect_http">Check the box to aut
+omatically redirect HTTP-requests to HTTPS. </msg><msg name="redirect_http">Redirect HTTP-requests to HT
+TPS</msg><msg name="aliases">Aliases </msg><msg name="analyzer">Analyzer </msg><msg name="analyzer_confi
+rm">Re-enter password</msg><msg name="analyzer_lang">Statistics language </msg><msg name="analyzer_passw
+d">Password </msg><msg name="analyzer_period">Period</msg><msg name="analyzer_secure">Restrict access to
+ statistics</msg><msg name="auto">receive automatically</msg><msg name="autosubdomain">Autosubdomains </
+msg><msg name="autosubdomain_locked_msg">Auto-subdomains are unavailable while the site has a public dir
+ectory set. Clear it to enable auto-subdomains.</msg><msg name="autosubdomain_dir">in a separate directo
+ry</msg><msg name="autosubdomain_subdir">in the domain's subdirectory</msg><msg name="by_size">size</msg
+><msg name="cgi">CGI-scripts</msg><msg name="cgi_ext">File extensions </msg><msg name="charset">Encoding
+ </msg><msg name="charset_off">do not specify</msg><msg name="daily">daily</msg><msg name="dirindex">Ind
+ex page</msg><msg name="domain">Website</msg><msg name="email">Administrator email</msg><msg name="email
+create">Create administrator's email</msg><msg name="features">Additional features </msg><msg name="fore
+ground">Priority</msg><msg name="hint_aliases">Enter the names of the aliases that you want to add for y
+our website, e.g. www.example.com or wiki.example.com, or another name associated with the above domain 
+name. By default, the following alias will be specified: www.example.com</msg><msg name="hint_analyzer">
+Select a program to be used for website logs analysis.</msg><msg name="hint_analyzer_confirm">Re-type th
+e password to gain access to statistics </msg><msg name="hint_analyzer_lang">Select the language that wi
+ll be used by the statistics program. </msg><msg name="hint_analyzer_passwd">Enter the password that nee
+ds to be used to access the statistics pages of this website.</msg><msg name="hint_analyzer_period">Set 
+period to collect statistics. Regardless the period specified, statistics will be collected during rotat
+ion </msg><msg name="hint_analyzer_secure">Check the box to protect the access to the statistics pages o
+f the website with a password (recommended). If you do not password protect the statistics pages than th
+e statistics pages will be accessible for everyone.</msg><msg name="hint_autosubdomain">Set up alias sub
+domains dynamically based on the directory with subdomain files</msg><msg name="hint_cgi">Check the box 
+to enable PHP as CGI for this WWW-domain.</msg><msg name="hint_cgi_ext">Additional file extensions of CG
+I-scripts</msg><msg name="hint_charset">The default encoding for this website. A list of available encod
+ings is taken from the file etc/charset and can be changed only by the server administrator</msg><msg na
+me="hint_dirindex">A list of file names in descending order of importance, separeted with spaces. The we
+b server will search for these files if the URL was specified without a filename. If the list is empty, 
+the values from the web server's global settings will be used</msg><msg name="hint_email">Enter an e-mai
+l address that will be shown on error pages of this website. webmaster@&lt;domain name&gt; will be speci
+fied by default after the domain name</msg><msg name="hint_foreground">A website with the highest priori
+ty will process requests by a domain name, which is not associated with this web server (including reque
+sts by IP), to any of the IP addresses assigned to the website</msg><msg name="hint_home">Enter the path
+ to the website directory that is relative to the owner's home directory</msg><msg name="hint_ipaddrs">L
+ist of IP addresses assigned to this website</msg><msg name="hint_ipsrc">Select a source of IP address f
+or a newly created website</msg><msg name="hint_log_access">Check the box to enable logging of requests 
+to resources on this site</msg><msg name="hint_log_error">Check the box to activate the error log for th
+is website</msg><msg name="hint_pooltype">Select a type of application pool used by IIS for this site</m
+sg><msg name="hint_rotation_count">Enter the number of archives that should be saved upon rotation </msg
+><msg name="hint_rotation_period">Select the period for error and access logs rotation</msg><msg name="h
+int_rotation_size">Specify a log size required to start rotation. In practice, the log may have larger s
+ize as the rotation process starts once an hour. </msg><msg name="hint_secure">Do you want to enable the
+ secure protecting for this website through HTTPs?</msg><msg name="hint_ssl_cert">Select an SSL certific
+ate that will be used for this website. You can also create a new self-signed certificate.</msg><msg nam
+e="hint_ssl_port">Enter the port number that will be used for secure connection through HTTPs.</msg><msg
+ name="home">Root directory </msg><msg name="public_docroot">Website public directory</msg><msg name="ho
+urly">hourly</msg><msg name="ipaddrs">IP address</msg><msg name="ipsrc">IP address source</msg><msg name
+="log_access">Request log</msg><msg name="log_error">Error log</msg><msg name="logs">Logs</msg><msg name
+="manual">enter IP-address in the field below</msg><msg name="monthly">monthly</msg><msg name="off">off<
+/msg><msg name="on">on</msg><msg name="php">PHP</msg><msg name="php_mode_cgi">CGI</msg><msg name="php_mo
+de_fcgi_apache">FastCGI (Apache)</msg><msg name="php_mode_fcgi_nginxfpm">FastCGI (Nginx + PHP-FPM)</msg>
+<msg name="php_mode_mod">Apache module </msg><msg name="placeholder_rotation_count">unlimited</msg><msg 
+name="pooltype">Pool type</msg><msg name="rotate">during rotation</msg><msg name="rotation_count">Store 
+archives</msg><msg name="rotation_period">Rotation period</msg><msg name="rotation_size">Size</msg><msg 
+name="secure">Secure connection (SSL)</msg><msg name="selfsigned">New self-signed</msg><msg name="shadow
+_hint_cgi">This user cannot use CGI</msg><msg name="shadow_hint_php">This user cannot use PHP</msg><msg 
+name="shadow_hint_secure">This user cannot use SSL</msg><msg name="ssl_cert">SSL certificate </msg><msg 
+name="ssl_port">SSL port</msg><msg name="weekly">weekly</msg><msg name="domain_name">&lt;domain name&gt;
+</msg><msg name="redirect_www">Domain redirect</msg><msg name="from_www">From www.__domain__ to __domain
+__</msg><msg name="to_www">From __domain__ to www.__domain__</msg><msg name="off_www">Redirect is not en
+abled</msg><msg name="hint_redirect_www">Redirect http/https requests from www to main domain and vice v
+ersa</msg><msg name="shadow_hint_site_nginx_proxy">Cannot be used without a connected SSL certificate</m
+sg><msg name="hint_site_nginx_proxy">Set up access to the control panel by site domain name. &lt;br/&gt;
+Disabled — access to the panel by site domain disabled; &lt;br/&gt;Open the panel by https://"domainname
+" — instead of opening the site by its domain name, the panel will be opened; &lt;br/&gt;Open the panel 
+by https://"domainname"/ispmgr — the domain will open the site, and the domain/ispmgr address will open 
+the panel.</msg><msg name="site_nginx_proxy">Access the panel by site name</msg><msg name="proxy_site">O
+pen the panel at https://__domain__/ispmgr</msg><msg name="proxy_panel">Open the panel at https://__doma
+in__</msg><msg name="proxy_disable">Disabled</msg><msg name="modsecurity_on_banner">After WAF is enabled
+, the site may start experiencing errors. If errors occur, check the site audit.log to find out the exac
+t cause of the problem and the id of the rule blocking the request.</msg><msg name="enabled">Enabled</ms
+g><msg name="detection">Detection only</msg><msg name="disabled">Disabled</msg><msg name="modsecurity_mo
+de">WAF</msg><msg name="hint_modsecurity_mode">If "Detection only" is selected, information about the re
+quests that failed the check will be added to the site log. If "Enabled" is selected, the requests that 
+fail the check will be blocked.</msg><msg name="nginx_proxy_warn_msg">If this option is enabled, the max
+ body size specified in the web server settings will apply to requests made to the control panel via thi
+s domain. If necessary, change this value in the "Web server settings" section.</msg><msg name="mb" adde
+d="common">MB</msg><msg name="title">New website</msg></messages><slist name="php_apache_version"><val k
+ey="native" priority="-1">7.2.24 (native)</val><val key="isp-php53">5.3.29 (alt)</val><val key="isp-php5
+4">5.4.45 (alt)</val><val key="isp-php55">5.5.38 (alt)</val><val key="isp-php56">5.6.40 (alt)</val><val 
+key="isp-php70">7.0.33 (alt)</val><val key="isp-php71">7.1.33 (alt)</val><val key="isp-php72">7.2.34 (al
+t)</val><val key="isp-php73">7.3.33 (alt)</val><val key="isp-php74">7.4.33 (alt)</val><val key="isp-php8
+0">8.0.30 (alt)</val><val key="isp-php81">8.1.29 (alt)</val><val key="isp-php82">8.2.20 (alt)</val><val 
+key="isp-php83">8.3.8 (alt)</val></slist><slist name="php_cgi_version"><val key="native" priority="-1">7
+.2.24 (native)</val><val key="isp-php53">5.3.29 (alt)</val><val key="isp-php54">5.4.45 (alt)</val><val k
+ey="isp-php55">5.5.38 (alt)</val><val key="isp-php56">5.6.40 (alt)</val><val key="isp-php70">7.0.33 (alt
+)</val><val key="isp-php71">7.1.33 (alt)</val><val key="isp-php72">7.2.34 (alt)</val><val key="isp-php73
+">7.3.33 (alt)</val><val key="isp-php74">7.4.33 (alt)</val><val key="isp-php80">8.0.30 (alt)</val><val k
+ey="isp-php81">8.1.29 (alt)</val><val key="isp-php82">8.2.20 (alt)</val><val key="isp-php83">8.3.8 (alt)
+</val></slist><slist name="php_fpm_version"><val key="native" priority="-1">7.2.24 (native)</val><val ke
+y="isp-php53">5.3.29 (alt)</val><val key="isp-php54">5.4.45 (alt)</val><val key="isp-php55">5.5.38 (alt)
+</val><val key="isp-php56">5.6.40 (alt)</val><val key="isp-php70">7.0.33 (alt)</val><val key="isp-php71"
+>7.1.33 (alt)</val><val key="isp-php72">7.2.34 (alt)</val><val key="isp-php73">7.3.33 (alt)</val><val ke
+y="isp-php74">7.4.33 (alt)</val><val key="isp-php80">8.0.30 (alt)</val><val key="isp-php81">8.1.29 (alt)
+</val><val key="isp-php82">8.2.20 (alt)</val><val key="isp-php83">8.3.8 (alt)</val></slist><ssl_port>443
+</ssl_port><ssi>off</ssi><basedir>on</basedir><log_access>on</log_access><log_error>on</log_error><show_
+params>yes</show_params><rotation_size>100</rotation_size><rotation_count>10</rotation_count><nginx_limi
+trequest>25</nginx_limitrequest><nginx_burstrequest>100</nginx_burstrequest><openlitespeed_limitrequest>
+25</openlitespeed_limitrequest><openlitespeed_bandwidth>0</openlitespeed_bandwidth><gzip_level>5</gzip_l
+evel><expire_period>24</expire_period><nginx_static_ext>jpg,jpeg,gif,png,svg,js,css,mp3,ogg,mpe?g,avi,zi
+p,gz,bz2?,rar,swf,webp,woff,woff2</nginx_static_ext><slist name="owner"><val key="www-root">www-root</va
+l></slist><cgi>off</cgi><limit_db></limit_db><limit_db_enabled>on</limit_db_enabled><limit_db_users></li
+mit_db_users><limit_db_users_enabled>on</limit_db_users_enabled><limit_dbsize></limit_dbsize><limit_dbsi
+ze_enabled>on</limit_dbsize_enabled><limit_mysql_maxconn></limit_mysql_maxconn><limit_mysql_maxconn_enab
+led>on</limit_mysql_maxconn_enabled><limit_mysql_maxuserconn></limit_mysql_maxuserconn><limit_mysql_maxu
+serconn_enabled>on</limit_mysql_maxuserconn_enabled><limit_mysql_query></limit_mysql_query><limit_mysql_
+query_enabled>on</limit_mysql_query_enabled><limit_mysql_update></limit_mysql_update><limit_mysql_update
+_enabled>on</limit_mysql_update_enabled><limit_ssl>on</limit_ssl><limit_ssl_enabled>on</limit_ssl_enable
+d><limit_ftp_users></limit_ftp_users><limit_ftp_users_enabled>on</limit_ftp_users_enabled><limit_schedul
+er></limit_scheduler><limit_scheduler_enabled>on</limit_scheduler_enabled><limit_domains></limit_domains
+><limit_domains_enabled>on</limit_domains_enabled><limit_nginxlimitconn></limit_nginxlimitconn><limit_ng
+inxlimitconn_enabled>on</limit_nginxlimitconn_enabled><limit_webdomains></limit_webdomains><limit_webdom
+ains_enabled>on</limit_webdomains_enabled><limit_cpu></limit_cpu><limit_cpu_enabled>on</limit_cpu_enable
+d><limit_process></limit_process><limit_process_enabled>on</limit_process_enabled><limit_memory></limit_
+memory><limit_memory_enabled>on</limit_memory_enabled><limit_maxclientsvhost></limit_maxclientsvhost><li
+mit_maxclientsvhost_enabled>on</limit_maxclientsvhost_enabled><limit_cgi>on</limit_cgi><limit_cgi_enable
+d>on</limit_cgi_enabled><limit_php_mode_mod>on</limit_php_mode_mod><limit_php_mode_mod_enabled>on</limit
+_php_mode_mod_enabled><limit_php_mode_cgi>on</limit_php_mode_cgi><limit_php_mode_cgi_enabled>on</limit_p
+hp_mode_cgi_enabled><limit_nodejs/><limit_nodejs_enabled/><limit_emaildomains></limit_emaildomains><limi
+t_emaildomains_enabled>on</limit_emaildomains_enabled><limit_emails></limit_emails><limit_emails_enabled
+>on</limit_emails_enabled><limit_mailrate></limit_mailrate><limit_mailrate_enabled>on</limit_mailrate_en
+abled><limit_email_quota></limit_email_quota><limit_email_quota_enabled>on</limit_email_quota_enabled><l
+imit_shell>0</limit_shell><limit_shell_enabled/><limit_quota></limit_quota><limit_quota_enabled>on</limi
+t_quota_enabled><limit_php_mode_fcgi_nginxfpm>on</limit_php_mode_fcgi_nginxfpm><limit_php_mode_fcgi_ngin
+xfpm_enabled>on</limit_php_mode_fcgi_nginxfpm_enabled><slist name="ssl_cert"><val msg="yes" key="selfsig
+ned">New self-signed</val><val msg="yes" key="ssl_not_used">ssl_not_used</val><val msg="yes" key="letsen
+crypt">Let’s Encrypt certificate</val></slist><slist name="php_mode"><val msg="yes" key="php_mode_mod">A
+pache</val><val msg="yes" key="php_mode_fcgi_nginxfpm">FastCGI (Nginx + PHP-FPM)</val><val msg="yes" key
+="php_mode_cgi">CGI</val></slist><php>on</php><php_enable>on</php_enable><dirindex>index.php index.html<
+/dirindex><slist name="ipsrc"><val msg="yes" key="auto">receive automatically</val><val msg="yes" key="m
+anual">enter IP-address in the field below</val></slist><slist name="ipaddrs"><val key="185.115.33.18" d
+efault_ip="on">185.115.33.18</val></slist><slist name="autosubdomain"><val msg="yes" key="off">off</val>
+<val msg="yes" key="autosubdomain_dir">in a separate directory</val><val msg="yes" key="autosubdomain_su
+bdir">in the domain's subdirectory</val></slist><slist name="charset"><val msg="yes" key="off">do not sp
+ecify</val><val key="UTF-8">UTF-8</val></slist><slist name="expire_times"><val msg="yes" key="expire_tim
+es_s">sec</val><val msg="yes" key="expire_times_m">min</val><val msg="yes" key="expire_times_h">hour</va
+l><val msg="yes" key="expire_times_d">day</val><val msg="yes" key="expire_times_max">unlimited</val></sl
+ist><slist name="redirect_www"><val msg="yes" key="off_www">Redirect is not enabled</val><val key="to_ww
+w">From &lt;domain name&gt; to www.&lt;domain name&gt;</val><val key="from_www">From www.&lt;domain name
+&gt; to &lt;domain name&gt;</val></slist><slist name="nginx_proxy"><val msg="yes" key="proxy_disable">Di
+sabled</val><val key="proxy_panel">Open the panel at https://&lt;domain name&gt;</val><val key="proxy_si
+te">Open the panel at https://&lt;domain name&gt;/ispmgr</val></slist><slist name="nodejs_version"><val 
+key="26.8.1">26.8.1</val><val key="24.21.0">24.21.0</val><val key="24.20.0">24.20.0</val><val key="24.19
+.0">24.19.0</val><val key="24.18.1">24.18.1</val><val key="24.18.0">24.18.0</val><val key="24.17.0">24.1
+7.0</val><val key="24.16.0">24.16.0</val><val key="24.15.0">24.15.0</val><val key="24.14.1">24.14.1</val
+><val key="24.14.0">24.14.0</val><val key="24.13.1">24.13.1</val><val key="24.13.0">24.13.0</val><val ke
+y="24.12.0">24.12.0</val><val key="24.11.1">24.11.1</val><val key="24.11.0">24.11.0</val><val key="22.23
+.2">22.23.2</val><val key="22.23.1">22.23.1</val><val key="22.23.0">22.23.0</val><val key="22.22.3">22.2
+2.3</val><val key="22.22.2">22.22.2</val><val key="22.22.1">22.22.1</val><val key="22.22.0">22.22.0</val
+><val key="22.21.1">22.21.1</val><val key="22.21.0">22.21.0</val><val key="22.20.0">22.20.0</val><val ke
+y="22.19.0">22.19.0</val><val key="22.18.0">22.18.0</val><val key="22.17.1">22.17.1</val><val key="22.17
+.0">22.17.0</val><val key="22.16.0">22.16.0</val><val key="22.15.1">22.15.1</val><val key="22.15.0">22.1
+5.0</val><val key="22.14.0">22.14.0</val><val key="22.13.1">22.13.1</val><val key="22.13.0">22.13.0</val
+><val key="22.12.0">22.12.0</val><val key="22.11.0">22.11.0</val><val key="20.20.2">20.20.2</val><val ke
+y="20.20.1">20.20.1</val><val key="20.20.0">20.20.0</val><val key="20.19.6">20.19.6</val><val key="20.19
+.5">20.19.5</val><val key="20.19.4">20.19.4</val><val key="20.19.3">20.19.3</val><val key="20.19.2">20.1
+9.2</val><val key="20.19.1">20.19.1</val><val key="20.19.0">20.19.0</val><val key="20.18.3">20.18.3</val
+><val key="20.18.2">20.18.2</val><val key="20.18.1">20.18.1</val><val key="20.18.0">20.18.0</val><val ke
+y="20.17.0">20.17.0</val><val key="20.16.0">20.16.0</val><val key="20.15.1">20.15.1</val><val key="20.15
+.0">20.15.0</val><val key="20.14.0">20.14.0</val><val key="20.13.1">20.13.1</val><val key="20.13.0">20.1
+3.0</val><val key="20.12.2">20.12.2</val><val key="20.12.1">20.12.1</val><val key="20.12.0">20.12.0</val
+><val key="20.11.1">20.11.1</val><val key="20.11.0">20.11.0</val><val key="20.10.0">20.10.0</val><val ke
+y="20.9.0">20.9.0</val><val key="18.20.8">18.20.8</val><val key="18.20.7">18.20.7</val><val key="18.20.6
+">18.20.6</val><val key="18.20.5">18.20.5</val><val key="18.20.4">18.20.4</val><val key="18.20.3">18.20.
+3</val><val key="18.20.2">18.20.2</val><val key="18.20.1">18.20.1</val><val key="18.20.0">18.20.0</val><
+val key="18.19.1">18.19.1</val><val key="18.19.0">18.19.0</val><val key="18.18.2">18.18.2</val><val key=
+"18.18.1">18.18.1</val><val key="18.18.0">18.18.0</val><val key="18.17.1">18.17.1</val><val key="18.17.0
+">18.17.0</val><val key="18.16.1">18.16.1</val><val key="18.16.0">18.16.0</val><val key="18.15.0">18.15.
+0</val><val key="18.14.2">18.14.2</val><val key="18.14.1">18.14.1</val><val key="18.14.0">18.14.0</val><
+val key="18.13.0">18.13.0</val><val key="18.12.1">18.12.1</val><val key="18.12.0">18.12.0</val><val key=
+"16.20.2">16.20.2</val><val key="16.20.1">16.20.1</val><val key="16.20.0">16.20.0</val><val key="16.19.1
+">16.19.1</val><val key="16.19.0">16.19.0</val><val key="16.18.1">16.18.1</val><val key="16.18.0">16.18.
+0</val><val key="16.17.1">16.17.1</val><val key="16.17.0">16.17.0</val><val key="16.16.0">16.16.0</val><
+val key="16.15.1">16.15.1</val><val key="16.15.0">16.15.0</val><val key="16.14.2">16.14.2</val><val key=
+"16.14.1">16.14.1</val><val key="16.14.0">16.14.0</val><val key="16.13.2">16.13.2</val><val key="16.13.1
+">16.13.1</val><val key="16.13.0">16.13.0</val><val key="14.21.3">14.21.3</val><val key="14.21.2">14.21.
+2</val><val key="14.21.1">14.21.1</val><val key="14.21.0">14.21.0</val><val key="14.20.1">14.20.1</val><
+val key="14.20.0">14.20.0</val><val key="14.19.3">14.19.3</val><val key="14.19.2">14.19.2</val><val key=
+"14.19.1">14.19.1</val><val key="14.19.0">14.19.0</val><val key="14.18.3">14.18.3</val><val key="14.18.2
+">14.18.2</val><val key="14.18.1">14.18.1</val><val key="14.18.0">14.18.0</val><val key="14.17.6">14.17.
+6</val><val key="14.17.5">14.17.5</val><val key="14.17.4">14.17.4</val><val key="14.17.3">14.17.3</val><
+val key="14.17.2">14.17.2</val><val key="14.17.1">14.17.1</val><val key="14.17.0">14.17.0</val><val key=
+"14.16.1">14.16.1</val><val key="14.16.0">14.16.0</val><val key="14.15.5">14.15.5</val><val key="14.15.4
+">14.15.4</val><val key="14.15.3">14.15.3</val><val key="14.15.2">14.15.2</val><val key="14.15.1">14.15.
+1</val><val key="14.15.0">14.15.0</val><val key="12.22.12">12.22.12</val><val key="12.22.11">12.22.11</v
+al><val key="12.22.10">12.22.10</val><val key="12.22.9">12.22.9</val><val key="12.22.8">12.22.8</val><va
+l key="12.22.7">12.22.7</val><val key="12.22.6">12.22.6</val><val key="12.22.5">12.22.5</val><val key="1
+2.22.4">12.22.4</val><val key="12.22.3">12.22.3</val><val key="12.22.2">12.22.2</val><val key="12.22.1">
+12.22.1</val><val key="12.22.0">12.22.0</val><val key="12.21.0">12.21.0</val><val key="12.20.2">12.20.2<
+/val><val key="12.20.1">12.20.1</val><val key="12.20.0">12.20.0</val><val key="12.19.1">12.19.1</val><va
+l key="12.19.0">12.19.0</val><val key="12.18.4">12.18.4</val><val key="12.18.3">12.18.3</val><val key="1
+2.18.2">12.18.2</val><val key="12.18.1">12.18.1</val><val key="12.18.0">12.18.0</val><val key="12.17.0">
+12.17.0</val><val key="12.16.3">12.16.3</val><val key="12.16.2">12.16.2</val><val key="12.16.1">12.16.1<
+/val><val key="12.16.0">12.16.0</val><val key="12.15.0">12.15.0</val><val key="12.14.1">12.14.1</val><va
+l key="12.14.0">12.14.0</val><val key="12.13.1">12.13.1</val><val key="12.13.0">12.13.0</val></slist><no
+dejs_server>server.js</nodejs_server><slist name="rotation_period"><val msg="yes" key="every_day">daily<
+/val><val msg="yes" key="every_week">weekly</val><val msg="yes" key="every_month">monthly</val><val msg=
+"yes" key="by_size">size</val></slist><slist name="analyzer"><val msg="yes" key="off">off</val><val msg=
+"yes" key="awstats">awstats</val></slist><slist name="analyzer_period"><val msg="yes" key="rotate">durin
+g rotation</val><val msg="yes" key="every_hour">every hour</val></slist><analyzer_secure>on</analyzer_se
+cure><php_bin_path_info>/opt/php83/bin/php</php_bin_path_info><slist name="script_selector"><val msg="ye
+s" key="*">Do not install </val><val key="WordPress">WordPress latest</val><val key="Joomla 4">Joomla 4 
+latest</val><val key="Joomla 5">Joomla 5 latest</val></slist><has_changed_fields/><name/><currname/><lim
+it_phpcomposer/><nodejs_has_problem/><limit_python/><limit_modsecurity/><limit_modsecurity_custom/><alia
+ses/><home/><public_docroot/><last_selected_script/><email/><cancreatebox/><emailcreate>off</emailcreate
+><passwd/><confirm/><secure>off</secure><hsts>off</hsts><redirect_http>off</redirect_http><foreground>of
+f</foreground><techdomain_inaccess/><techdomain_name/><techdomain>off</techdomain><ddosshield>off</ddoss
+hield><hide_autosubdomain/><semantic_url>off</semantic_url><cgi_ext/><nodejs>off</nodejs><hide_nodejs_po
+rt/><hide_nodejs_socket/><show_nodejs_version_info/><nodejs_use_port>off</nodejs_use_port><skip_processi
+ng_nodejs_app/><analyzer_passwd/><analyzer_confirm/><srv_gzip>off</srv_gzip><srv_cache>off</srv_cache><s
+cript_selector>*</script_selector><owner>www-root</owner><ipsrc>auto</ipsrc><ipaddrs>185.115.33.18</ipad
+drs><charset>off</charset><ssl_cert>selfsigned</ssl_cert><nginx_proxy>proxy_disable</nginx_proxy><redire
+ct_www>off_www</redirect_www><autosubdomain>off</autosubdomain><php_mode>php_mode_mod</php_mode><php_cgi
+_version>isp-php83</php_cgi_version><php_apache_version>isp-php83</php_apache_version><php_fpm_version>i
+sp-php83</php_fpm_version><nodejs_version>26.8.1</nodejs_version><rotation_period>every_day</rotation_pe
+riod><analyzer>off</analyzer><analyzer_period>rotate</analyzer_period><expire_times>expire_times_h</expi
+re_times><tparams><out>devel</out><func>webdomain.edit</func></tparams><saved_filters/></doc>           
+[root@mail ~]#                                                                                          
+ 
