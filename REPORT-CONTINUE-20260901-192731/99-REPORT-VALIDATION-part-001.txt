@@ -1,0 +1,29 @@
+ПРОВЕРКА ФАЙЛОВ ОТЧЁТА
+
+Ограничение пользователя:
+не более 10000 символов в одном TXT-файле.
+
+Рабочий лимит генератора:
+9000 символов.
+
+Результаты:
+
+01-MAIN-SUMMARY-part-001.txt	1995 символов	OK
+02-NEXT-STEPS-part-001.txt	2839 символов	OK
+03-ENVIRONMENT-part-001.txt	1851 символов	OK
+04-PROJECT-FILE-LIST-part-001.txt	2517 символов	OK
+05-PUBLISHED-EXE-part-001.txt	388 символов	OK
+06-CSPROJ-part-001.txt	1483 символов	OK
+07-SOURCE-MainWindow.Build3.cs-part-001.txt	9000 символов	OK
+07-SOURCE-MainWindow.Build3.cs-part-002.txt	2866 символов	OK
+08-SOURCE-MainWindow.xaml-part-001.txt	9000 символов	OK
+08-SOURCE-MainWindow.xaml-part-002.txt	9000 символов	OK
+08-SOURCE-MainWindow.xaml-part-003.txt	9000 символов	OK
+08-SOURCE-MainWindow.xaml-part-004.txt	105 символов	OK
+09-SOURCE-Models-SshDeploymentModels.cs-part-001.txt	3566 символов	OK
+10-SOURCE-Services-SftpDeploymentService.cs-part-001.txt	9000 символов	OK
+10-SOURCE-Services-SftpDeploymentService.cs-part-002.txt	9000 символов	OK
+10-SOURCE-Services-SftpDeploymentService.cs-part-003.txt	9000 символов	OK
+10-SOURCE-Services-SftpDeploymentService.cs-part-004.txt	1636 символов	OK
+11-SOURCE-Services-SshDeploymentSettingsService.cs-part-001.txt	2875 символов	OK
+12-SOURCE-Services-SftpSettingsService.cs-part-001.txt	2823 символов	OK

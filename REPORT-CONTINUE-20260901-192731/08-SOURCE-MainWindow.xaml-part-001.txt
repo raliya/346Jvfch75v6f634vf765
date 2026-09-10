@@ -1,0 +1,239 @@
+ИСХОДНЫЙ ФАЙЛ СБОРКИ 3
+
+Относительный путь:
+MainWindow.xaml
+
+Полный путь:
+C:\Users\User\Desktop\Adminki\. Программа домены\Новая папка\MainWindow.xaml
+
+Существует:
+True
+
+СОДЕРЖИМОЕ
+
+<Window x:Class="TextFileProcessor.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Domain Site Deployment Manager — Сборка 2"
+        Width="1320"
+        Height="850"
+        MinWidth="1050"
+        MinHeight="700"
+        WindowStartupLocation="CenterScreen"
+        Loaded="Build3_Loaded"
+        Closing="Window_Closing">
+
+    <Grid Margin="12">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="190"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="180"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <GroupBox Grid.Row="0"
+                  Header="Папки"
+                  Margin="0,0,0,8">
+            <Grid Margin="8">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="135"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="110"/>
+                </Grid.ColumnDefinitions>
+
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <TextBlock Grid.Row="0"
+                           Grid.Column="0"
+                           Margin="0,0,8,7"
+                           VerticalAlignment="Center"
+                           Text="Исходная папка:"/>
+
+                <TextBox x:Name="SourceFolderTextBox"
+                         Grid.Row="0"
+                         Grid.Column="1"
+                         Margin="0,0,8,7"/>
+
+                <Button Grid.Row="0"
+                        Grid.Column="2"
+                        Margin="0,0,0,7"
+                        Padding="8,5"
+                        Click="BrowseSource_Click"
+                        Content="Выбрать..."/>
+
+                <TextBlock Grid.Row="1"
+                           Grid.Column="0"
+                           Margin="0,0,8,0"
+                           VerticalAlignment="Center"
+                           Text="Папка результата:"/>
+
+                <TextBox x:Name="OutputFolderTextBox"
+                         Grid.Row="1"
+                         Grid.Column="1"
+                         Margin="0,0,8,0"/>
+
+                <Button Grid.Row="1"
+                        Grid.Column="2"
+                        Padding="8,5"
+                        Click="BrowseOutput_Click"
+                        Content="Выбрать..."/>
+            </Grid>
+        </GroupBox>
+
+        <Grid Grid.Row="1"
+              Margin="0,0,0,8">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="1.25*"/>
+            </Grid.ColumnDefinitions>
+
+            <GroupBox Grid.Column="0"
+                      Header="Домены — по одному на строку"
+                      Margin="0,0,8,0">
+                <TextBox x:Name="DomainsTextBox"
+                         Margin="8"
+                         AcceptsReturn="True"
+                         AcceptsTab="True"
+                         VerticalScrollBarVisibility="Auto"
+                         HorizontalScrollBarVisibility="Auto"
+                         TextWrapping="NoWrap"/>
+            </GroupBox>
+
+            <GroupBox Grid.Column="1"
+                      Header="Значения №2 — строка к строке"
+                      Margin="0,0,8,0">
+                <TextBox x:Name="SecondValuesTextBox"
+                         Margin="8"
+                         AcceptsReturn="True"
+                         AcceptsTab="True"
+                         VerticalScrollBarVisibility="Auto"
+                         HorizontalScrollBarVisibility="Auto"
+                         TextWrapping="NoWrap"/>
+            </GroupBox>
+
+            <GroupBox Grid.Column="2"
+                      Header="Правила замен">
+                <Grid Margin="8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="145"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Grid.Row="0"
+                               Grid.Column="0"
+                               Margin="0,0,8,8"
+                               VerticalAlignment="Center"
+                               Text="Искомый текст №1:"/>
+
+                    <TextBox x:Name="SearchText1TextBox"
+                             Grid.Row="0"
+                             Grid.Column="1"
+                             Margin="0,0,0,8"/>
+
+                    <TextBlock Grid.Row="1"
+                               Grid.Column="0"
+                               Margin="0,0,8,8"
+                               VerticalAlignment="Center"
+                               Text="Искомый текст №2:"/>
+
+                    <TextBox x:Name="SearchText2TextBox"
+                             Grid.Row="1"
+                             Grid.Column="1"
+                             Margin="0,0,0,8"/>
+
+                    <CheckBox x:Name="AdditionalExtensionsCheckBox"
+                              Grid.Row="2"
+                              Grid.ColumnSpan="2"
+                              Margin="0,0,0,8"
+                              Content="Также CSS, JS, JSON, XML, ENV, INI, CONF"/>
+
+                    <CheckBox x:Name="ReplaceExistingCheckBox"
+                              Grid.Row="3"
+                              Grid.ColumnSpan="2"
+                              Content="Безопасно заменять существующие папки"/>
+                </Grid>
+            </GroupBox>
+        </Grid>
+
+        <StackPanel Grid.Row="2"
+                    Margin="0,0,0,8"
+                    Orientation="Horizontal">
+
+            <Button x:Name="PreviewButton"
+                    Width="135"
+                    Margin="0,0,8,0"
+                    Padding="10,6"
+                    Click="Preview_Click"
+                    Content="Предпросмотр"/>
+
+            <Button x:Name="StartButton"
+                    Width="135"
+                    Margin="0,0,8,0"
+                    Padding="10,6"
+                    Click="Start_Click"
+                    Content="Запустить"/>
+
+            <Button x:Name="CancelButton"
+                    Width="135"
+                    Margin="0,0,8,0"
+                    Padding="10,6"
+                    IsEnabled="False"
+                    Click="Cancel_Click"
+                    Content="Остановить"/>
+
+            <Button Width="155"
+                    Padding="10,6"
+                    Click="ClearJobs_Click"
+                    Content="Очистить таблицу"/>
+        </StackPanel>
+
+        <TabControl Grid.Row="3"
+                    Margin="0,0,0,8">
+
+            <TabItem Header="ISPmanager">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <Grid Margin="14">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="190"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <TextBlock Grid.Row="0"
+                                   Grid.Column="0"
+                                   Margin="0,0,10,9"
+                                   VerticalAlignment="Center"
+                                   Text="Адрес панели:"/>
+
+                        <TextBox x:Name="IspmanagerUrlTextBox"
+                                 Grid.Row="0"
+                                 Grid.Column="1"
+                                 Margin="0,0,0,9"
+                                 Text="https://185.115.33.18:1500/ispmgr"/>
+
+                        <TextBlock Grid.Row="1"
+                                   Gr

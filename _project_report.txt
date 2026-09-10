@@ -1,0 +1,3893 @@
+﻿ОТЧЁТ ПО ПРОЕКТУ
+Создано: 2026-09-01 13:30:52
+Корень: C:\Users\User\Desktop\Adminki\. Программа домены\Новая папка
+
+========== СТРУКТУРА ПРОЕКТА ==========
+[DIR]  .nuget-local
+[DIR]  AppData
+[DIR]  bin
+[DIR]  Data
+[DIR]  Infrastructure
+[DIR]  Logs
+[DIR]  Models
+[DIR]  obj
+[DIR]  publish
+[DIR]  Security
+[DIR]  Services
+[DIR]  Styles
+[DIR]  ViewModels
+[DIR]  Views
+[FILE] .gitignore
+[FILE] app.manifest
+[FILE] App.xaml
+[FILE] App.xaml.cs
+[FILE] AssemblyInfo.cs
+[FILE] GlobalUsings.cs
+[FILE] MainWindow.Build2.cs
+[FILE] MainWindow.xaml
+[FILE] MainWindow.xaml.cs
+[FILE] NuGet.Config
+[FILE] PROJECT-REPORT.txt
+[FILE] TextFileProcessor.csproj
+[FILE] TextFileProcessor.sln
+[FILE] .nuget-local\ssh.net.2026.0.0.nupkg
+[FILE] Data\AppDatabase.cs
+[FILE] Models\AppModels.cs
+[FILE] Models\IspmanagerOperationResult.cs
+[FILE] Models\IspmanagerSettings.cs
+[FILE] publish\TextFileProcessor.exe
+[FILE] Security\DpapiSecretProtector.cs
+[FILE] Services\DomainService.cs
+[FILE] Services\FileProcessingService.cs
+[FILE] Services\IspmanagerAutomationService.cs
+[FILE] Services\IspmanagerAutomationService.cs.20260901-130202.bak
+[FILE] Services\IspmanagerAutomationService.cs.20260901-130700.bak
+[FILE] Services\IspmanagerAutomationService.cs.before-direct-form-20260901-114154.bak
+[FILE] Services\IspmanagerAutomationService.cs.before-domain-field-fix-20260901-114655.bak
+[FILE] Services\IspmanagerAutomationService.cs.before-route-fix-20260901-113537.bak
+[FILE] Services\IspmanagerAutomationService.cs.before-tab4-fix-20260901-114932.bak
+[FILE] Services\IspmanagerSettingsService.cs
+[FILE] Services\SensitiveDataRedactor.cs
+
+========== ФАЙЛЫ ПРОЕКТА CSPROJ ==========
+
+----- FILE: TextFileProcessor.csproj -----
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <AssemblyName>TextFileProcessor</AssemblyName>
+    <RootNamespace>TextFileProcessor</RootNamespace>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <PlatformTarget>x64</PlatformTarget>
+    <Prefer32Bit>false</Prefer32Bit>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <SelfContained>true</SelfContained>
+    <PublishSingleFile>true</PublishSingleFile>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
+    <Version>1.0.0</Version>
+    <Company>Local</Company>
+    <Product>Domain Site Deployment Manager</Product>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="8.0.20" />
+    <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="8.0.0" />
+  </ItemGroup>
+</Project>
+
+========== ОСНОВНЫЕ ФАЙЛЫ ==========
+
+----- FILE: MainWindow.xaml -----
+<Window x:Class="TextFileProcessor.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Domain Site Deployment Manager — Сборка 2"
+        Width="1320"
+        Height="850"
+        MinWidth="1050"
+        MinHeight="700"
+        WindowStartupLocation="CenterScreen"
+        Loaded="Build2_Loaded"
+        Closing="Window_Closing">
+
+    <Grid Margin="12">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="190"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="180"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <GroupBox Grid.Row="0"
+                  Header="Папки"
+                  Margin="0,0,0,8">
+            <Grid Margin="8">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="135"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="110"/>
+                </Grid.ColumnDefinitions>
+
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <TextBlock Grid.Row="0"
+                           Grid.Column="0"
+                           Margin="0,0,8,7"
+                           VerticalAlignment="Center"
+                           Text="Исходная папка:"/>
+
+                <TextBox x:Name="SourceFolderTextBox"
+                         Grid.Row="0"
+                         Grid.Column="1"
+                         Margin="0,0,8,7"/>
+
+                <Button Grid.Row="0"
+                        Grid.Column="2"
+                        Margin="0,0,0,7"
+                        Padding="8,5"
+                        Click="BrowseSource_Click"
+                        Content="Выбрать..."/>
+
+                <TextBlock Grid.Row="1"
+                           Grid.Column="0"
+                           Margin="0,0,8,0"
+                           VerticalAlignment="Center"
+                           Text="Папка результата:"/>
+
+                <TextBox x:Name="OutputFolderTextBox"
+                         Grid.Row="1"
+                         Grid.Column="1"
+                         Margin="0,0,8,0"/>
+
+                <Button Grid.Row="1"
+                        Grid.Column="2"
+                        Padding="8,5"
+                        Click="BrowseOutput_Click"
+                        Content="Выбрать..."/>
+            </Grid>
+        </GroupBox>
+
+        <Grid Grid.Row="1"
+              Margin="0,0,0,8">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="1.25*"/>
+            </Grid.ColumnDefinitions>
+
+            <GroupBox Grid.Column="0"
+                      Header="Домены — по одному на строку"
+                      Margin="0,0,8,0">
+                <TextBox x:Name="DomainsTextBox"
+                         Margin="8"
+                         AcceptsReturn="True"
+                         AcceptsTab="True"
+                         VerticalScrollBarVisibility="Auto"
+                         HorizontalScrollBarVisibility="Auto"
+                         TextWrapping="NoWrap"/>
+            </GroupBox>
+
+            <GroupBox Grid.Column="1"
+                      Header="Значения №2 — строка к строке"
+                      Margin="0,0,8,0">
+                <TextBox x:Name="SecondValuesTextBox"
+                         Margin="8"
+                         AcceptsReturn="True"
+                         AcceptsTab="True"
+                         VerticalScrollBarVisibility="Auto"
+                         HorizontalScrollBarVisibility="Auto"
+                         TextWrapping="NoWrap"/>
+            </GroupBox>
+
+            <GroupBox Grid.Column="2"
+                      Header="Правила замен">
+                <Grid Margin="8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="145"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Grid.Row="0"
+                               Grid.Column="0"
+                               Margin="0,0,8,8"
+                               VerticalAlignment="Center"
+                               Text="Искомый текст №1:"/>
+
+                    <TextBox x:Name="SearchText1TextBox"
+                             Grid.Row="0"
+                             Grid.Column="1"
+                             Margin="0,0,0,8"/>
+
+                    <TextBlock Grid.Row="1"
+                               Grid.Column="0"
+                               Margin="0,0,8,8"
+                               VerticalAlignment="Center"
+                               Text="Искомый текст №2:"/>
+
+                    <TextBox x:Name="SearchText2TextBox"
+                             Grid.Row="1"
+                             Grid.Column="1"
+                             Margin="0,0,0,8"/>
+
+                    <CheckBox x:Name="AdditionalExtensionsCheckBox"
+                              Grid.Row="2"
+                              Grid.ColumnSpan="2"
+                              Margin="0,0,0,8"
+                              Content="Также CSS, JS, JSON, XML, ENV, INI, CONF"/>
+
+                    <CheckBox x:Name="ReplaceExistingCheckBox"
+                              Grid.Row="3"
+                              Grid.ColumnSpan="2"
+                              Content="Безопасно заменять существующие папки"/>
+                </Grid>
+            </GroupBox>
+        </Grid>
+
+        <StackPanel Grid.Row="2"
+                    Margin="0,0,0,8"
+                    Orientation="Horizontal">
+
+            <Button x:Name="PreviewButton"
+                    Width="135"
+                    Margin="0,0,8,0"
+                    Padding="10,6"
+                    Click="Preview_Click"
+                    Content="Предпросмотр"/>
+
+            <Button x:Name="StartButton"
+                    Width="135"
+                    Margin="0,0,8,0"
+                    Padding="10,6"
+                    Click="Start_Click"
+                    Content="Запустить"/>
+
+            <Button x:Name="CancelButton"
+                    Width="135"
+                    Margin="0,0,8,0"
+                    Padding="10,6"
+                    IsEnabled="False"
+                    Click="Cancel_Click"
+                    Content="Остановить"/>
+
+            <Button Width="155"
+                    Padding="10,6"
+                    Click="ClearJobs_Click"
+                    Content="Очистить таблицу"/>
+        </StackPanel>
+
+        <TabControl Grid.Row="3"
+                    Margin="0,0,0,8">
+
+            <TabItem Header="ISPmanager">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <Grid Margin="14">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="190"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <TextBlock Grid.Row="0"
+                                   Grid.Column="0"
+                                   Margin="0,0,10,9"
+                                   VerticalAlignment="Center"
+                                   Text="Адрес панели:"/>
+
+                        <TextBox x:Name="IspmanagerUrlTextBox"
+                                 Grid.Row="0"
+                                 Grid.Column="1"
+                                 Margin="0,0,0,9"
+                                 Text="https://185.115.33.18:1500/ispmgr"/>
+
+                        <TextBlock Grid.Row="1"
+                                   Grid.Column="0"
+                                   Margin="0,0,10,9"
+                                   VerticalAlignment="Center"
+                                   Text="Логин:"/>
+
+                        <TextBox x:Name="IspmanagerLoginTextBox"
+                                 Grid.Row="1"
+                                 Grid.Column="1"
+                                 Margin="0,0,0,9"
+                                 Text="root"/>
+
+                        <TextBlock Grid.Row="2"
+                                   Grid.Column="0"
+                                   Margin="0,0,10,9"
+                                   VerticalAlignment="Center"
+                                   Text="Пароль:"/>
+
+                        <StackPanel Grid.Row="2"
+                                    Grid.Column="1"
+                                    Margin="0,0,0,9">
+                            <PasswordBox x:Name="IspmanagerPasswordBox"/>
+                            <TextBlock x:Name="PasswordSavedTextBlock"
+                                       Margin="0,4,0,0"
+                                       Foreground="#666666"
+                                       Text="Пароль ещё не сохранён."/>
+                        </StackPanel>
+
+                        <TextBlock Grid.Row="3"
+                                   Grid.Column="0"
+                                   Margin="0,0,10,9"
+                                   VerticalAlignment="Center"
+                                   Text="Владелец сайта:"/>
+
+                        <TextBox x:Name="IspmanagerOwnerTextBox"
+                                 Grid.Row="3"
+                                 Grid.Column="1"
+                                 Margin="0,0,0,9"
+                                 Text="www-root"/>
+
+                        <TextBlock Grid.Row="4"
+                                   Grid.Column="0"
+                                   Margin="0,0,10,9"
+                                   VerticalAlignment="Center"
+                                   Text="Версия PHP:"/>
+
+                        <TextBox x:Name="IspmanagerPhpVersionTextBox"
+                                 Grid.Row="4"
+                                 Grid.Column="1"
+                                 Margin="0,0,0,9"
+                                 Text="8.3.8"/>
+
+                        <CheckBox x:Name="IgnoreCertificateErrorsCheckBox"
+                                  Grid.Row="5"
+                                  Grid.ColumnSpan="2"
+                                  Margin="0,0,0,8"
+                                  IsChecked="True"
+                                  Content="Разрешить сертификат панели с ошибкой проверки (панель открывается по IP)"/>
+
+                        <CheckBox x:Name="ShowBrowserCheckBox"
+                                  Grid.Row="6"
+                                  Grid.ColumnSpan="2"
+                                  Margin="0,0,0,12"
+                                  IsChecked="True"
+                                  Content="Показывать окно Chromium во время автоматизации"/>
+
+                        <StackPanel Grid.Row="7"
+                                    Grid.ColumnSpan="2"
+                                    Orientation="Horizontal">
+                            <Button x:Name="SaveIspmanagerSettingsButton"
+                                    Width="170"
+                                    Margin="0,0,8,0"
+                                    Padding="10,6"
+                                    Click="SaveIspmanagerSettings_Click"
+                                    Content="Сохранить настройки"/>
+
+                            <Button x:Name="TestIspmanagerButton"
+                                    Width="180"
+                                    Margin="0,0,8,0"
+                                    Padding="10,6"
+                                    Click="TestIspmanagerConnection_Click"
+                                    Content="Проверить подключение"/>
+
+                            <Button x:Name="CreateWebDomainButton"
+                                    Width="225"
+                                    Padding="10,6"
+                                    Click="CreateSelectedWebDomain_Click"
+                                    Content="Создать выбранный WWW-домен"/>
+                        </StackPanel>
+
+                        <Border Grid.Row="8"
+                                Grid.ColumnSpan="2"
+                                Margin="0,14,0,0"
+                                Padding="10"
+                                Background="#FFF1F1F1"
+                                BorderBrush="#FFD0D0D0"
+                                BorderThickness="1">
+                            <TextBlock x:Name="Build2StatusTextBlock"
+                                       TextWrapping="Wrap"
+                                       Text="Сборка 2 ещё не проверена."/>
+                        </Border>
+                    </Grid>
+                </ScrollViewer>
+            </TabItem>
+            <TabItem Header="Задания">
+                <DataGrid x:Name="JobsGrid"
+                          AutoGenerateColumns="False"
+                          IsReadOnly="True"
+                          CanUserAddRows="False"
+                          HeadersVisibility="Column"
+                          GridLinesVisibility="Horizontal">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Домен"
+                                            Width="180"
+                                            Binding="{Binding Domain}"/>
+
+                        <DataGridTextColumn Header="Статус"
+                                            Width="110"
+                                            Binding="{Binding Status}"/>
+
+                        <DataGridTemplateColumn Header="Прогресс"
+                                                Width="150">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <Grid Margin="4">
+                                        <ProgressBar Height="18"
+                                                     Minimum="0"
+                                                     Maximum="100"
+                                                     Value="{Binding Progress}"/>
+
+                                        <TextBlock HorizontalAlignment="Center"
+                                                   VerticalAlignment="Center"
+                                                   FontSize="11"
+                                                   Text="{Binding Progress,
+                                                       StringFormat={}{0}%}"/>
+                                    </Grid>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+
+                        <DataGridTextColumn Header="Сообщение"
+                                            Width="*"
+                                            Binding="{Binding Message}"/>
+
+                        <DataGridTextColumn Header="Результат"
+                                            Width="280"
+                                            Binding="{Binding OutputPath}"/>
+
+                        <DataGridTextColumn Header="База"
+                                            Width="130"
+                                            Binding="{Binding DatabaseName}"/>
+
+                        <DataGridTextColumn Header="Пользователь"
+                                            Width="130"
+                                            Binding="{Binding DatabaseUser}"/>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </TabItem>
+
+            <TabItem Header="Предпросмотр">
+                <TextBox x:Name="PreviewTextBox"
+                         Margin="8"
+                         IsReadOnly="True"
+                         AcceptsReturn="True"
+                         TextWrapping="Wrap"
+                         VerticalScrollBarVisibility="Auto"
+                         FontFamily="Consolas"
+                         Text="Выберите папки и нажмите «Предпросмотр»."/>
+            </TabItem>
+        </TabControl>
+
+        <GroupBox Grid.Row="4"
+                  Header="Журнал"
+                  Margin="0,0,0,8">
+            <DataGrid x:Name="LogsGrid"
+                      Margin="6"
+                      AutoGenerateColumns="False"
+                      IsReadOnly="True"
+                      CanUserAddRows="False"
+                      HeadersVisibility="Column"
+                      GridLinesVisibility="Horizontal">
+
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Время"
+                                        Width="145"
+                                        Binding="{Binding DisplayTime}"/>
+
+                    <DataGridTextColumn Header="Уровень"
+                                        Width="80"
+                                        Binding="{Binding Level}"/>
+
+                    <DataGridTextColumn Header="Домен"
+                                        Width="180"
+                                        Binding="{Binding Domain}"/>
+
+                    <DataGridTextColumn Header="Сообщение"
+                                        Width="*"
+                                        Binding="{Binding Message}"/>
+                </DataGrid.Columns>
+            </DataGrid>
+        </GroupBox>
+
+        <Border Grid.Row="5"
+                Padding="8"
+                Background="#FFF1F1F1"
+                BorderBrush="#FFD0D0D0"
+                BorderThickness="1">
+            <TextBlock x:Name="StatusTextBlock"
+                       Text="Готово"
+                       TextTrimming="CharacterEllipsis"/>
+        </Border>
+    </Grid>
+</Window>
+
+
+
+----- FILE: MainWindow.xaml.cs -----
+using System.Collections.ObjectModel;
+using System.ComponentModel;
+using System.Windows;
+using Microsoft.Win32;
+using TextFileProcessor.Data;
+using TextFileProcessor.Models;
+using TextFileProcessor.Services;
+
+namespace TextFileProcessor;
+
+public partial class MainWindow : Window
+{
+    private readonly AppDatabase _database = new();
+    private readonly DomainService _domainService = new();
+    private readonly FileProcessingService _processor = new();
+
+    private readonly ObservableCollection<DomainJob> _jobs = new();
+    private readonly ObservableCollection<LogEntry> _logs = new();
+
+    private CancellationTokenSource? _cancellationTokenSource;
+    private bool _isRunning;
+
+    public MainWindow()
+    {
+        InitializeComponent();
+
+        JobsGrid.ItemsSource = _jobs;
+        LogsGrid.ItemsSource = _logs;
+
+        try
+        {
+            _database.Initialize();
+
+            foreach (var job in _database.LoadJobs())
+            {
+                _jobs.Add(job);
+            }
+
+            foreach (var log in _database.LoadLogs())
+            {
+                _logs.Add(log);
+            }
+
+            AddLog(
+                "INFO",
+                string.Empty,
+                $"Сборка 1 запущена. SQLite: {_database.DatabasePath}");
+        }
+        catch (Exception exception)
+        {
+            MessageBox.Show(
+                this,
+                exception.Message,
+                "Ошибка инициализации",
+                MessageBoxButton.OK,
+                MessageBoxImage.Error);
+        }
+    }
+
+    private void BrowseSource_Click(
+        object sender,
+        RoutedEventArgs e)
+    {
+        var dialog = new OpenFolderDialog
+        {
+            Title = "Выберите корень исходного сайта",
+            Multiselect = false
+        };
+
+        if (dialog.ShowDialog() == true)
+        {
+            SourceFolderTextBox.Text =
+                dialog.FolderName;
+        }
+    }
+
+    private void BrowseOutput_Click(
+        object sender,
+        RoutedEventArgs e)
+    {
+        var dialog = new OpenFolderDialog
+        {
+            Title = "Выберите папку результата",
+            Multiselect = false
+        };
+
+        if (dialog.ShowDialog() == true)
+        {
+            OutputFolderTextBox.Text =
+                dialog.FolderName;
+        }
+    }
+
+    private void Preview_Click(
+        object sender,
+        RoutedEventArgs e)
+    {
+        try
+        {
+            var firstDomain = ParseRows()
+                .Select(row => row.Domain)
+                .FirstOrDefault() ?? string.Empty;
+
+            PreviewTextBox.Text =
+                _processor.CreatePreview(
+                    SourceFolderTextBox.Text.Trim(),
+                    OutputFolderTextBox.Text.Trim(),
+                    firstDomain);
+
+            AddLog(
+                "INFO",
+                firstDomain,
+                "Предварительная проверка структуры выполнена.");
+        }
+        catch (Exception exception)
+        {
+            var message =
+                SensitiveDataRedactor.Redact(
+                    exception.Message);
+
+            PreviewTextBox.Text =
+                "ОШИБКА:\n" + message;
+
+            AddLog(
+                "ERROR",
+                string.Empty,
+                message);
+        }
+    }
+
+    private async void Start_Click(
+        object sender,
+        RoutedEventArgs e)
+    {
+        if (_isRunning)
+        {
+            return;
+        }
+
+        try
+        {
+            var rows = ParseRows();
+
+            if (rows.Count == 0)
+            {
+                throw new InvalidOperationException(
+                    "Введите хотя бы один домен.");
+            }
+
+            if (string.IsNullOrWhiteSpace(
+                    SearchText1TextBox.Text))
+            {
+                throw new InvalidOperationException(
+                    "Заполните искомый текст №1.");
+            }
+
+            var searchText2 =
+                SearchText2TextBox.Text;
+
+            if (!string.IsNullOrWhiteSpace(searchText2) &&
+                rows.Any(row =>
+                    string.IsNullOrWhiteSpace(
+                        row.SecondValue)))
+            {
+                throw new InvalidOperationException(
+                    "Для замены №2 необходимо указать " +
+                    "второе значение для каждого домена.");
+            }
+
+            var options = new ProcessingOptions
+            {
+                SourceFolder =
+                    SourceFolderTextBox.Text.Trim(),
+                OutputFolder =
+                    OutputFolderTextBox.Text.Trim(),
+                SearchText1 =
+                    SearchText1TextBox.Text,
+                SearchText2 =
+                    searchText2,
+                IncludeAdditionalExtensions =
+                    AdditionalExtensionsCheckBox.IsChecked == true,
+                ReplaceExistingFolders =
+                    ReplaceExistingCheckBox.IsChecked == true
+            };
+
+            _isRunning = true;
+
+            StartButton.IsEnabled = false;
+            PreviewButton.IsEnabled = false;
+            CancelButton.IsEnabled = true;
+
+            _cancellationTokenSource =
+                new CancellationTokenSource();
+
+            var newJobs = rows
+                .Select(row => new DomainJob
+                {
+                    Domain = row.Domain,
+                    SecondValue = row.SecondValue,
+                    Status = JobStatus.Pending,
+                    Progress = 0,
+                    Message = "Ожидает запуска."
+                })
+                .ToList();
+
+            foreach (var job in newJobs)
+            {
+                _jobs.Insert(0, job);
+                _database.SaveJob(job);
+            }
+
+            var usedDatabaseNames = new HashSet<string>(
+                _jobs
+                    .Where(job =>
+                        job.Status == JobStatus.Completed &&
+                        !string.IsNullOrWhiteSpace(
+                            job.DatabaseName))
+                    .Select(job => job.DatabaseName),
+                StringComparer.OrdinalIgnoreCase);
+
+            var usedDatabaseUsers = new HashSet<string>(
+                _jobs
+                    .Where(job =>
+                        job.Status == JobStatus.Completed &&
+                        !string.IsNullOrWhiteSpace(
+                            job.DatabaseUser))
+                    .Select(job => job.DatabaseUser),
+                StringComparer.OrdinalIgnoreCase);
+
+            foreach (var job in newJobs)
+            {
+                if (_cancellationTokenSource
+                    .IsCancellationRequested)
+                {
+                    job.Status = JobStatus.Skipped;
+                    job.Message =
+                        "Пропущено из-за остановки очереди.";
+
+                    _database.SaveJob(job);
+
+                    AddLog(
+                        "WARN",
+                        job.Domain,
+                        job.Message);
+
+                    continue;
+                }
+
+                job.Status = JobStatus.Running;
+                job.Progress = 0;
+                job.Message = "Запуск обработки.";
+
+                _database.SaveJob(job);
+
+                SetStatus(
+                    $"Обработка: {job.Domain}");
+
+                AddLog(
+                    "INFO",
+                    job.Domain,
+                    "Начата локальная обработка.");
+
+                try
+                {
+                    var result =
+                        await _processor.ProcessAsync(
+                            job,
+                            options,
+                            (databaseName, databaseUser) =>
+                                !usedDatabaseNames.Contains(
+                                    databaseName) &&
+                                !usedDatabaseUsers.Contains(
+                                    databaseUser),
+                            (progress, message) =>
+                            {
+                                Dispatcher.Invoke(() =>
+                                {
+                                    job.Progress = progress;
+                                    job.Message = message;
+
+                                    _database.SaveJob(job);
+
+                                    SetStatus(
+                                        $"{job.Domain}: " +
+                                        $"{progress}% — {message}");
+                                });
+                            },
+                            _cancellationTokenSource.Token);
+
+                    job.Status = JobStatus.Completed;
+                    job.Progress = 100;
+                    job.OutputPath = result.FinalFolder;
+                    job.ConfigPath = result.ConfigPath;
+                    job.SqlPath = result.SqlPath;
+                    job.DatabaseName =
+                        result.Credentials.Name;
+                    job.DatabaseUser =
+                        result.Credentials.User;
+
+                    job.Message =
+                        $"Готово. Файлов: {result.FilesProcessed}; " +
+                        $"замен №1: {result.ReplacementCount1}; " +
+                        $"замен №2: {result.ReplacementCount2}.";
+
+                    usedDatabaseNames.Add(
+                        result.Credentials.Name);
+
+                    usedDatabaseUsers.Add(
+                        result.Credentials.User);
+
+                    _database.SaveJob(job);
+
+                    AddLog(
+                        "INFO",
+                        job.Domain,
+                        $"Обработка завершена. " +
+                        $"Результат: {result.FinalFolder}");
+                }
+                catch (OperationCanceledException)
+                {
+                    job.Status = JobStatus.Cancelled;
+                    job.Message =
+                        "Обработка отменена пользователем.";
+
+                    _database.SaveJob(job);
+
+                    AddLog(
+                        "WARN",
+                        job.Domain,
+                        job.Message);
+                }
+                catch (Exception exception)
+                {
+                    job.Status = JobStatus.Failed;
+                    job.Message =
+                        SensitiveDataRedactor.Redact(
+                            exception.Message);
+
+                    _database.SaveJob(job);
+
+                    AddLog(
+                        "ERROR",
+                        job.Domain,
+                        job.Message);
+                }
+            }
+
+            var completedCount = newJobs.Count(
+                job =>
+                    job.Status == JobStatus.Completed);
+
+            var failedCount = newJobs.Count(
+                job =>
+                    job.Status == JobStatus.Failed);
+
+            var cancelledCount = newJobs.Count(
+                job =>
+                    job.Status is
+                        JobStatus.Cancelled or
+                        JobStatus.Skipped);
+
+            SetStatus(
+                $"Очередь завершена. " +
+                $"Успешно: {completedCount}; " +
+                $"ошибок: {failedCount}; " +
+                $"отменено/пропущено: {cancelledCount}.");
+
+            AddLog(
+                "INFO",
+                string.Empty,
+                StatusTextBlock.Text);
+        }
+        catch (Exception exception)
+        {
+            var message =
+                SensitiveDataRedactor.Redact(
+                    exception.Message);
+
+            SetStatus(message);
+
+            AddLog(
+                "ERROR",
+                string.Empty,
+                message);
+
+            MessageBox.Show(
+                this,
+                message,
+                "Ошибка запуска",
+                MessageBoxButton.OK,
+                MessageBoxImage.Error);
+        }
+        finally
+        {
+            _cancellationTokenSource?.Dispose();
+            _cancellationTokenSource = null;
+
+            _isRunning = false;
+
+            StartButton.IsEnabled = true;
+            PreviewButton.IsEnabled = true;
+            CancelButton.IsEnabled = false;
+        }
+    }
+
+    private void Cancel_Click(
+        object sender,
+        RoutedEventArgs e)
+    {
+        CancelProcessing();
+    }
+
+    private void ClearJobs_Click(
+        object sender,
+        RoutedEventArgs e)
+    {
+        if (_isRunning)
+        {
+            return;
+        }
+
+        _jobs.Clear();
+
+        AddLog(
+            "INFO",
+            string.Empty,
+            "Таблица очищена. История SQLite сохранена.");
+    }
+
+    private void CancelProcessing()
+    {
+        if (!_isRunning)
+        {
+            return;
+        }
+
+        _cancellationTokenSource?.Cancel();
+
+        SetStatus(
+            "Запрошена остановка текущего задания.");
+
+        AddLog(
+            "WARN",
+            string.Empty,
+            "Пользователь запросил остановку очереди.");
+    }
+
+    private List<InputRow> ParseRows()
+    {
+        var domainLines = SplitLines(
+            DomainsTextBox.Text,
+            removeEmptyLines: true);
+
+        var secondValueLines = SplitLines(
+            SecondValuesTextBox.Text,
+            removeEmptyLines: false);
+
+        while (secondValueLines.Count > 0 &&
+               string.IsNullOrWhiteSpace(
+                   secondValueLines[^1]))
+        {
+            secondValueLines.RemoveAt(
+                secondValueLines.Count - 1);
+        }
+
+        if (!string.IsNullOrWhiteSpace(
+                SearchText2TextBox.Text) &&
+            secondValueLines.Count !=
+            domainLines.Count)
+        {
+            throw new InvalidOperationException(
+                "Количество значений №2 должно совпадать " +
+                "с количеством доменов.");
+        }
+
+        var rows = new List<InputRow>();
+
+        var uniqueDomains = new HashSet<string>(
+            StringComparer.OrdinalIgnoreCase);
+
+        for (var index = 0;
+             index < domainLines.Count;
+             index++)
+        {
+            var domain = _domainService.Normalize(
+                domainLines[index]);
+
+            if (!uniqueDomains.Add(domain))
+            {
+                throw new InvalidOperationException(
+                    $"Домен повторяется во входном списке: {domain}");
+            }
+
+            var secondValue =
+                index < secondValueLines.Count
+                    ? secondValueLines[index].Trim()
+                    : string.Empty;
+
+            rows.Add(
+                new InputRow(
+                    domain,
+                    secondValue));
+        }
+
+        return rows;
+    }
+
+    private static List<string> SplitLines(
+        string text,
+        bool removeEmptyLines)
+    {
+        var normalized = text
+            .Replace(
+                "\r\n",
+                "\n",
+                StringComparison.Ordinal)
+            .Replace('\r', '\n');
+
+        if (removeEmptyLines)
+        {
+            return normalized
+                .Split(
+                    '\n',
+                    StringSplitOptions.RemoveEmptyEntries |
+                    StringSplitOptions.TrimEntries)
+                .ToList();
+        }
+
+        return normalized
+            .Split(
+                '\n',
+                StringSplitOptions.None)
+            .ToList();
+    }
+
+    private void AddLog(
+        string level,
+        string domain,
+        string message)
+    {
+        var entry = new LogEntry
+        {
+            Level = level,
+            Domain = domain,
+            Message = SensitiveDataRedactor.Redact(
+                message)
+        };
+
+        _logs.Insert(0, entry);
+
+        while (_logs.Count > 1000)
+        {
+            _logs.RemoveAt(
+                _logs.Count - 1);
+        }
+
+        try
+        {
+            _database.AddLog(entry);
+        }
+        catch
+        {
+            // Ошибка записи журнала не останавливает обработку.
+        }
+    }
+
+    private void SetStatus(string message)
+    {
+        StatusTextBlock.Text = message;
+    }
+
+    private void Window_Closing(
+        object? sender,
+        CancelEventArgs eventArgs)
+    {
+        if (!_isRunning)
+        {
+            return;
+        }
+
+        var result = MessageBox.Show(
+            this,
+            "Идёт обработка. Остановить её и закрыть программу?",
+            "Подтверждение",
+            MessageBoxButton.YesNo,
+            MessageBoxImage.Warning);
+
+        if (result != MessageBoxResult.Yes)
+        {
+            eventArgs.Cancel = true;
+            return;
+        }
+
+        CancelProcessing();
+    }
+
+    private sealed record InputRow(
+        string Domain,
+        string SecondValue);
+}
+
+
+----- НЕ НАЙДЕН: MainViewModel.cs -----
+
+----- НЕ НАЙДЕН: ConnectionSettings.cs -----
+
+----- НЕ НАЙДЕН: DomainJob.cs -----
+
+----- НЕ НАЙДЕН: JobStateService.cs -----
+
+----- НЕ НАЙДЕН: LogService.cs -----
+
+----- FILE: Services\IspmanagerAutomationService.cs -----
+using System.Globalization;
+using System.Net.Http;
+using System.Xml.Linq;
+using TextFileProcessor.Models;
+
+namespace TextFileProcessor.Services;
+
+public sealed class IspmanagerAutomationService
+{
+    private static readonly TimeSpan RequestTimeout =
+        TimeSpan.FromSeconds(120);
+
+    private static readonly TimeSpan DomainCreationTimeout =
+        TimeSpan.FromSeconds(120);
+
+    public async Task<IspmanagerOperationResult> TestConnectionAsync(
+        IspmanagerSettings settings,
+        string password,
+        CancellationToken cancellationToken)
+    {
+        ValidateSettings(settings, password);
+
+        using var client = CreateClient(settings);
+
+        var sessionId = await AuthenticateAsync(
+            client,
+            settings,
+            password,
+            cancellationToken);
+
+        var listResult = await CallAsync(
+            client,
+            settings,
+            sessionId,
+            "webdomain",
+            null,
+            cancellationToken);
+
+        EnsureSuccess(
+            listResult,
+            "РќРµ СѓРґР°Р»РѕСЃСЊ РїРѕР»СѓС‡РёС‚СЊ СЃРїРёСЃРѕРє WWW-РґРѕРјРµРЅРѕРІ");
+
+        return new IspmanagerOperationResult
+        {
+            Success = true,
+            Message =
+                "РџРѕРґРєР»СЋС‡РµРЅРёРµ Рє ISPmanager API РІС‹РїРѕР»РЅРµРЅРѕ СѓСЃРїРµС€РЅРѕ. " +
+                "РЎРїРёСЃРѕРє WWW-РґРѕРјРµРЅРѕРІ РїРѕР»СѓС‡РµРЅ."
+        };
+    }
+
+    public async Task<IspmanagerOperationResult> CreateWebDomainAsync(
+        IspmanagerSettings settings,
+        string password,
+        string domain,
+        CancellationToken cancellationToken)
+    {
+        ValidateSettings(settings, password);
+
+        domain = NormalizeDomain(domain);
+
+        using var client = CreateClient(settings);
+
+        var sessionId = await AuthenticateAsync(
+            client,
+            settings,
+            password,
+            cancellationToken);
+
+        if (await DomainExistsAsync(
+            client,
+            settings,
+            sessionId,
+            domain,
+            cancellationToken))
+        {
+            return new IspmanagerOperationResult
+            {
+                Success = true,
+                Message =
+                    $"WWW-РґРѕРјРµРЅ {domain} СѓР¶Рµ СЃСѓС‰РµСЃС‚РІСѓРµС‚ РІ ISPmanager."
+            };
+        }
+        // РџРµСЂРµРґР°С‘Рј С‚РѕР»СЊРєРѕ РїР°СЂР°РјРµС‚СЂС‹, РєРѕС‚РѕСЂС‹Рµ Р±С‹Р»Рё СѓРєР°Р·Р°РЅС‹:
+        // РґРѕРјРµРЅ, wildcard-РїСЃРµРІРґРѕРЅРёРј, HTTPS Рё РѕС‚РєР»СЋС‡РµРЅРёРµ РєРµС€Р°.
+        // Р РµР¶РёРј Рё РІРµСЂСЃРёСЏ PHP РЅРµ РїРµСЂРµРґР°СЋС‚СЃСЏ вЂ” ISPmanager
+        // РёСЃРїРѕР»СЊР·СѓРµС‚ РЅР°СЃС‚СЂРѕР№РєРё РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ.
+        var aliases = $"*.{domain}";
+
+        var parameters = new Dictionary<string, string>
+        {
+            ["sok"] = "ok",
+            ["site_name"] = domain,
+            ["site_aliases"] = aliases,
+            ["site_ssl"] = "on",
+            ["site_cache"] = "off"
+        };
+
+        var createResult = await CallAsync(
+            client,
+            settings,
+            sessionId,
+            "site.edit",
+            parameters,
+            cancellationToken);
+
+        EnsureSuccess(
+            createResult,
+            $"ISPmanager РЅРµ СЃРѕР·РґР°Р» WWW-РґРѕРјРµРЅ {domain}");
+
+        var startedAt = DateTime.UtcNow;
+        string? lastError = null;
+
+        while (
+            DateTime.UtcNow - startedAt <
+            DomainCreationTimeout)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            try
+            {
+                if (await DomainExistsAsync(
+                    client,
+                    settings,
+                    sessionId,
+                    domain,
+                    cancellationToken))
+                {
+                    return new IspmanagerOperationResult
+                    {
+                        Success = true,
+                        Message =
+                            $"WWW-РґРѕРјРµРЅ {domain} СЃРѕР·РґР°РЅ Рё РЅР°Р№РґРµРЅ " +
+                            "РІ СЃРїРёСЃРєРµ ISPmanager. " +
+                            $"РїСЃРµРІРґРѕРЅРёРјС‹: {aliases}; " +
+                            "HTTPS РІРєР»СЋС‡С‘РЅ; РєРµС€РёСЂРѕРІР°РЅРёРµ РѕС‚РєР»СЋС‡РµРЅРѕ."
+                    };
+                }
+            }
+            catch (Exception exception)
+            {
+                lastError =
+                    SensitiveDataRedactor.Redact(
+                        exception.Message);
+            }
+
+            await Task.Delay(
+                TimeSpan.FromSeconds(3),
+                cancellationToken);
+        }
+
+        throw new TimeoutException(
+            $"РљРѕРјР°РЅРґР° СЃРѕР·РґР°РЅРёСЏ {domain} Р±С‹Р»Р° РѕС‚РїСЂР°РІР»РµРЅР°, " +
+            "РЅРѕ РґРѕРјРµРЅ РЅРµ РїРѕСЏРІРёР»СЃСЏ РІ СЃРїРёСЃРєРµ WWW-РґРѕРјРµРЅРѕРІ " +
+            $"Р·Р° {DomainCreationTimeout.TotalSeconds:0} СЃРµРєСѓРЅРґ." +
+            (
+                string.IsNullOrWhiteSpace(lastError)
+                    ? string.Empty
+                    : $" РџРѕСЃР»РµРґРЅСЏСЏ РѕС€РёР±РєР° РїСЂРѕРІРµСЂРєРё: {lastError}"
+            ));
+    }
+
+    private static HttpClient CreateClient(
+        IspmanagerSettings settings)
+    {
+        var handler = new HttpClientHandler();
+
+        if (settings.IgnoreCertificateErrors)
+        {
+            handler.ServerCertificateCustomValidationCallback =
+                HttpClientHandler
+                    .DangerousAcceptAnyServerCertificateValidator;
+        }
+
+        var client = new HttpClient(handler)
+        {
+            Timeout = RequestTimeout
+        };
+
+        client.DefaultRequestHeaders.UserAgent.ParseAdd(
+            "TextFileProcessor/2.0");
+
+        return client;
+    }
+
+    private static async Task<string> AuthenticateAsync(
+        HttpClient client,
+        IspmanagerSettings settings,
+        string password,
+        CancellationToken cancellationToken)
+    {
+        var form = new Dictionary<string, string>
+        {
+            ["out"] = "xml",
+            ["func"] = "auth",
+            ["username"] = settings.Login.Trim(),
+            ["password"] = password
+        };
+
+        var result = await SendFormAsync(
+            client,
+            NormalizePanelUrl(settings.PanelUrl),
+            form,
+            cancellationToken);
+
+        EnsureSuccess(
+            result,
+            "ISPmanager РѕС‚РєР»РѕРЅРёР» Р°РІС‚РѕСЂРёР·Р°С†РёСЋ");
+
+        if (result.Document is null)
+        {
+            throw new InvalidOperationException(
+                "ISPmanager РЅРµ РІРµСЂРЅСѓР» XML РїСЂРё Р°РІС‚РѕСЂРёР·Р°С†РёРё.");
+        }
+
+        var authElement = result.Document
+            .Descendants()
+            .FirstOrDefault(element =>
+                string.Equals(
+                    element.Name.LocalName,
+                    "auth",
+                    StringComparison.OrdinalIgnoreCase));
+
+        if (authElement is null)
+        {
+            throw new InvalidOperationException(
+                "ISPmanager РЅРµ РІРµСЂРЅСѓР» РЅРѕРјРµСЂ API-СЃРµСЃСЃРёРё.");
+        }
+
+        var sessionId = authElement.Value.Trim();
+
+        if (string.IsNullOrWhiteSpace(sessionId))
+        {
+            sessionId =
+                authElement.Attribute("id")?.Value?.Trim() ??
+                string.Empty;
+        }
+
+        if (string.IsNullOrWhiteSpace(sessionId))
+        {
+            throw new InvalidOperationException(
+                "ISPmanager РІРµСЂРЅСѓР» РїСѓСЃС‚РѕР№ РЅРѕРјРµСЂ API-СЃРµСЃСЃРёРё.");
+        }
+
+        return sessionId;
+    }
+
+    private static async Task<ApiResult> CallAsync(
+        HttpClient client,
+        IspmanagerSettings settings,
+        string sessionId,
+        string function,
+        IReadOnlyDictionary<string, string>? parameters,
+        CancellationToken cancellationToken)
+    {
+        var form = new Dictionary<string, string>
+        {
+            ["out"] = "xml",
+            ["lang"] = "ru",
+            ["auth"] = sessionId,
+            ["func"] = function
+        };
+
+        if (parameters is not null)
+        {
+            foreach (var parameter in parameters)
+            {
+                form[parameter.Key] = parameter.Value;
+            }
+        }
+
+        return await SendFormAsync(
+            client,
+            NormalizePanelUrl(settings.PanelUrl),
+            form,
+            cancellationToken);
+    }
+
+    private static async Task<ApiResult> SendFormAsync(
+        HttpClient client,
+        string url,
+        IReadOnlyDictionary<string, string> form,
+        CancellationToken cancellationToken)
+    {
+        using var content =
+            new FormUrlEncodedContent(form);
+
+        HttpResponseMessage response;
+
+        try
+        {
+            response = await client.PostAsync(
+                url,
+                content,
+                cancellationToken);
+        }
+        catch (OperationCanceledException)
+            when (!cancellationToken.IsCancellationRequested)
+        {
+            return ApiResult.Failure(
+                "timeout",
+                "РСЃС‚РµРєР»Рѕ РІСЂРµРјСЏ РѕР¶РёРґР°РЅРёСЏ РѕС‚РІРµС‚Р° ISPmanager.");
+        }
+        catch (HttpRequestException exception)
+        {
+            return ApiResult.Failure(
+                "connection",
+                exception.Message);
+        }
+
+        using (response)
+        {
+            var responseText =
+                await response.Content.ReadAsStringAsync(
+                    cancellationToken);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                return ApiResult.Failure(
+                    ((int)response.StatusCode).ToString(
+                        CultureInfo.InvariantCulture),
+                    $"HTTP {(int)response.StatusCode}: " +
+                    response.ReasonPhrase);
+            }
+
+            if (string.IsNullOrWhiteSpace(responseText))
+            {
+                return ApiResult.Failure(
+                    "empty_response",
+                    "ISPmanager РІРµСЂРЅСѓР» РїСѓСЃС‚РѕР№ РѕС‚РІРµС‚.");
+            }
+
+            XDocument document;
+
+            try
+            {
+                document = XDocument.Parse(responseText);
+            }
+            catch
+            {
+                return ApiResult.Failure(
+                    "invalid_xml",
+                    "ISPmanager РІРµСЂРЅСѓР» РѕС‚РІРµС‚ РЅРµРёР·РІРµСЃС‚РЅРѕРіРѕ С„РѕСЂРјР°С‚Р°.");
+            }
+
+            var errorElement = document
+                .Descendants()
+                .FirstOrDefault(element =>
+                    string.Equals(
+                        element.Name.LocalName,
+                        "error",
+                        StringComparison.OrdinalIgnoreCase));
+
+            if (errorElement is null)
+            {
+                return ApiResult.SuccessResult(document);
+            }
+
+            var errorCode =
+                errorElement.Attribute("code")?.Value ??
+                FindElementValue(errorElement, "code") ??
+                "ispmanager_error";
+
+            var errorMessage =
+                errorElement.Attribute("msg")?.Value ??
+                FindElementValue(errorElement, "msg") ??
+                FindElementValue(errorElement, "message") ??
+                errorElement.Value;
+
+            if (string.IsNullOrWhiteSpace(errorMessage))
+            {
+                errorMessage =
+                    "ISPmanager РІРµСЂРЅСѓР» РѕС€РёР±РєСѓ Р±РµР· РѕРїРёСЃР°РЅРёСЏ.";
+            }
+
+            return ApiResult.Failure(
+                errorCode.Trim(),
+                errorMessage.Trim(),
+                document);
+        }
+    }
+
+    private static async Task<bool> DomainExistsAsync(
+        HttpClient client,
+        IspmanagerSettings settings,
+        string sessionId,
+        string domain,
+        CancellationToken cancellationToken)
+    {
+        var result = await CallAsync(
+            client,
+            settings,
+            sessionId,
+            "webdomain",
+            null,
+            cancellationToken);
+
+        EnsureSuccess(
+            result,
+            "РќРµ СѓРґР°Р»РѕСЃСЊ РїСЂРѕРІРµСЂРёС‚СЊ СЃРїРёСЃРѕРє WWW-РґРѕРјРµРЅРѕРІ");
+
+        if (result.Document is null)
+        {
+            return false;
+        }
+
+        var expectedDomain =
+            NormalizeDomain(domain);
+
+        return result.Document
+            .Descendants()
+            .Where(element =>
+                string.Equals(
+                    element.Name.LocalName,
+                    "name",
+                    StringComparison.OrdinalIgnoreCase))
+            .Select(element =>
+                NormalizeDomainSafe(element.Value))
+            .Any(value =>
+                string.Equals(
+                    value,
+                    expectedDomain,
+                    StringComparison.OrdinalIgnoreCase));
+    }
+
+    private static string? FindElementValue(
+        XElement parent,
+        string localName)
+    {
+        return parent
+            .Descendants()
+            .FirstOrDefault(element =>
+                string.Equals(
+                    element.Name.LocalName,
+                    localName,
+                    StringComparison.OrdinalIgnoreCase))
+            ?.Value;
+    }
+
+    private static void EnsureSuccess(
+        ApiResult result,
+        string operation)
+    {
+        if (result.Success)
+        {
+            return;
+        }
+
+        throw new InvalidOperationException(
+            $"{operation}. " +
+            $"РћС€РёР±РєР° {result.ErrorCode}: " +
+            result.ErrorMessage);
+    }
+
+    private static void ValidateSettings(
+        IspmanagerSettings settings,
+        string password)
+    {
+        if (!Uri.TryCreate(
+            settings.PanelUrl,
+            UriKind.Absolute,
+            out var panelUri) ||
+            (
+                panelUri.Scheme != Uri.UriSchemeHttps &&
+                panelUri.Scheme != Uri.UriSchemeHttp
+            ))
+        {
+            throw new InvalidOperationException(
+                "РЈРєР°Р¶РёС‚Рµ РєРѕСЂСЂРµРєС‚РЅС‹Р№ URL РїР°РЅРµР»Рё ISPmanager.");
+        }
+
+        if (string.IsNullOrWhiteSpace(settings.Login))
+        {
+            throw new InvalidOperationException(
+                "РЈРєР°Р¶РёС‚Рµ Р»РѕРіРёРЅ ISPmanager.");
+        }
+
+        if (string.IsNullOrEmpty(password))
+        {
+            throw new InvalidOperationException(
+                "Р’РІРµРґРёС‚Рµ РёР»Рё СЃРѕС…СЂР°РЅРёС‚Рµ РїР°СЂРѕР»СЊ ISPmanager.");
+        }
+
+        if (string.IsNullOrWhiteSpace(settings.Owner))
+        {
+            throw new InvalidOperationException(
+                "РЈРєР°Р¶РёС‚Рµ РІР»Р°РґРµР»СЊС†Р° WWW-РґРѕРјРµРЅР°.");
+        }
+
+        if (string.IsNullOrWhiteSpace(settings.PhpVersion))
+        {
+            throw new InvalidOperationException(
+                "РЈРєР°Р¶РёС‚Рµ РІРµСЂСЃРёСЋ PHP.");
+        }
+    }
+
+    private static string NormalizePanelUrl(
+        string panelUrl)
+    {
+        var value = panelUrl.Trim();
+
+        var fragmentIndex = value.IndexOf('#');
+
+        if (fragmentIndex >= 0)
+        {
+            value = value[..fragmentIndex];
+        }
+
+        value = value.TrimEnd('/');
+
+        if (!value.EndsWith(
+            "/ispmgr",
+            StringComparison.OrdinalIgnoreCase))
+        {
+            value += "/ispmgr";
+        }
+
+        return value;
+    }
+
+    private static string NormalizeDomain(
+        string input)
+    {
+        var value = input.Trim();
+
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            throw new InvalidOperationException(
+                "РќРµ СѓРєР°Р·Р°РЅ РґРѕРјРµРЅ РґР»СЏ СЃРѕР·РґР°РЅРёСЏ.");
+        }
+
+        if (!value.Contains(
+            "://",
+            StringComparison.Ordinal))
+        {
+            value = "https://" + value;
+        }
+
+        if (!Uri.TryCreate(
+            value,
+            UriKind.Absolute,
+            out var uri))
+        {
+            throw new InvalidOperationException(
+                $"РќРµРєРѕСЂСЂРµРєС‚РЅС‹Р№ РґРѕРјРµРЅ: {input}");
+        }
+
+        var host = uri.IdnHost
+            .Trim()
+            .TrimEnd('.')
+            .ToLowerInvariant();
+
+        if (host.StartsWith(
+            "www.",
+            StringComparison.OrdinalIgnoreCase))
+        {
+            host = host[4..];
+        }
+
+        if (string.IsNullOrWhiteSpace(host) ||
+            !host.Contains('.'))
+        {
+            throw new InvalidOperationException(
+                $"РќРµРєРѕСЂСЂРµРєС‚РЅС‹Р№ РґРѕРјРµРЅ: {input}");
+        }
+
+        return host;
+    }
+
+    private static string NormalizeDomainSafe(
+        string input)
+    {
+        try
+        {
+            return NormalizeDomain(input);
+        }
+        catch
+        {
+            return input
+                .Trim()
+                .TrimEnd('.')
+                .ToLowerInvariant();
+        }
+    }
+
+    private sealed class ApiResult
+    {
+        public bool Success { get; init; }
+
+        public string ErrorCode { get; init; } =
+            string.Empty;
+
+        public string ErrorMessage { get; init; } =
+            string.Empty;
+
+        public XDocument? Document { get; init; }
+
+        public static ApiResult SuccessResult(
+            XDocument document)
+        {
+            return new ApiResult
+            {
+                Success = true,
+                Document = document
+            };
+        }
+
+        public static ApiResult Failure(
+            string code,
+            string message,
+            XDocument? document = null)
+        {
+            return new ApiResult
+            {
+                Success = false,
+                ErrorCode = code,
+                ErrorMessage = message,
+                Document = document
+            };
+        }
+    }
+}
+
+========== ПРОЧИЕ ИСХОДНЫЕ ФАЙЛЫ ==========
+
+----- FILE: App.xaml -----
+<Application x:Class="TextFileProcessor.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             StartupUri="MainWindow.xaml">
+    <Application.Resources>
+    </Application.Resources>
+</Application>
+
+
+----- FILE: App.xaml.cs -----
+using System.Windows;
+
+namespace TextFileProcessor;
+
+public partial class App : Application
+{
+}
+
+
+----- FILE: AssemblyInfo.cs -----
+using System.Windows;
+
+[assembly:ThemeInfo(
+    ResourceDictionaryLocation.None,            //where theme specific resource dictionaries are located
+                                                //(used if a resource is not found in the page,
+                                                // or application resource dictionaries)
+    ResourceDictionaryLocation.SourceAssembly   //where the generic resource dictionary is located
+                                                //(used if a resource is not found in the page,
+                                                // app, or any theme specific resource dictionaries)
+)]
+
+
+----- FILE: Data\AppDatabase.cs -----
+using System.Globalization;
+using Microsoft.Data.Sqlite;
+using TextFileProcessor.Models;
+
+namespace TextFileProcessor.Data;
+
+public sealed class AppDatabase
+{
+    private readonly string _connectionString;
+
+    public string DatabasePath { get; }
+
+    public AppDatabase()
+    {
+        var directory = Path.Combine(
+            Environment.GetFolderPath(
+                Environment.SpecialFolder.LocalApplicationData),
+            "TextFileProcessor");
+
+        Directory.CreateDirectory(directory);
+
+        DatabasePath = Path.Combine(directory, "app.db");
+
+        _connectionString = new SqliteConnectionStringBuilder
+        {
+            DataSource = DatabasePath,
+            Mode = SqliteOpenMode.ReadWriteCreate
+        }.ToString();
+    }
+
+    public void Initialize()
+    {
+        using var connection = Open();
+        using var command = connection.CreateCommand();
+
+        command.CommandText =
+        """
+        PRAGMA journal_mode = WAL;
+        PRAGMA synchronous = NORMAL;
+
+        CREATE TABLE IF NOT EXISTS jobs
+        (
+            id TEXT PRIMARY KEY,
+            domain TEXT NOT NULL,
+            second_value TEXT NOT NULL DEFAULT '',
+            status TEXT NOT NULL,
+            progress INTEGER NOT NULL DEFAULT 0,
+            message TEXT NOT NULL DEFAULT '',
+            output_path TEXT NOT NULL DEFAULT '',
+            config_path TEXT NOT NULL DEFAULT '',
+            sql_path TEXT NOT NULL DEFAULT '',
+            database_name TEXT NOT NULL DEFAULT '',
+            database_user TEXT NOT NULL DEFAULT '',
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+        );
+
+        CREATE TABLE IF NOT EXISTS logs
+        (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            created_at TEXT NOT NULL,
+            level TEXT NOT NULL,
+            domain TEXT NOT NULL DEFAULT '',
+            message TEXT NOT NULL
+        );
+        """;
+
+        command.ExecuteNonQuery();
+
+        using var recovery = connection.CreateCommand();
+
+        recovery.CommandText =
+        """
+        UPDATE jobs
+        SET status = 'Interrupted',
+            message = 'Выполнение было прервано закрытием программы.',
+            updated_at = $updated
+        WHERE status = 'Running';
+        """;
+
+        recovery.Parameters.AddWithValue(
+            "$updated",
+            DateTime.Now.ToString("O"));
+
+        recovery.ExecuteNonQuery();
+    }
+
+    public void SaveJob(DomainJob job)
+    {
+        job.UpdatedAt = DateTime.Now;
+
+        using var connection = Open();
+        using var command = connection.CreateCommand();
+
+        command.CommandText =
+        """
+        INSERT INTO jobs
+        (
+            id,
+            domain,
+            second_value,
+            status,
+            progress,
+            message,
+            output_path,
+            config_path,
+            sql_path,
+            database_name,
+            database_user,
+            created_at,
+            updated_at
+        )
+        VALUES
+        (
+            $id,
+            $domain,
+            $secondValue,
+            $status,
+            $progress,
+            $message,
+            $outputPath,
+            $configPath,
+            $sqlPath,
+            $databaseName,
+            $databaseUser,
+            $createdAt,
+            $updatedAt
+        )
+        ON CONFLICT(id) DO UPDATE SET
+            domain = excluded.domain,
+            second_value = excluded.second_value,
+            status = excluded.status,
+            progress = excluded.progress,
+            message = excluded.message,
+            output_path = excluded.output_path,
+            config_path = excluded.config_path,
+            sql_path = excluded.sql_path,
+            database_name = excluded.database_name,
+            database_user = excluded.database_user,
+            updated_at = excluded.updated_at;
+        """;
+
+        command.Parameters.AddWithValue("$id", job.Id);
+        command.Parameters.AddWithValue("$domain", job.Domain);
+        command.Parameters.AddWithValue(
+            "$secondValue",
+            job.SecondValue);
+        command.Parameters.AddWithValue(
+            "$status",
+            job.Status.ToString());
+        command.Parameters.AddWithValue(
+            "$progress",
+            job.Progress);
+        command.Parameters.AddWithValue(
+            "$message",
+            job.Message);
+        command.Parameters.AddWithValue(
+            "$outputPath",
+            job.OutputPath);
+        command.Parameters.AddWithValue(
+            "$configPath",
+            job.ConfigPath);
+        command.Parameters.AddWithValue(
+            "$sqlPath",
+            job.SqlPath);
+        command.Parameters.AddWithValue(
+            "$databaseName",
+            job.DatabaseName);
+        command.Parameters.AddWithValue(
+            "$databaseUser",
+            job.DatabaseUser);
+        command.Parameters.AddWithValue(
+            "$createdAt",
+            job.CreatedAt.ToString("O"));
+        command.Parameters.AddWithValue(
+            "$updatedAt",
+            job.UpdatedAt.ToString("O"));
+
+        command.ExecuteNonQuery();
+    }
+
+    public List<DomainJob> LoadJobs()
+    {
+        var jobs = new List<DomainJob>();
+
+        using var connection = Open();
+        using var command = connection.CreateCommand();
+
+        command.CommandText =
+        """
+        SELECT
+            id,
+            domain,
+            second_value,
+            status,
+            progress,
+            message,
+            output_path,
+            config_path,
+            sql_path,
+            database_name,
+            database_user,
+            created_at,
+            updated_at
+        FROM jobs
+        ORDER BY created_at DESC
+        LIMIT 500;
+        """;
+
+        using var reader = command.ExecuteReader();
+
+        while (reader.Read())
+        {
+            Enum.TryParse<JobStatus>(
+                reader.GetString(3),
+                true,
+                out var status);
+
+            jobs.Add(new DomainJob
+            {
+                Id = reader.GetString(0),
+                Domain = reader.GetString(1),
+                SecondValue = reader.GetString(2),
+                Status = status,
+                Progress = reader.GetInt32(4),
+                Message = reader.GetString(5),
+                OutputPath = reader.GetString(6),
+                ConfigPath = reader.GetString(7),
+                SqlPath = reader.GetString(8),
+                DatabaseName = reader.GetString(9),
+                DatabaseUser = reader.GetString(10),
+                CreatedAt = DateTime.Parse(
+                    reader.GetString(11),
+                    CultureInfo.InvariantCulture,
+                    DateTimeStyles.RoundtripKind),
+                UpdatedAt = DateTime.Parse(
+                    reader.GetString(12),
+                    CultureInfo.InvariantCulture,
+                    DateTimeStyles.RoundtripKind)
+            });
+        }
+
+        return jobs;
+    }
+
+    public void AddLog(LogEntry entry)
+    {
+        using var connection = Open();
+        using var command = connection.CreateCommand();
+
+        command.CommandText =
+        """
+        INSERT INTO logs
+        (
+            created_at,
+            level,
+            domain,
+            message
+        )
+        VALUES
+        (
+            $createdAt,
+            $level,
+            $domain,
+            $message
+        );
+        """;
+
+        command.Parameters.AddWithValue(
+            "$createdAt",
+            entry.CreatedAt.ToString("O"));
+        command.Parameters.AddWithValue(
+            "$level",
+            entry.Level);
+        command.Parameters.AddWithValue(
+            "$domain",
+            entry.Domain);
+        command.Parameters.AddWithValue(
+            "$message",
+            entry.Message);
+
+        command.ExecuteNonQuery();
+    }
+
+    public List<LogEntry> LoadLogs()
+    {
+        var logs = new List<LogEntry>();
+
+        using var connection = Open();
+        using var command = connection.CreateCommand();
+
+        command.CommandText =
+        """
+        SELECT
+            created_at,
+            level,
+            domain,
+            message
+        FROM logs
+        ORDER BY id DESC
+        LIMIT 1000;
+        """;
+
+        using var reader = command.ExecuteReader();
+
+        while (reader.Read())
+        {
+            logs.Add(new LogEntry
+            {
+                CreatedAt = DateTime.Parse(
+                    reader.GetString(0),
+                    CultureInfo.InvariantCulture,
+                    DateTimeStyles.RoundtripKind),
+                Level = reader.GetString(1),
+                Domain = reader.GetString(2),
+                Message = reader.GetString(3)
+            });
+        }
+
+        return logs;
+    }
+
+    private SqliteConnection Open()
+    {
+        var connection = new SqliteConnection(_connectionString);
+        connection.Open();
+        return connection;
+    }
+}
+
+
+----- FILE: GlobalUsings.cs -----
+global using System.IO;
+
+
+----- FILE: MainWindow.Build2.cs -----
+using System.Windows;
+using TextFileProcessor.Models;
+using TextFileProcessor.Services;
+
+namespace TextFileProcessor;
+
+public partial class MainWindow
+{
+    private readonly IspmanagerSettingsService
+        _ispmanagerSettingsService = new();
+
+    private readonly IspmanagerAutomationService
+        _ispmanagerAutomationService = new();
+
+    private IspmanagerSettings _ispmanagerSettings = new();
+
+    private void Build2_Loaded(
+        object sender,
+        RoutedEventArgs e)
+    {
+        try
+        {
+            _ispmanagerSettings =
+                _ispmanagerSettingsService.Load();
+
+            IspmanagerUrlTextBox.Text =
+                _ispmanagerSettings.PanelUrl;
+
+            IspmanagerLoginTextBox.Text =
+                _ispmanagerSettings.Login;
+
+            IspmanagerOwnerTextBox.Text =
+                _ispmanagerSettings.Owner;
+
+            IspmanagerPhpVersionTextBox.Text =
+                _ispmanagerSettings.PhpVersion;
+
+            IgnoreCertificateErrorsCheckBox.IsChecked =
+                _ispmanagerSettings.IgnoreCertificateErrors;
+
+            ShowBrowserCheckBox.IsChecked =
+                _ispmanagerSettings.ShowBrowser;
+
+            PasswordSavedTextBlock.Text =
+                string.IsNullOrWhiteSpace(
+                    _ispmanagerSettings.EncryptedPassword)
+                    ? "Пароль ещё не сохранён."
+                    : "Зашифрованный пароль сохранён для " +
+                      "текущего пользователя Windows.";
+
+            Build2StatusTextBlock.Text =
+                "Сборка 2 готова. Сначала проверьте подключение.";
+        }
+        catch (Exception exception)
+        {
+            Build2StatusTextBlock.Text =
+                SensitiveDataRedactor.Redact(
+                    exception.Message);
+        }
+    }
+
+    private IspmanagerSettings ReadIspmanagerSettings()
+    {
+        return new IspmanagerSettings
+        {
+            PanelUrl =
+                IspmanagerUrlTextBox.Text.Trim(),
+
+            Login =
+                IspmanagerLoginTextBox.Text.Trim(),
+
+            Owner =
+                IspmanagerOwnerTextBox.Text.Trim(),
+
+            PhpVersion =
+                IspmanagerPhpVersionTextBox.Text.Trim(),
+
+            IgnoreCertificateErrors =
+                IgnoreCertificateErrorsCheckBox.IsChecked == true,
+
+            ShowBrowser =
+                ShowBrowserCheckBox.IsChecked == true,
+
+            EncryptedPassword =
+                _ispmanagerSettings.EncryptedPassword
+        };
+    }
+
+    private void SaveIspmanagerSettings_Click(
+        object sender,
+        RoutedEventArgs e)
+    {
+        try
+        {
+            var settings = ReadIspmanagerSettings();
+
+            _ispmanagerSettingsService.Save(
+                settings,
+                IspmanagerPasswordBox.Password);
+
+            _ispmanagerSettings = settings;
+
+            IspmanagerPasswordBox.Clear();
+
+            PasswordSavedTextBlock.Text =
+                "Настройки сохранены. Пароль зашифрован DPAPI.";
+
+            Build2StatusTextBlock.Text =
+                "Настройки ISPmanager сохранены.";
+
+            AddLog(
+                "INFO",
+                string.Empty,
+                "Настройки ISPmanager сохранены. " +
+                "Пароль в журнал не записан.");
+        }
+        catch (Exception exception)
+        {
+            ShowBuild2Error(exception);
+        }
+    }
+
+    private async void TestIspmanagerConnection_Click(
+        object sender,
+        RoutedEventArgs e)
+    {
+        await ExecuteIspmanagerActionAsync(
+            "Проверка подключения к ISPmanager...",
+            async (settings, password, token) =>
+            {
+                return await _ispmanagerAutomationService
+                    .TestConnectionAsync(
+                        settings,
+                        password,
+                        token);
+            });
+    }
+
+    private async void CreateSelectedWebDomain_Click(
+        object sender,
+        RoutedEventArgs e)
+    {
+        var selectedJob =
+            JobsGrid.SelectedItem as DomainJob;
+
+        if (selectedJob is null)
+        {
+            MessageBox.Show(
+                this,
+                "Сначала выберите домен в таблице «Задания».",
+                "WWW-домен",
+                MessageBoxButton.OK,
+                MessageBoxImage.Information);
+
+            return;
+        }
+
+        var confirmation = MessageBox.Show(
+            this,
+            $"Создать WWW-домен {selectedJob.Domain}?\n\n" +
+            $"Владелец: {IspmanagerOwnerTextBox.Text.Trim()}\n" +
+            $"PHP: {IspmanagerPhpVersionTextBox.Text.Trim()}\n" +
+            $"Алиасы: www.{selectedJob.Domain} " +
+            $"*.{selectedJob.Domain}",
+            "Подтверждение создания",
+            MessageBoxButton.YesNo,
+            MessageBoxImage.Question);
+
+        if (confirmation != MessageBoxResult.Yes)
+        {
+            return;
+        }
+
+        await ExecuteIspmanagerActionAsync(
+            $"Создание WWW-домена {selectedJob.Domain}...",
+            async (settings, password, token) =>
+            {
+                var result =
+                    await _ispmanagerAutomationService
+                        .CreateWebDomainAsync(
+                            settings,
+                            password,
+                            selectedJob.Domain,
+                            token);
+
+                AddLog(
+                    "INFO",
+                    selectedJob.Domain,
+                    result.Message);
+
+                return result;
+            });
+    }
+
+    private async Task ExecuteIspmanagerActionAsync(
+        string status,
+        Func<
+            IspmanagerSettings,
+            string,
+            CancellationToken,
+            Task<IspmanagerOperationResult>> action)
+    {
+        if (_isRunning)
+        {
+            MessageBox.Show(
+                this,
+                "Дождитесь завершения текущей операции.",
+                "ISPmanager",
+                MessageBoxButton.OK,
+                MessageBoxImage.Information);
+
+            return;
+        }
+
+        string password = string.Empty;
+
+        try
+        {
+            _isRunning = true;
+
+            SaveIspmanagerSettingsButton.IsEnabled = false;
+            TestIspmanagerButton.IsEnabled = false;
+            CreateWebDomainButton.IsEnabled = false;
+
+            Build2StatusTextBlock.Text = status;
+            SetStatus(status);
+
+            var settings = ReadIspmanagerSettings();
+
+            password =
+                _ispmanagerSettingsService.GetPassword(
+                    settings,
+                    IspmanagerPasswordBox.Password);
+
+            _ispmanagerSettingsService.Save(
+                settings,
+                IspmanagerPasswordBox.Password);
+
+            _ispmanagerSettings = settings;
+            IspmanagerPasswordBox.Clear();
+
+            using var cancellation =
+                new CancellationTokenSource(
+                    TimeSpan.FromMinutes(3));
+
+            var result = await action(
+                settings,
+                password,
+                cancellation.Token);
+
+            Build2StatusTextBlock.Text =
+                result.Message;
+
+            SetStatus(result.Message);
+
+            AddLog(
+                "INFO",
+                string.Empty,
+                result.Message);
+
+            PasswordSavedTextBlock.Text =
+                "Зашифрованный пароль сохранён для " +
+                "текущего пользователя Windows.";
+
+            MessageBox.Show(
+                this,
+                result.Message,
+                "ISPmanager",
+                MessageBoxButton.OK,
+                MessageBoxImage.Information);
+        }
+        catch (Exception exception)
+        {
+            ShowBuild2Error(exception);
+        }
+        finally
+        {
+            password = string.Empty;
+
+            _isRunning = false;
+
+            SaveIspmanagerSettingsButton.IsEnabled = true;
+            TestIspmanagerButton.IsEnabled = true;
+            CreateWebDomainButton.IsEnabled = true;
+        }
+    }
+
+    private void ShowBuild2Error(Exception exception)
+    {
+        var message =
+            SensitiveDataRedactor.Redact(
+                exception.Message);
+
+        Build2StatusTextBlock.Text = message;
+        SetStatus(message);
+
+        AddLog(
+            "ERROR",
+            string.Empty,
+            message);
+
+        MessageBox.Show(
+            this,
+            message,
+            "Ошибка ISPmanager",
+            MessageBoxButton.OK,
+            MessageBoxImage.Error);
+    }
+}
+
+
+----- FILE: Models\AppModels.cs -----
+using System.ComponentModel;
+using System.Runtime.CompilerServices;
+
+namespace TextFileProcessor.Models;
+
+public enum JobStatus
+{
+    Pending,
+    Running,
+    Completed,
+    Failed,
+    Cancelled,
+    Interrupted,
+    Skipped
+}
+
+public sealed class DomainJob : INotifyPropertyChanged
+{
+    private JobStatus _status;
+    private int _progress;
+    private string _message = string.Empty;
+    private string _outputPath = string.Empty;
+    private string _databaseName = string.Empty;
+    private string _databaseUser = string.Empty;
+
+    public string Id { get; set; } = Guid.NewGuid().ToString("N");
+
+    public string Domain { get; set; } = string.Empty;
+
+    public string SecondValue { get; set; } = string.Empty;
+
+    public string ConfigPath { get; set; } = string.Empty;
+
+    public string SqlPath { get; set; } = string.Empty;
+
+    public DateTime CreatedAt { get; set; } = DateTime.Now;
+
+    public DateTime UpdatedAt { get; set; } = DateTime.Now;
+
+    public JobStatus Status
+    {
+        get => _status;
+        set => SetField(ref _status, value);
+    }
+
+    public int Progress
+    {
+        get => _progress;
+        set => SetField(ref _progress, value);
+    }
+
+    public string Message
+    {
+        get => _message;
+        set => SetField(ref _message, value);
+    }
+
+    public string OutputPath
+    {
+        get => _outputPath;
+        set => SetField(ref _outputPath, value);
+    }
+
+    public string DatabaseName
+    {
+        get => _databaseName;
+        set => SetField(ref _databaseName, value);
+    }
+
+    public string DatabaseUser
+    {
+        get => _databaseUser;
+        set => SetField(ref _databaseUser, value);
+    }
+
+    public event PropertyChangedEventHandler? PropertyChanged;
+
+    private void SetField<T>(
+        ref T field,
+        T value,
+        [CallerMemberName] string? propertyName = null)
+    {
+        if (EqualityComparer<T>.Default.Equals(field, value))
+        {
+            return;
+        }
+
+        field = value;
+
+        PropertyChanged?.Invoke(
+            this,
+            new PropertyChangedEventArgs(propertyName));
+    }
+}
+
+public sealed class ProcessingOptions
+{
+    public string SourceFolder { get; init; } = string.Empty;
+
+    public string OutputFolder { get; init; } = string.Empty;
+
+    public string SearchText1 { get; init; } = string.Empty;
+
+    public string SearchText2 { get; init; } = string.Empty;
+
+    public bool IncludeAdditionalExtensions { get; init; }
+
+    public bool ReplaceExistingFolders { get; init; }
+}
+
+public sealed class DatabaseCredentials
+{
+    public string Name { get; init; } = string.Empty;
+
+    public string User { get; init; } = string.Empty;
+
+    public string Password { get; init; } = string.Empty;
+}
+
+public sealed class ProcessingResult
+{
+    public string FinalFolder { get; init; } = string.Empty;
+
+    public string ConfigPath { get; init; } = string.Empty;
+
+    public string SqlPath { get; init; } = string.Empty;
+
+    public string StartFile { get; init; } = string.Empty;
+
+    public DatabaseCredentials Credentials { get; init; } = new();
+
+    public int FilesProcessed { get; init; }
+
+    public int ReplacementCount1 { get; init; }
+
+    public int ReplacementCount2 { get; init; }
+}
+
+public sealed class LogEntry
+{
+    public DateTime CreatedAt { get; init; } = DateTime.Now;
+
+    public string Level { get; init; } = "INFO";
+
+    public string Domain { get; init; } = string.Empty;
+
+    public string Message { get; init; } = string.Empty;
+
+    public string DisplayTime =>
+        CreatedAt.ToString("dd.MM.yyyy HH:mm:ss");
+}
+
+
+----- FILE: Models\IspmanagerOperationResult.cs -----
+namespace TextFileProcessor.Models;
+
+public sealed class IspmanagerOperationResult
+{
+    public bool Success { get; init; }
+
+    public string Message { get; init; } = string.Empty;
+
+    public string DiagnosticPath { get; init; } = string.Empty;
+}
+
+
+----- FILE: Models\IspmanagerSettings.cs -----
+namespace TextFileProcessor.Models;
+
+public sealed class IspmanagerSettings
+{
+    public string PanelUrl { get; set; } =
+        "https://185.115.33.18:1500/ispmgr";
+
+    public string Login { get; set; } = "root";
+
+    public string EncryptedPassword { get; set; } = string.Empty;
+
+    public string Owner { get; set; } = "www-root";
+
+    public string PhpVersion { get; set; } = "8.3.8";
+
+    public bool IgnoreCertificateErrors { get; set; } = true;
+
+    public bool ShowBrowser { get; set; } = true;
+}
+
+
+----- FILE: Security\DpapiSecretProtector.cs -----
+using System.Security.Cryptography;
+using System.Text;
+
+namespace TextFileProcessor.Security;
+
+public sealed class DpapiSecretProtector
+{
+    private static readonly byte[] Entropy =
+        Encoding.UTF8.GetBytes(
+            "TextFileProcessor.ISPmanager.Password.v1");
+
+    public string Protect(string value)
+    {
+        if (string.IsNullOrEmpty(value))
+        {
+            return string.Empty;
+        }
+
+        var plainBytes = Encoding.UTF8.GetBytes(value);
+        byte[]? protectedBytes = null;
+
+        try
+        {
+            protectedBytes = ProtectedData.Protect(
+                plainBytes,
+                Entropy,
+                DataProtectionScope.CurrentUser);
+
+            return Convert.ToBase64String(protectedBytes);
+        }
+        finally
+        {
+            CryptographicOperations.ZeroMemory(plainBytes);
+
+            if (protectedBytes is not null)
+            {
+                CryptographicOperations.ZeroMemory(
+                    protectedBytes);
+            }
+        }
+    }
+
+    public string Unprotect(string protectedValue)
+    {
+        if (string.IsNullOrWhiteSpace(protectedValue))
+        {
+            return string.Empty;
+        }
+
+        byte[] encryptedBytes;
+
+        try
+        {
+            encryptedBytes =
+                Convert.FromBase64String(protectedValue);
+        }
+        catch (FormatException exception)
+        {
+            throw new InvalidOperationException(
+                "РЎРѕС…СЂР°РЅС‘РЅРЅС‹Р№ РїР°СЂРѕР»СЊ ISPmanager РїРѕРІСЂРµР¶РґС‘РЅ.",
+                exception);
+        }
+
+        byte[]? plainBytes = null;
+
+        try
+        {
+            plainBytes = ProtectedData.Unprotect(
+                encryptedBytes,
+                Entropy,
+                DataProtectionScope.CurrentUser);
+
+            return Encoding.UTF8.GetString(plainBytes);
+        }
+        catch (CryptographicException exception)
+        {
+            throw new InvalidOperationException(
+                "РќРµ СѓРґР°Р»РѕСЃСЊ СЂР°СЃС€РёС„СЂРѕРІР°С‚СЊ РїР°СЂРѕР»СЊ ISPmanager. " +
+                "РџР°СЂРѕР»СЊ РґРѕСЃС‚СѓРїРµРЅ С‚РѕР»СЊРєРѕ С‚РµРєСѓС‰РµР№ СѓС‡С‘С‚РЅРѕР№ Р·Р°РїРёСЃРё Windows.",
+                exception);
+        }
+        finally
+        {
+            CryptographicOperations.ZeroMemory(
+                encryptedBytes);
+
+            if (plainBytes is not null)
+            {
+                CryptographicOperations.ZeroMemory(
+                    plainBytes);
+            }
+        }
+    }
+}
+
+----- FILE: Services\DomainService.cs -----
+using System.Globalization;
+
+namespace TextFileProcessor.Services;
+
+public sealed class DomainService
+{
+    public string Normalize(string input)
+    {
+        var value = input.Trim();
+
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            throw new InvalidOperationException(
+                "Обнаружена пустая строка домена.");
+        }
+
+        if (!value.Contains(
+                "://",
+                StringComparison.Ordinal))
+        {
+            value = "https://" + value;
+        }
+
+        if (!Uri.TryCreate(
+                value,
+                UriKind.Absolute,
+                out var uri))
+        {
+            throw new InvalidOperationException(
+                $"Некорректный домен: {input}");
+        }
+
+        if (uri.Scheme != Uri.UriSchemeHttp &&
+            uri.Scheme != Uri.UriSchemeHttps)
+        {
+            throw new InvalidOperationException(
+                $"Некорректный протокол домена: {input}");
+        }
+
+        var unicodeHost = uri.Host
+            .Trim()
+            .TrimEnd('.');
+
+        if (unicodeHost.StartsWith(
+                "www.",
+                StringComparison.OrdinalIgnoreCase))
+        {
+            unicodeHost = unicodeHost[4..];
+        }
+
+        string host;
+
+        try
+        {
+            host = new IdnMapping()
+                .GetAscii(unicodeHost)
+                .ToLowerInvariant();
+        }
+        catch
+        {
+            throw new InvalidOperationException(
+                $"Некорректный домен: {input}");
+        }
+
+        if (host.Length > 253)
+        {
+            throw new InvalidOperationException(
+                $"Домен слишком длинный: {input}");
+        }
+
+        var labels = host.Split(
+            '.',
+            StringSplitOptions.RemoveEmptyEntries);
+
+        if (labels.Length < 2)
+        {
+            throw new InvalidOperationException(
+                $"У домена отсутствует доменная зона: {input}");
+        }
+
+        foreach (var label in labels)
+        {
+            if (label.Length is < 1 or > 63 ||
+                label.StartsWith('-') ||
+                label.EndsWith('-') ||
+                label.Any(character =>
+                    !char.IsLetterOrDigit(character) &&
+                    character != '-'))
+            {
+                throw new InvalidOperationException(
+                    $"Некорректный домен: {input}");
+            }
+        }
+
+        return host;
+    }
+}
+
+
+----- FILE: Services\FileProcessingService.cs -----
+using System.Text;
+using System.Text.RegularExpressions;
+using TextFileProcessor.Models;
+
+namespace TextFileProcessor.Services;
+
+public sealed class FileProcessingService
+{
+    private static readonly HashSet<string> BaseExtensions =
+        new(StringComparer.OrdinalIgnoreCase)
+        {
+            ".php",
+            ".html",
+            ".htm",
+            ".txt",
+            ".sql"
+        };
+
+    private static readonly HashSet<string> AdditionalExtensions =
+        new(StringComparer.OrdinalIgnoreCase)
+        {
+            ".css",
+            ".js",
+            ".json",
+            ".xml",
+            ".env",
+            ".ini",
+            ".conf"
+        };
+
+    public string CreatePreview(
+        string sourceFolder,
+        string outputFolder,
+        string domain)
+    {
+        ValidatePaths(sourceFolder, outputFolder);
+
+        var rootFiles = Directory
+            .EnumerateFiles(
+                sourceFolder,
+                "*",
+                SearchOption.TopDirectoryOnly)
+            .ToList();
+
+        var rootDirectories = Directory
+            .EnumerateDirectories(
+                sourceFolder,
+                "*",
+                SearchOption.TopDirectoryOnly)
+            .ToList();
+
+        var startFile = FindOptionalStartFile(sourceFolder);
+
+        var configFiles = Directory
+            .EnumerateFiles(
+                sourceFolder,
+                "config.php",
+                SearchOption.AllDirectories)
+            .ToList();
+
+        var sqlFiles = Directory
+            .EnumerateFiles(
+                sourceFolder,
+                "*.sql",
+                SearchOption.AllDirectories)
+            .ToList();
+
+        var finalDomain = string.IsNullOrWhiteSpace(domain)
+            ? "<домен>"
+            : domain;
+
+        var warning = string.Empty;
+
+        if (startFile is null &&
+            rootFiles.Count == 0 &&
+            rootDirectories.Count == 1)
+        {
+            warning =
+                "\n\nВНИМАНИЕ:\n" +
+                "В выбранном корне находится только одна вложенная папка. " +
+                "Возможно, выбран внешний уровень сайта.";
+        }
+
+        return
+            $"Исходный корень:\n{sourceFolder}\n\n" +
+            $"Конечный корень:\n" +
+            $"{Path.Combine(outputFolder, finalDomain)}\n\n" +
+            $"Стартовый файл:\n" +
+            $"{startFile ?? "НЕ НАЙДЕН В КОРНЕ"}\n\n" +
+            $"config.php найдено: {configFiles.Count}\n" +
+            $"SQL-файлов найдено: {sqlFiles.Count}\n" +
+            $"Файлов в корне: {rootFiles.Count}\n" +
+            $"Папок в корне: {rootDirectories.Count}" +
+            warning;
+    }
+
+    public async Task<ProcessingResult> ProcessAsync(
+        DomainJob job,
+        ProcessingOptions options,
+        Func<string, string, bool> credentialsAreUnique,
+        Action<int, string> report,
+        CancellationToken cancellationToken)
+    {
+        ValidatePaths(
+            options.SourceFolder,
+            options.OutputFolder);
+
+        if (string.IsNullOrWhiteSpace(options.SearchText1))
+        {
+            throw new InvalidOperationException(
+                "Искомый текст №1 не заполнен.");
+        }
+
+        Directory.CreateDirectory(options.OutputFolder);
+
+        var shortId = job.Id.Length >= 8
+            ? job.Id[..8]
+            : job.Id;
+
+        var temporaryFolder = Path.Combine(
+            options.OutputFolder,
+            $".processing-{job.Domain}-{shortId}");
+
+        var finalFolder = Path.Combine(
+            options.OutputFolder,
+            job.Domain);
+
+        var backupFolder = Path.Combine(
+            options.OutputFolder,
+            $".backup-{job.Domain}-{shortId}");
+
+        DeleteDirectoryIfExists(temporaryFolder);
+
+        Directory.CreateDirectory(temporaryFolder);
+
+        try
+        {
+            report(
+                5,
+                "Копирование содержимого исходного корня.");
+
+            await Task.Run(
+                () => CopyDirectoryContents(
+                    options.SourceFolder,
+                    temporaryFolder,
+                    cancellationToken),
+                cancellationToken);
+
+            cancellationToken.ThrowIfCancellationRequested();
+
+            report(
+                30,
+                "Выполнение текстовых замен.");
+
+            var replacementResult = await Task.Run(
+                () => ReplaceText(
+                    temporaryFolder,
+                    job,
+                    options,
+                    cancellationToken),
+                cancellationToken);
+
+            if (replacementResult.ReplacementCount1 == 0)
+            {
+                throw new InvalidOperationException(
+                    $"Искомый текст №1 «{options.SearchText1}» " +
+                    "не найден в разрешённых текстовых файлах.");
+            }
+
+            report(
+                65,
+                "Проверка структуры и стартового файла.");
+
+            var startFile = FindRequiredStartFile(
+                temporaryFolder);
+
+            EnsureNoExtraDomainLevel(
+                temporaryFolder,
+                job.Domain);
+
+            report(
+                72,
+                "Чтение обработанного config.php.");
+
+            var configResult = ParseConfigPhp(
+                temporaryFolder);
+
+            if (!credentialsAreUnique(
+                    configResult.Credentials.Name,
+                    configResult.Credentials.User))
+            {
+                throw new InvalidOperationException(
+                    "Значения name или user из config.php " +
+                    "повторяются в другом завершённом задании.");
+            }
+
+            report(
+                78,
+                "Поиск обработанного SQL-файла.");
+
+            var sqlPath = FindSqlFile(
+                temporaryFolder);
+
+            cancellationToken.ThrowIfCancellationRequested();
+
+            report(
+                85,
+                "Подготовка конечной папки домена.");
+
+            var backupCreated = false;
+
+            try
+            {
+                if (Directory.Exists(finalFolder))
+                {
+                    if (!options.ReplaceExistingFolders)
+                    {
+                        throw new InvalidOperationException(
+                            $"Конечная папка уже существует: {finalFolder}");
+                    }
+
+                    DeleteDirectoryIfExists(backupFolder);
+
+                    Directory.Move(
+                        finalFolder,
+                        backupFolder);
+
+                    backupCreated = true;
+                }
+
+                Directory.Move(
+                    temporaryFolder,
+                    finalFolder);
+
+                if (backupCreated)
+                {
+                    DeleteDirectoryIfExists(backupFolder);
+                }
+            }
+            catch
+            {
+                if (Directory.Exists(finalFolder) &&
+                    backupCreated)
+                {
+                    DeleteDirectoryIfExists(finalFolder);
+                }
+
+                if (backupCreated &&
+                    Directory.Exists(backupFolder) &&
+                    !Directory.Exists(finalFolder))
+                {
+                    Directory.Move(
+                        backupFolder,
+                        finalFolder);
+                }
+
+                throw;
+            }
+
+            report(
+                100,
+                "Локальная обработка завершена.");
+
+            return new ProcessingResult
+            {
+                FinalFolder = finalFolder,
+                StartFile = ChangeRoot(
+                    startFile,
+                    temporaryFolder,
+                    finalFolder),
+                ConfigPath = ChangeRoot(
+                    configResult.Path,
+                    temporaryFolder,
+                    finalFolder),
+                SqlPath = ChangeRoot(
+                    sqlPath,
+                    temporaryFolder,
+                    finalFolder),
+                Credentials = configResult.Credentials,
+                FilesProcessed =
+                    replacementResult.FilesProcessed,
+                ReplacementCount1 =
+                    replacementResult.ReplacementCount1,
+                ReplacementCount2 =
+                    replacementResult.ReplacementCount2
+            };
+        }
+        catch
+        {
+            try
+            {
+                DeleteDirectoryIfExists(temporaryFolder);
+            }
+            catch
+            {
+                // Папка может быть занята сторонней программой.
+            }
+
+            throw;
+        }
+    }
+
+    private static void ValidatePaths(
+        string sourceFolder,
+        string outputFolder)
+    {
+        if (string.IsNullOrWhiteSpace(sourceFolder) ||
+            !Directory.Exists(sourceFolder))
+        {
+            throw new DirectoryNotFoundException(
+                "Исходная папка не существует.");
+        }
+
+        if (string.IsNullOrWhiteSpace(outputFolder))
+        {
+            throw new InvalidOperationException(
+                "Не выбрана папка результата.");
+        }
+
+        var source = NormalizePath(sourceFolder);
+        var output = NormalizePath(outputFolder);
+
+        if (string.Equals(
+                source,
+                output,
+                StringComparison.OrdinalIgnoreCase))
+        {
+            throw new InvalidOperationException(
+                "Исходная папка и папка результата не могут совпадать.");
+        }
+
+        if (output.StartsWith(
+                source + Path.DirectorySeparatorChar,
+                StringComparison.OrdinalIgnoreCase))
+        {
+            throw new InvalidOperationException(
+                "Папка результата не должна находиться " +
+                "внутри исходной папки.");
+        }
+
+        if (source.StartsWith(
+                output + Path.DirectorySeparatorChar,
+                StringComparison.OrdinalIgnoreCase))
+        {
+            throw new InvalidOperationException(
+                "Исходная папка не должна находиться " +
+                "внутри папки результата.");
+        }
+    }
+
+    private static string NormalizePath(string path)
+    {
+        return Path.GetFullPath(path).TrimEnd(
+            Path.DirectorySeparatorChar,
+            Path.AltDirectorySeparatorChar);
+    }
+
+    private static void CopyDirectoryContents(
+        string source,
+        string destination,
+        CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+
+        foreach (var sourceFile in Directory.EnumerateFiles(
+                     source,
+                     "*",
+                     SearchOption.TopDirectoryOnly))
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            var fileInfo = new FileInfo(sourceFile);
+
+            if ((fileInfo.Attributes &
+                 FileAttributes.ReparsePoint) != 0)
+            {
+                continue;
+            }
+
+            var destinationFile = Path.Combine(
+                destination,
+                fileInfo.Name);
+
+            File.Copy(
+                sourceFile,
+                destinationFile,
+                true);
+        }
+
+        foreach (var sourceDirectory in
+                 Directory.EnumerateDirectories(
+                     source,
+                     "*",
+                     SearchOption.TopDirectoryOnly))
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            var directoryInfo =
+                new DirectoryInfo(sourceDirectory);
+
+            if ((directoryInfo.Attributes &
+                 FileAttributes.ReparsePoint) != 0)
+            {
+                continue;
+            }
+
+            var destinationDirectory = Path.Combine(
+                destination,
+                directoryInfo.Name);
+
+            Directory.CreateDirectory(
+                destinationDirectory);
+
+            CopyDirectoryContents(
+                sourceDirectory,
+                destinationDirectory,
+                cancellationToken);
+        }
+    }
+
+    private static ReplacementResult ReplaceText(
+        string root,
+        DomainJob job,
+        ProcessingOptions options,
+        CancellationToken cancellationToken)
+    {
+        var extensions = new HashSet<string>(
+            BaseExtensions,
+            StringComparer.OrdinalIgnoreCase);
+
+        if (options.IncludeAdditionalExtensions)
+        {
+            extensions.UnionWith(
+                AdditionalExtensions);
+        }
+
+        var filesProcessed = 0;
+        var replacementCount1 = 0;
+        var replacementCount2 = 0;
+
+        foreach (var path in Directory.EnumerateFiles(
+                     root,
+                     "*",
+                     SearchOption.AllDirectories))
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            var extension = Path.GetExtension(path);
+
+            if (!extensions.Contains(extension))
+            {
+                continue;
+            }
+
+            if (!IsProbablyText(path))
+            {
+                continue;
+            }
+
+            var textDocument = ReadText(path);
+            var content = textDocument.Text;
+            var changed = false;
+
+            var count1 = CountOccurrences(
+                content,
+                options.SearchText1);
+
+            if (count1 > 0)
+            {
+                content = content.Replace(
+                    options.SearchText1,
+                    job.Domain,
+                    StringComparison.Ordinal);
+
+                replacementCount1 += count1;
+                changed = true;
+            }
+
+            if (!string.IsNullOrWhiteSpace(
+                    options.SearchText2) &&
+                !string.IsNullOrWhiteSpace(
+                    job.SecondValue))
+            {
+                var count2 = CountOccurrences(
+                    content,
+                    options.SearchText2);
+
+                if (count2 > 0)
+                {
+                    content = content.Replace(
+                        options.SearchText2,
+                        job.SecondValue,
+                        StringComparison.Ordinal);
+
+                    replacementCount2 += count2;
+                    changed = true;
+                }
+            }
+
+            if (changed)
+            {
+                WriteTextAtomically(
+                    path,
+                    content,
+                    textDocument.Encoding);
+            }
+
+            filesProcessed++;
+        }
+
+        return new ReplacementResult(
+            filesProcessed,
+            replacementCount1,
+            replacementCount2);
+    }
+
+    private static bool IsProbablyText(string path)
+    {
+        const int sampleSize = 8192;
+
+        using var stream = new FileStream(
+            path,
+            FileMode.Open,
+            FileAccess.Read,
+            FileShare.Read);
+
+        var size = (int)Math.Min(
+            stream.Length,
+            sampleSize);
+
+        if (size == 0)
+        {
+            return true;
+        }
+
+        var buffer = new byte[size];
+        var read = stream.Read(
+            buffer,
+            0,
+            buffer.Length);
+
+        var controlCharacters = 0;
+
+        for (var index = 0;
+             index < read;
+             index++)
+        {
+            var current = buffer[index];
+
+            if (current == 0)
+            {
+                return false;
+            }
+
+            if (current < 9 ||
+                current is > 13 and < 32)
+            {
+                controlCharacters++;
+            }
+        }
+
+        return controlCharacters <=
+               Math.Max(3, read / 50);
+    }
+
+    private static TextDocument ReadText(string path)
+    {
+        var bytes = File.ReadAllBytes(path);
+
+        if (bytes.Length >= 3 &&
+            bytes[0] == 0xEF &&
+            bytes[1] == 0xBB &&
+            bytes[2] == 0xBF)
+        {
+            var encoding = new UTF8Encoding(true);
+
+            return new TextDocument(
+                encoding.GetString(
+                    bytes,
+                    3,
+                    bytes.Length - 3),
+                encoding);
+        }
+
+        if (bytes.Length >= 2 &&
+            bytes[0] == 0xFF &&
+            bytes[1] == 0xFE)
+        {
+            return new TextDocument(
+                Encoding.Unicode.GetString(
+                    bytes,
+                    2,
+                    bytes.Length - 2),
+                Encoding.Unicode);
+        }
+
+        if (bytes.Length >= 2 &&
+            bytes[0] == 0xFE &&
+            bytes[1] == 0xFF)
+        {
+            return new TextDocument(
+                Encoding.BigEndianUnicode.GetString(
+                    bytes,
+                    2,
+                    bytes.Length - 2),
+                Encoding.BigEndianUnicode);
+        }
+
+        try
+        {
+            var utf8 = new UTF8Encoding(
+                false,
+                true);
+
+            return new TextDocument(
+                utf8.GetString(bytes),
+                new UTF8Encoding(false));
+        }
+        catch (DecoderFallbackException)
+        {
+            return new TextDocument(
+                Encoding.Latin1.GetString(bytes),
+                Encoding.Latin1);
+        }
+    }
+
+    private static void WriteTextAtomically(
+        string path,
+        string content,
+        Encoding encoding)
+    {
+        var temporaryPath =
+            path + ".replace-" +
+            Guid.NewGuid().ToString("N");
+
+        try
+        {
+            File.WriteAllText(
+                temporaryPath,
+                content,
+                encoding);
+
+            File.Move(
+                temporaryPath,
+                path,
+                true);
+        }
+        finally
+        {
+            if (File.Exists(temporaryPath))
+            {
+                File.Delete(temporaryPath);
+            }
+        }
+    }
+
+    private static int CountOccurrences(
+        string content,
+        string searchText)
+    {
+        if (string.IsNullOrEmpty(searchText))
+        {
+            return 0;
+        }
+
+        var count = 0;
+        var position = 0;
+
+        while (true)
+        {
+            position = content.IndexOf(
+                searchText,
+                position,
+                StringComparison.Ordinal);
+
+            if (position < 0)
+            {
+                return count;
+            }
+
+            count++;
+            position += searchText.Length;
+        }
+    }
+
+    private static string FindRequiredStartFile(
+        string root)
+    {
+        var result = FindOptionalStartFile(root);
+
+        if (result is null)
+        {
+            throw new InvalidOperationException(
+                "В корне обработанного сайта не найден " +
+                "index.php, index.html или index.htm.");
+        }
+
+        return result;
+    }
+
+    private static string? FindOptionalStartFile(
+        string root)
+    {
+        var candidates = new[]
+        {
+            "index.php",
+            "index.html",
+            "index.htm"
+        };
+
+        foreach (var candidate in candidates)
+        {
+            var path = Path.Combine(
+                root,
+                candidate);
+
+            if (File.Exists(path))
+            {
+                return path;
+            }
+        }
+
+        return null;
+    }
+
+    private static void EnsureNoExtraDomainLevel(
+        string root,
+        string domain)
+    {
+        var nestedFolder = Path.Combine(
+            root,
+            domain);
+
+        if (Directory.Exists(nestedFolder))
+        {
+            throw new InvalidOperationException(
+                $"Обнаружен лишний уровень: {domain}\\{domain}. " +
+                "Выберите внутренний корень исходного сайта.");
+        }
+    }
+
+    private static ConfigResult ParseConfigPhp(
+        string root)
+    {
+        var configFiles = Directory
+            .EnumerateFiles(
+                root,
+                "config.php",
+                SearchOption.AllDirectories)
+            .ToList();
+
+        if (configFiles.Count == 0)
+        {
+            throw new InvalidOperationException(
+                "В обработанной копии не найден config.php.");
+        }
+
+        if (configFiles.Count > 1)
+        {
+            var preferredFiles = configFiles
+                .Where(path =>
+                    path.Replace('\\', '/')
+                        .EndsWith(
+                            "/config/config.php",
+                            StringComparison.OrdinalIgnoreCase))
+                .ToList();
+
+            if (preferredFiles.Count == 1)
+            {
+                configFiles = preferredFiles;
+            }
+            else
+            {
+                throw new InvalidOperationException(
+                    "Найдено несколько config.php. " +
+                    "Невозможно однозначно выбрать конфигурацию.");
+            }
+        }
+
+        var configPath = configFiles[0];
+        var content = File.ReadAllText(configPath);
+
+        var name = ReadPhpArrayValue(
+            content,
+            "name");
+
+        var user = ReadPhpArrayValue(
+            content,
+            "user");
+
+        var password = ReadPhpArrayValue(
+            content,
+            "pass");
+
+        if (string.IsNullOrWhiteSpace(name) ||
+            string.IsNullOrWhiteSpace(user) ||
+            string.IsNullOrWhiteSpace(password))
+        {
+            throw new InvalidOperationException(
+                "В обработанном config.php не удалось " +
+                "прочитать name, user и pass.");
+        }
+
+        return new ConfigResult(
+            configPath,
+            new DatabaseCredentials
+            {
+                Name = name,
+                User = user,
+                Password = password
+            });
+    }
+
+    private static string ReadPhpArrayValue(
+        string content,
+        string key)
+    {
+        var pattern =
+            $@"['""]{Regex.Escape(key)}['""]" +
+            @"\s*=>\s*(['""])(?<value>.*?)\1";
+
+        var match = Regex.Match(
+            content,
+            pattern,
+            RegexOptions.IgnoreCase |
+            RegexOptions.Singleline);
+
+        return match.Success
+            ? match.Groups["value"].Value.Trim()
+            : string.Empty;
+    }
+
+    private static string FindSqlFile(
+        string root)
+    {
+        var sqlFiles = Directory
+            .EnumerateFiles(
+                root,
+                "*.sql",
+                SearchOption.AllDirectories)
+            .Select(path => new FileInfo(path))
+            .OrderByDescending(file =>
+                string.Equals(
+                    file.Name,
+                    "database.sql",
+                    StringComparison.OrdinalIgnoreCase))
+            .ThenByDescending(file => file.Length)
+            .ToList();
+
+        if (sqlFiles.Count == 0)
+        {
+            throw new InvalidOperationException(
+                "В обработанной копии не найден SQL-файл.");
+        }
+
+        return sqlFiles[0].FullName;
+    }
+
+    private static string ChangeRoot(
+        string path,
+        string oldRoot,
+        string newRoot)
+    {
+        var relativePath = Path.GetRelativePath(
+            oldRoot,
+            path);
+
+        return Path.Combine(
+            newRoot,
+            relativePath);
+    }
+
+    private static void DeleteDirectoryIfExists(
+        string path)
+    {
+        if (!Directory.Exists(path))
+        {
+            return;
+        }
+
+        foreach (var file in Directory.EnumerateFiles(
+                     path,
+                     "*",
+                     SearchOption.AllDirectories))
+        {
+            try
+            {
+                File.SetAttributes(
+                    file,
+                    FileAttributes.Normal);
+            }
+            catch
+            {
+                // Продолжаем стандартное удаление.
+            }
+        }
+
+        Directory.Delete(
+            path,
+            true);
+    }
+
+    private sealed record TextDocument(
+        string Text,
+        Encoding Encoding);
+
+    private sealed record ReplacementResult(
+        int FilesProcessed,
+        int ReplacementCount1,
+        int ReplacementCount2);
+
+    private sealed record ConfigResult(
+        string Path,
+        DatabaseCredentials Credentials);
+}
+
+
+----- FILE: Services\IspmanagerSettingsService.cs -----
+using System.Text;
+using System.Text.Json;
+using TextFileProcessor.Models;
+using TextFileProcessor.Security;
+
+namespace TextFileProcessor.Services;
+
+public sealed class IspmanagerSettingsService
+{
+    private readonly DpapiSecretProtector _protector = new();
+
+    public string SettingsPath { get; }
+
+    public IspmanagerSettingsService()
+    {
+        var directory = Path.Combine(
+            Environment.GetFolderPath(
+                Environment.SpecialFolder.LocalApplicationData),
+            "TextFileProcessor");
+
+        Directory.CreateDirectory(directory);
+
+        SettingsPath = Path.Combine(
+            directory,
+            "ispmanager-settings.json");
+    }
+
+    public IspmanagerSettings Load()
+    {
+        if (!File.Exists(SettingsPath))
+        {
+            return new IspmanagerSettings();
+        }
+
+        try
+        {
+            var json = File.ReadAllText(
+                SettingsPath,
+                Encoding.UTF8);
+
+            return JsonSerializer.Deserialize<IspmanagerSettings>(
+                       json)
+                   ?? new IspmanagerSettings();
+        }
+        catch
+        {
+            return new IspmanagerSettings();
+        }
+    }
+
+    public void Save(
+        IspmanagerSettings settings,
+        string plainPassword)
+    {
+        var settingsToSave = new IspmanagerSettings
+        {
+            PanelUrl = settings.PanelUrl,
+            Login = settings.Login,
+            Owner = settings.Owner,
+            PhpVersion = settings.PhpVersion,
+            IgnoreCertificateErrors =
+                settings.IgnoreCertificateErrors,
+            ShowBrowser = settings.ShowBrowser,
+            EncryptedPassword =
+                string.IsNullOrEmpty(plainPassword)
+                    ? settings.EncryptedPassword
+                    : _protector.Protect(plainPassword)
+        };
+
+        var json = JsonSerializer.Serialize(
+            settingsToSave,
+            new JsonSerializerOptions
+            {
+                WriteIndented = true
+            });
+
+        var temporaryPath =
+            SettingsPath + "." +
+            Guid.NewGuid().ToString("N") +
+            ".tmp";
+
+        File.WriteAllText(
+            temporaryPath,
+            json,
+            new UTF8Encoding(false));
+
+        File.Move(
+            temporaryPath,
+            SettingsPath,
+            true);
+
+        settings.EncryptedPassword =
+            settingsToSave.EncryptedPassword;
+    }
+
+    public string GetPassword(
+        IspmanagerSettings settings,
+        string passwordEnteredInInterface)
+    {
+        if (!string.IsNullOrEmpty(
+                passwordEnteredInInterface))
+        {
+            return passwordEnteredInInterface;
+        }
+
+        return _protector.Unprotect(
+            settings.EncryptedPassword);
+    }
+}
+
+
+
+----- FILE: Services\SensitiveDataRedactor.cs -----
+using System.Text.RegularExpressions;
+
+namespace TextFileProcessor.Services;
+
+public static class SensitiveDataRedactor
+{
+    private static readonly Regex ConnectionPasswordRegex = new(
+        @"(?i)\b(password|passwd|pwd|pass)\s*[:=]\s*[^\s,;]+",
+        RegexOptions.Compiled);
+
+    private static readonly Regex PhpPasswordRegex = new(
+        @"(?i)(['""]pass['""]\s*=>\s*['""])[^'""]*(['""])",
+        RegexOptions.Compiled);
+
+    public static string Redact(string message)
+    {
+        if (string.IsNullOrWhiteSpace(message))
+        {
+            return string.Empty;
+        }
+
+        var result = ConnectionPasswordRegex.Replace(
+            message,
+            "$1=***");
+
+        return PhpPasswordRegex.Replace(
+            result,
+            "$1***$2");
+    }
+}
+
+

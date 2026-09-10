@@ -1,0 +1,56 @@
+СИСТЕМА И СРЕДА СБОРКИ
+
+Дата: 2026-09-01 19:27:32
+ОС: Microsoft Windows NT 10.0.19043.0
+64-разрядная ОС: True
+64-разрядный процесс: True
+PowerShell: 5.1.19041.1320
+Рабочая папка: C:\Users\User\Desktop\Adminki\. Программа домены\Новая папка
+
+DOTNET INFO
+
+╨Я╨Р╨Ъ╨Х╨в SDK ╨Ф╨Ы╨п .NET:
+ Version:           8.0.424
+ Commit:            5cbde90d8f
+ Workload version:  8.0.400-manifests.d7d8d4b1
+ MSBuild version:   17.11.48+02bf66295
+
+╨б╤А╨╡╨┤╨░ ╨▓╤Л╨┐╨╛╨╗╨╜╨╡╨╜╨╕╤П:
+ OS Name:     Windows
+ OS Version:  10.0.19043
+ OS Platform: Windows
+ RID:         win-x64
+ Base Path:   C:\Users\User\AppData\Local\Microsoft\dotnet\sdk\8.0.424\
+
+╨г╤Б╤В╨░╨╜╨╛╨▓╨╗╨╡╨╜╨╜╤Л╨╡ ╤А╨░╨▒╨╛╤З╨╕╨╡ ╨╜╨░╨│╤А╤Г╨╖╨║╨╕ .NET:
+╨Э╨░╤Б╤В╤А╨╛╨╡╨╜╨╛ ╨╜╨░ ╨╕╤Б╨┐╨╛╨╗╤М╨╖╨╛╨▓╨░╨╜╨╕╨╡ loose manifests ╨┐╤А╨╕ ╤Г╤Б╤В╨░╨╜╨╛╨▓╨║╨╡ ╨╜╨╛╨▓╤Л╤Е ╨╝╨░╨╜╨╕╤Д╨╡╤Б╤В╨╛╨▓.
+╨Э╨╡╤В ╤Г╤Б╤В╨░╨╜╨╛╨▓╨╗╨╡╨╜╨╜╤Л╤Е ╤А╨░╨▒╨╛╤З╨╕╤Е ╨╜╨░╨│╤А╤Г╨╖╨╛╨║ ╨┤╨╗╤П ╨╛╤В╨╛╨▒╤А╨░╨╢╨╡╨╜╨╕╤П.
+
+Host:
+  Version:      8.0.30
+  Architecture: x64
+  Commit:       a83db3e0eb
+
+.NET SDKs installed:
+  8.0.424 [C:\Users\User\AppData\Local\Microsoft\dotnet\sdk]
+
+.NET runtimes installed:
+  Microsoft.AspNetCore.App 8.0.30 [C:\Users\User\AppData\Local\Microsoft\dotnet\shared\Microsoft.AspNetCore.App]
+  Microsoft.NETCore.App 8.0.30 [C:\Users\User\AppData\Local\Microsoft\dotnet\shared\Microsoft.NETCore.App]
+  Microsoft.WindowsDesktop.App 8.0.30 [C:\Users\User\AppData\Local\Microsoft\dotnet\shared\Microsoft.WindowsDesktop.App]
+
+Other architectures found:
+  x86   [C:\Program Files (x86)\dotnet]
+    registered at [HKLM\SOFTWARE\dotnet\Setup\InstalledVersions\x86\InstallLocation]
+
+Environment variables:
+  DOTNET_ROOT       [C:\Users\User\AppData\Local\Microsoft\dotnet]
+
+global.json file:
+  Not found
+
+Learn more:
+  https://aka.ms/dotnet/info
+
+Download .NET:
+  https://aka.ms/dotnet/download

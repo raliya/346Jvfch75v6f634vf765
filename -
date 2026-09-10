@@ -1,0 +1,778 @@
+    1: #requires -Version 5.1
+    2: 
+    3: $ErrorActionPreference = 'Stop'
+    4: Set-StrictMode -Version Latest
+    5: 
+    6: $ProjectRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
+    7: $Utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+    8: 
+    9: $Files = @{
+   10:     Project = Join-Path $ProjectRoot 'TextFileProcessor.csproj'
+   11:     Main    = Join-Path $ProjectRoot 'MainWindow.xaml.cs'
+   12:     Build2  = Join-Path $ProjectRoot 'MainWindow.Build2.cs'
+   13:     Build3  = Join-Path $ProjectRoot 'MainWindow.Build3.cs'
+   14:     Build4  = Join-Path $ProjectRoot 'MainWindow.Build4.cs'
+   15:     Build7  = Join-Path $ProjectRoot 'MainWindow.Build7.cs'
+   16: }
+   17: 
+   18: function Read-Source {
+   19:     param([string]$Path)
+   20: 
+   21:     return [IO.File]::ReadAllText($Path).Replace(
+   22:         "`r`n",
+   23:         "`n"
+   24:     ).Replace(
+   25:         "`r",
+   26:         "`n"
+   27:     )
+   28: }
+   29: 
+   30: function Write-Source {
+   31:     param(
+   32:         [string]$Path,
+   33:         [string]$Text
+   34:     )
+   35: 
+   36:     [IO.File]::WriteAllText(
+   37:         $Path,
+   38:         $Text.Replace("`n", "`r`n"),
+   39:         $script:Utf8NoBom
+   40:     )
+   41: }
+   42: 
+   43: function Replace-Required {
+   44:     param(
+   45:         [string]$Text,
+   46:         [string]$Old,
+   47:         [string]$New,
+   48:         [string]$Name,
+   49:         [string]$Marker
+   50:     )
+   51: 
+   52:     if (-not [string]::IsNullOrWhiteSpace($Marker) -and
+   53:         $Text.Contains($Marker)) {
+   54:         Write-Host "Уже исправлено: $Name" -ForegroundColor Yellow
+   55:         return $Text
+   56:     }
+   57: 
+   58:     if (-not $Text.Contains($Old)) {
+   59:         throw "Не найден блок для исправления: $Name"
+   60:     }
+   61: 
+   62:     Write-Host "Исправлено: $Name" -ForegroundColor Green
+   63:     return $Text.Replace($Old, $New)
+   64: }
+   65: 
+   66: try {
+   67:     Write-Host ''
+   68:     Write-Host '=== BUILD 9: проверка проекта ===' `
+   69:         -ForegroundColor Cyan
+   70: 
+   71:     foreach ($path in $Files.Values) {
+   72:         if (-not (Test-Path -LiteralPath $path -PathType Leaf)) {
+   73:             throw "Не найден файл: $path"
+   74:         }
+   75:     }
+   76: 
+   77:     if (Get-Process `
+   78:         -Name 'TextFileProcessor' `
+   79:         -ErrorAction SilentlyContinue) {
+   80:         throw 'Сначала закройте TextFileProcessor.exe.'
+   81:     }
+   82: 
+   83:     if (-not (Get-Command dotnet.exe `
+   84:         -ErrorAction SilentlyContinue)) {
+   85:         throw 'Не найден .NET SDK. Установите .NET 8 SDK x64.'
+   86:     }
+   87: 
+   88:     Write-Host "Проект: $ProjectRoot"
+   89:     Write-Host "SDK: $(& dotnet.exe --version)" `
+   90:         -ForegroundColor Green
+   91: 
+   92:     # ---------------------------------------------------------
+   93:     # Резервная копия
+   94:     # ---------------------------------------------------------
+   95: 
+   96:     Write-Host ''
+   97:     Write-Host '=== Резервная копия ===' `
+   98:         -ForegroundColor Cyan
+   99: 
+  100:     $Timestamp = Get-Date -Format 'yyyyMMdd-HHmmss'
+  101:     $Backup = Join-Path `
+  102:         $ProjectRoot `
+  103:         ".build9-backup-$Timestamp"
+  104: 
+  105:     New-Item `
+  106:         -ItemType Directory `
+  107:         -Path $Backup `
+  108:         -Force |
+  109:         Out-Null
+  110: 
+  111:     foreach ($path in $Files.Values) {
+  112:         Copy-Item `
+  113:             -LiteralPath $path `
+  114:             -Destination $Backup `
+  115:             -Force
+  116:     }
+  117: 
+  118:     Write-Host "Копия: $Backup" -ForegroundColor Green
+  119: 
+  120:     # ---------------------------------------------------------
+  121:     # MainWindow.xaml.cs
+  122:     # ---------------------------------------------------------
+  123: 
+  124:     Write-Host ''
+  125:     Write-Host '=== Локальная обработка ===' `
+  126:         -ForegroundColor Cyan
+  127: 
+  128:     $Text = Read-Source $Files.Main
+  129: 
+  130:     $Old = @'
+  131:             AddLog(
+  132:                 "INFO",
+  133:                 string.Empty,
+  134:                 StatusTextBlock.Text);
+  135:         }
+  136:         catch (Exception exception)
+  137:         {
+  138:             var message =
+  139:                 SensitiveDataRedactor.Redact(
+  140:                     exception.Message);
+  141: '@
+  142: 
+  143:     $New = @'
+  144:             AddLog(
+  145:                 "INFO",
+  146:                 string.Empty,
+  147:                 StatusTextBlock.Text);
+  148: 
+  149:             if (failedCount > 0)
+  150:             {
+  151:                 CaptureBuild7Error(
+  152:                     new InvalidOperationException(
+  153:                         "Локальная обработка завершилась с ошибками. " +
+  154:                         $"Ошибок: {failedCount}."));
+  155:             }
+  156:             else if (cancelledCount > 0)
+  157:             {
+  158:                 CaptureBuild7Error(
+  159:                     new OperationCanceledException(
+  160:                         "Локальная обработка отменена или пропущена."));
+  161:             }
+  162:             else
+  163:             {
+  164:                 CompleteBuild7LegacyOperation();
+  165:             }
+  166:         }
+  167:         catch (Exception exception)
+  168:         {
+  169:             CaptureBuild7Error(exception);
+  170: 
+  171:             var message =
+  172:                 SensitiveDataRedactor.Redact(
+  173:                     exception.Message);
+  174: '@
+  175: 
+  176:     $Text = Replace-Required `
+  177:         -Text $Text `
+  178:         -Old $Old `
+  179:         -New $New `
+  180:         -Name 'результат локальной обработки' `
+  181:         -Marker 'Локальная обработка завершилась с ошибками.'
+  182: 
+  183:     Write-Source $Files.Main $Text
+  184: 
+  185:     # ---------------------------------------------------------
+  186:     # MainWindow.Build2.cs
+  187:     # ---------------------------------------------------------
+  188: 
+  189:     Write-Host ''
+  190:     Write-Host '=== ISPmanager ===' `
+  191:         -ForegroundColor Cyan
+  192: 
+  193:     $Text = Read-Source $Files.Build2
+  194: 
+  195:     $Old = @'
+  196:             MessageBox.Show(
+  197:                 this,
+  198:                 result.Message,
+  199:                 "ISPmanager",
+  200:                 MessageBoxButton.OK,
+  201:                 MessageBoxImage.Information);
+  202:         }
+  203:         catch (Exception exception)
+  204: '@
+  205: 
+  206:     $New = @'
+  207:             MessageBox.Show(
+  208:                 this,
+  209:                 result.Message,
+  210:                 "ISPmanager",
+  211:                 MessageBoxButton.OK,
+  212:                 MessageBoxImage.Information);
+  213: 
+  214:             CompleteBuild7LegacyOperation();
+  215:         }
+  216:         catch (Exception exception)
+  217: '@
+  218: 
+  219:     $Text = Replace-Required `
+  220:         -Text $Text `
+  221:         -Old $Old `
+  222:         -New $New `
+  223:         -Name 'успешное завершение ISPmanager' `
+  224:         -Marker @'
+  225:             CompleteBuild7LegacyOperation();
+  226:         }
+  227:         catch (Exception exception)
+  228:         {
+  229:             ShowBuild2Error(exception);
+  230: '@
+  231: 
+  232:     $Old = @'
+  233:     private void ShowBuild2Error(Exception exception)
+  234:     {
+  235:         var message =
+  236: '@
+  237: 
+  238:     $New = @'
+  239:     private void ShowBuild2Error(Exception exception)
+  240:     {
+  241:         CaptureBuild7Error(exception);
+  242: 
+  243:         var message =
+  244: '@
+  245: 
+  246:     $Text = Replace-Required `
+  247:         -Text $Text `
+  248:         -Old $Old `
+  249:         -New $New `
+  250:         -Name 'передача ошибки ISPmanager' `
+  251:         -Marker @'
+  252:     private void ShowBuild2Error(Exception exception)
+  253:     {
+  254:         CaptureBuild7Error(exception);
+  255: '@
+  256: 
+  257:     Write-Source $Files.Build2 $Text
+  258: 
+  259:     # ---------------------------------------------------------
+  260:     # MainWindow.Build3.cs
+  261:     # ---------------------------------------------------------
+  262: 
+  263:     Write-Host ''
+  264:     Write-Host '=== SSH/SFTP ===' `
+  265:         -ForegroundColor Cyan
+  266: 
+  267:     $Text = Read-Source $Files.Build3
+  268: 
+  269:     $Old = @'
+  270:             Build3ProgressBar.Value = 100;
+  271:             Build3StatusTextBlock.Text = message;
+  272:             SetStatus(message);
+  273:             AddLog(
+  274:                 "INFO",
+  275:                 selectedJob.Domain,
+  276:                 message);
+  277:             MessageBox.Show(
+  278:                 this,
+  279:                 message,
+  280:                 "SSH/SFTP",
+  281:                 MessageBoxButton.OK,
+  282:                 MessageBoxImage.Information);
+  283:         }
+  284:         catch (Exception exception)
+  285: '@
+  286: 
+  287:     $New = @'
+  288:             Build3ProgressBar.Value = 100;
+  289:             Build3StatusTextBlock.Text = message;
+  290:             SetStatus(message);
+  291:             AddLog(
+  292:                 "INFO",
+  293:                 selectedJob.Domain,
+  294:                 message);
+  295:             MessageBox.Show(
+  296:                 this,
+  297:                 message,
+  298:                 "SSH/SFTP",
+  299:                 MessageBoxButton.OK,
+  300:                 MessageBoxImage.Information);
+  301: 
+  302:             CompleteBuild7LegacyOperation();
+  303:         }
+  304:         catch (Exception exception)
+  305: '@
+  306: 
+  307:     $Text = Replace-Required `
+  308:         -Text $Text `
+  309:         -Old $Old `
+  310:         -New $New `
+  311:         -Name 'успешное завершение загрузки файлов' `
+  312:         -Marker @'
+  313:             Build3ProgressBar.Value = 100;
+  314:             Build3StatusTextBlock.Text = message;
+  315:             SetStatus(message);
+  316:             AddLog(
+  317:                 "INFO",
+  318:                 selectedJob.Domain,
+  319:                 message);
+  320:             MessageBox.Show(
+  321:                 this,
+  322:                 message,
+  323:                 "SSH/SFTP",
+  324:                 MessageBoxButton.OK,
+  325:                 MessageBoxImage.Information);
+  326: 
+  327:             CompleteBuild7LegacyOperation();
+  328: '@
+  329: 
+  330:     $Old = @'
+  331:     private void ShowBuild3Error(Exception exception)
+  332:     {
+  333:         var message =
+  334: '@
+  335: 
+  336:     $New = @'
+  337:     private void ShowBuild3Error(Exception exception)
+  338:     {
+  339:         CaptureBuild7Error(exception);
+  340: 
+  341:         var message =
+  342: '@
+  343: 
+  344:     $Text = Replace-Required `
+  345:         -Text $Text `
+  346:         -Old $Old `
+  347:         -New $New `
+  348:         -Name 'передача ошибки SSH/SFTP' `
+  349:         -Marker @'
+  350:     private void ShowBuild3Error(Exception exception)
+  351:     {
+  352:         CaptureBuild7Error(exception);
+  353: '@
+  354: 
+  355:     Write-Source $Files.Build3 $Text
+  356: 
+  357:     # ---------------------------------------------------------
+  358:     # MainWindow.Build4.cs
+  359:     # ---------------------------------------------------------
+  360: 
+  361:     Write-Host ''
+  362:     Write-Host '=== База данных ===' `
+  363:         -ForegroundColor Cyan
+  364: 
+  365:     $Text = Read-Source $Files.Build4
+  366: 
+  367:     $Old = @'
+  368:             MessageBox.Show(
+  369:                 this,
+  370:                 message,
+  371:                 "Сборка 4 — успешно",
+  372:                 MessageBoxButton.OK,
+  373:                 MessageBoxImage.Information);
+  374:         }
+  375:         catch (Exception exception)
+  376:         {
+  377:             var message =
+  378: '@
+  379: 
+  380:     $New = @'
+  381:             MessageBox.Show(
+  382:                 this,
+  383:                 message,
+  384:                 "Сборка 4 — успешно",
+  385:                 MessageBoxButton.OK,
+  386:                 MessageBoxImage.Information);
+  387: 
+  388:             CompleteBuild7LegacyOperation();
+  389:         }
+  390:         catch (Exception exception)
+  391:         {
+  392:             CaptureBuild7Error(exception);
+  393: 
+  394:             var message =
+  395: '@
+  396: 
+  397:     $Text = Replace-Required `
+  398:         -Text $Text `
+  399:         -Old $Old `
+  400:         -New $New `
+  401:         -Name 'результат развёртывания базы данных' `
+  402:         -Marker @'
+  403:                 "Сборка 4 — успешно",
+  404:                 MessageBoxButton.OK,
+  405:                 MessageBoxImage.Information);
+  406: 
+  407:             CompleteBuild7LegacyOperation();
+  408: '@
+  409: 
+  410:     Write-Source $Files.Build4 $Text
+  411: 
+  412:     # ---------------------------------------------------------
+  413:     # MainWindow.Build7.cs
+  414:     # ---------------------------------------------------------
+  415: 
+  416:     Write-Host ''
+  417:     Write-Host '=== Последовательный запуск ===' `
+  418:         -ForegroundColor Cyan
+  419: 
+  420:     $Text = Read-Source $Files.Build7
+  421: 
+  422:     $Old = @'
+  423:     private Button? _build7SpaceshipButton;
+  424:     private Button? _build7AllButton;
+  425:     private readonly HttpClient _spaceshipHttpClient =
+  426: '@
+  427: 
+  428:     $New = @'
+  429:     private Button? _build7SpaceshipButton;
+  430:     private Button? _build7AllButton;
+  431: 
+  432:     private TaskCompletionSource<object?>?
+  433:         _build7LegacyCompletion;
+  434: 
+  435:     private readonly HttpClient _spaceshipHttpClient =
+  436: '@
+  437: 
+  438:     $Text = Replace-Required `
+  439:         -Text $Text `
+  440:         -Old $Old `
+  441:         -New $New `
+  442:         -Name 'контроллер завершения этапов' `
+  443:         -Marker '_build7LegacyCompletion;'
+  444: 
+  445:     # Все вызовы Start_Click + ненадёжное ожидание.
+  446:     $Old = @'
+  447:             Start_Click(
+  448:                 this,
+  449:                 new RoutedEventArgs());
+  450:             await WaitForLegacyOperationAsync();
+  451: '@
+  452: 
+  453:     $New = @'
+  454:             await RunBuild7LegacyOperationAsync(
+  455:                 () => Start_Click(
+  456:                     this,
+  457:                     new RoutedEventArgs()),
+  458:                 "локальная обработка");
+  459: '@
+  460: 
+  461:     if ($Text.Contains($Old)) {
+  462:         $Text = $Text.Replace($Old, $New)
+  463:         Write-Host 'Исправлены вызовы локальной обработки.' `
+  464:             -ForegroundColor Green
+  465:     }
+  466:     elseif (-not $Text.Contains(
+  467:         '"локальная обработка");'
+  468:     )) {
+  469:         throw 'Не найдены вызовы локальной обработки Build7.'
+  470:     }
+  471: 
+  472:     # Все вызовы создания WWW-домена.
+  473:     $Old = @'
+  474:             CreateSelectedWebDomain_Click(
+  475:                 this,
+  476:                 new RoutedEventArgs());
+  477:             await WaitForLegacyOperationAsync();
+  478: '@
+  479: 
+  480:     $New = @'
+  481:             await RunBuild7LegacyOperationAsync(
+  482:                 () => CreateSelectedWebDomain_Click(
+  483:                     this,
+  484:                     new RoutedEventArgs()),
+  485:                 "создание WWW-домена");
+  486: '@
+  487: 
+  488:     if ($Text.Contains($Old)) {
+  489:         $Text = $Text.Replace($Old, $New)
+  490:         Write-Host 'Исправлены вызовы создания WWW-домена.' `
+  491:             -ForegroundColor Green
+  492:     }
+  493:     elseif (-not $Text.Contains(
+  494:         '"создание WWW-домена");'
+  495:     )) {
+  496:         throw 'Не найдены вызовы создания WWW-домена Build7.'
+  497:     }
+  498: 
+  499:     # Все вызовы загрузки файлов.
+  500:     $Old = @'
+  501:             DeploySelectedSite_Click(
+  502:                 this,
+  503:                 new RoutedEventArgs());
+  504:             await WaitForLegacyOperationAsync();
+  505: '@
+  506: 
+  507:     $New = @'
+  508:             await RunBuild7LegacyOperationAsync(
+  509:                 () => DeploySelectedSite_Click(
+  510:                     this,
+  511:                     new RoutedEventArgs()),
+  512:                 "загрузка файлов");
+  513: '@
+  514: 
+  515:     if ($Text.Contains($Old)) {
+  516:         $Text = $Text.Replace($Old, $New)
+  517:         Write-Host 'Исправлены вызовы загрузки файлов.' `
+  518:             -ForegroundColor Green
+  519:     }
+  520:     elseif (-not $Text.Contains(
+  521:         '"загрузка файлов");'
+  522:     )) {
+  523:         throw 'Не найдены вызовы загрузки файлов Build7.'
+  524:     }
+  525: 
+  526:     # Все вызовы развёртывания БД.
+  527:     $Old = @'
+  528:             DeployDatabaseButton_Click(
+  529:                 this,
+  530:                 new RoutedEventArgs());
+  531:             await WaitForLegacyOperationAsync();
+  532: '@
+  533: 
+  534:     $New = @'
+  535:             await RunBuild7LegacyOperationAsync(
+  536:                 () => DeployDatabaseButton_Click(
+  537:                     this,
+  538:                     new RoutedEventArgs()),
+  539:                 "создание БД и импорт SQL");
+  540: '@
+  541: 
+  542:     if ($Text.Contains($Old)) {
+  543:         $Text = $Text.Replace($Old, $New)
+  544:         Write-Host 'Исправлены вызовы базы данных.' `
+  545:             -ForegroundColor Green
+  546:     }
+  547:     elseif (-not $Text.Contains(
+  548:         '"создание БД и импорт SQL");'
+  549:     )) {
+  550:         throw 'Не найдены вызовы базы данных Build7.'
+  551:     }
+  552: 
+  553:     # Полностью заменяем ненадёжный WaitForLegacyOperationAsync.
+  554:     $Old = @'
+  555:     private async Task WaitForLegacyOperationAsync()
+  556:     {
+  557:         // async void обработчики переключают _isRunning до первого
+  558:         // длительного await. Небольшая задержка позволяет обработчику
+  559:         // перейти в рабочее состояние.
+  560:         await Task.Delay(150);
+  561:         while (_isRunning)
+  562:         {
+  563:             await Task.Delay(250);
+  564:         }
+  565:     }
+  566: '@
+  567: 
+  568:     $New = @'
+  569:     private async Task RunBuild7LegacyOperationAsync(
+  570:         Action startOperation,
+  571:         string operationName)
+  572:     {
+  573:         if (_build7LegacyCompletion is not null &&
+  574:             !_build7LegacyCompletion.Task.IsCompleted)
+  575:         {
+  576:             throw new InvalidOperationException(
+  577:                 "Предыдущий этап ещё не завершён.");
+  578:         }
+  579: 
+  580:         var completion =
+  581:             new TaskCompletionSource<object?>(
+  582:                 TaskCreationOptions.RunContinuationsAsynchronously);
+  583: 
+  584:         _build7LegacyCompletion = completion;
+  585: 
+  586:         try
+  587:         {
+  588:             startOperation();
+  589: 
+  590:             // Обработчик async void выполняется синхронно до
+  591:             // первого await. Если он вернулся, не установив
+  592:             // _isRunning, пользователь отказался от подтверждения
+  593:             // либо предварительная проверка не позволила запуск.
+  594:             await Task.Yield();
+  595: 
+  596:             if (!completion.Task.IsCompleted &&
+  597:                 !_isRunning)
+  598:             {
+  599:                 completion.TrySetCanceled();
+  600:             }
+  601: 
+  602:             try
+  603:             {
+  604:                 await completion.Task.WaitAsync(
+  605:                     TimeSpan.FromMinutes(65));
+  606:             }
+  607:             catch (TimeoutException exception)
+  608:             {
+  609:                 throw new TimeoutException(
+  610:                     $"Превышено время ожидания этапа: " +
+  611:                     $"{operationName}.",
+  612:                     exception);
+  613:             }
+  614:         }
+  615:         finally
+  616:         {
+  617:             if (ReferenceEquals(
+  618:                     _build7LegacyCompletion,
+  619:                     completion))
+  620:             {
+  621:                 _build7LegacyCompletion = null;
+  622:             }
+  623:         }
+  624:     }
+  625: 
+  626:     private void CompleteBuild7LegacyOperation()
+  627:     {
+  628:         _build7LegacyCompletion?.TrySetResult(null);
+  629:     }
+  630: 
+  631:     private void CaptureBuild7Error(Exception exception)
+  632:     {
+  633:         var completion = _build7LegacyCompletion;
+  634:         if (completion is null ||
+  635:             completion.Task.IsCompleted)
+  636:         {
+  637:             return;
+  638:         }
+  639: 
+  640:         if (exception is OperationCanceledException)
+  641:         {
+  642:             completion.TrySetCanceled();
+  643:             return;
+  644:         }
+  645: 
+  646:         completion.TrySetException(exception);
+  647:     }
+  648: '@
+  649: 
+  650:     $Text = Replace-Required `
+  651:         -Text $Text `
+  652:         -Old $Old `
+  653:         -New $New `
+  654:         -Name 'надёжное ожидание async void' `
+  655:         -Marker 'private async Task RunBuild7LegacyOperationAsync('
+  656: 
+  657:     Write-Source $Files.Build7 $Text
+  658: 
+  659:     # ---------------------------------------------------------
+  660:     # Проверка отсутствия старого ожидания
+  661:     # ---------------------------------------------------------
+  662: 
+  663:     $Build7Check = Read-Source $Files.Build7
+  664: 
+  665:     if ($Build7Check.Contains(
+  666:         'WaitForLegacyOperationAsync'
+  667:     )) {
+  668:         throw `
+  669:             'В Build7 остался старый WaitForLegacyOperationAsync.'
+  670:     }
+  671: 
+  672:     # ---------------------------------------------------------
+  673:     # Сборка
+  674:     # ---------------------------------------------------------
+  675: 
+  676:     Write-Host ''
+  677:     Write-Host '=== Восстановление пакетов ===' `
+  678:         -ForegroundColor Cyan
+  679: 
+  680:     Push-Location $ProjectRoot
+  681: 
+  682:     try {
+  683:         & dotnet.exe restore $Files.Project
+  684: 
+  685:         if ($LASTEXITCODE -ne 0) {
+  686:             throw 'dotnet restore завершился с ошибкой.'
+  687:         }
+  688: 
+  689:         Write-Host ''
+  690:         Write-Host '=== Проверочная сборка ===' `
+  691:             -ForegroundColor Cyan
+  692: 
+  693:         & dotnet.exe build `
+  694:             $Files.Project `
+  695:             --configuration Release `
+  696:             --no-restore
+  697: 
+  698:         if ($LASTEXITCODE -ne 0) {
+  699:             throw 'dotnet build завершился с ошибкой.'
+  700:         }
+  701: 
+  702:         Write-Host ''
+  703:         Write-Host '=== Публикация EXE ===' `
+  704:             -ForegroundColor Cyan
+  705: 
+  706:         $PublishDirectory = Join-Path `
+  707:             $ProjectRoot `
+  708:             'publish\BUILD9-win-x64'
+  709: 
+  710:         if (Test-Path -LiteralPath $PublishDirectory) {
+  711:             Remove-Item `
+  712:                 -LiteralPath $PublishDirectory `
+  713:                 -Recurse `
+  714:                 -Force
+  715:         }
+  716: 
+  717:         & dotnet.exe publish `
+  718:             $Files.Project `
+  719:             --configuration Release `
+  720:             --runtime win-x64 `
+  721:             --self-contained true `
+  722:             --output $PublishDirectory `
+  723:             -p:PublishSingleFile=true `
+  724:             -p:IncludeNativeLibrariesForSelfExtract=true `
+  725:             -p:DebugType=None `
+  726:             -p:DebugSymbols=false
+  727: 
+  728:         if ($LASTEXITCODE -ne 0) {
+  729:             throw 'dotnet publish завершился с ошибкой.'
+  730:         }
+  731:     }
+  732:     finally {
+  733:         Pop-Location
+  734:     }
+  735: 
+  736:     $Exe = Get-ChildItem `
+  737:         -LiteralPath $PublishDirectory `
+  738:         -Filter '*.exe' `
+  739:         -File |
+  740:         Select-Object -First 1
+  741: 
+  742:     if ($null -eq $Exe) {
+  743:         throw "EXE не найден в $PublishDirectory"
+  744:     }
+  745: 
+  746:     Write-Host ''
+  747:     Write-Host 'ГОТОВО!' -ForegroundColor Green
+  748:     Write-Host 'Исправление применено и собрано.' `
+  749:         -ForegroundColor Green
+  750:     Write-Host ''
+  751:     Write-Host 'Новый EXE:' -ForegroundColor Cyan
+  752:     Write-Host $Exe.FullName -ForegroundColor Yellow
+  753:     Write-Host ''
+  754:     Write-Host 'Резервная копия:' -ForegroundColor Cyan
+  755:     Write-Host $Backup -ForegroundColor Yellow
+  756: 
+  757:     Start-Process `
+  758:         -FilePath 'explorer.exe' `
+  759:         -ArgumentList (
+  760:             '/select,"{0}"' -f $Exe.FullName
+  761:         )
+  762: }
+  763: catch {
+  764:     Write-Host ''
+  765:     Write-Host 'ОШИБКА BUILD 9:' -ForegroundColor Red
+  766:     Write-Host $_.Exception.Message -ForegroundColor Yellow
+  767:     Write-Host ''
+  768: 
+  769:     if (Get-Variable `
+  770:         -Name Backup `
+  771:         -ErrorAction SilentlyContinue) {
+  772:         Write-Host 'Резервная копия сохранена:' `
+  773:             -ForegroundColor Cyan
+  774:         Write-Host $Backup -ForegroundColor Yellow
+  775:     }
+  776: 
+  777:     exit 1
+  778: }

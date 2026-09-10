@@ -1,0 +1,436 @@
+﻿  152:             sshPassword);
+  153: 
+  154:         using var sftp = CreateSftpClient(
+  155:             settings,
+  156:             sshPassword);
+  157: 
+  158:         var temporaryDirectoryCreated = false;
+  159: 
+  160:         try
+  161:         {
+  162:             cancellationToken.ThrowIfCancellationRequested();
+  163: 
+  164:             progress?.Report(
+  165:                 new DatabaseDeploymentProgress(
+  166:                     15,
+  167:                     "Подключение к SSH/SFTP."));
+  168: 
+  169:             ssh.Connect();
+  170:             sftp.Connect();
+  171: 
+  172:             cancellationToken.ThrowIfCancellationRequested();
+  173: 
+  174:             RunChecked(
+  175:                 ssh,
+  176:                 "umask 077; mkdir -- " +
+  177:                 ShellQuote(remoteDirectory));
+  178: 
+  179:             temporaryDirectoryCreated = true;
+  180: 
+  181:             progress?.Report(
+  182:                 new DatabaseDeploymentProgress(
+  183:                     25,
+  184:                     "Загрузка SQL во временный закрытый каталог."));
+  185: 
+  186:             using (var sqlStream = new FileStream(
+  187:                        sqlFile,
+  188:                        FileMode.Open,
+  189:                        FileAccess.Read,
+  190:                        FileShare.Read,
+  191:                        1024 * 1024,
+  192:                        FileOptions.SequentialScan))
+  193:             {
+  194:                 var sqlLength = sqlStream.Length;
+  195: 
+  196:                 sftp.UploadFile(
+  197:                     sqlStream,
+  198:                     remoteSql,
+  199:                     true,
+  200:                     uploaded =>
+  201:                     {
+  202:                         var percent = sqlLength > 0
+  203:                             ? 25 + (int)Math.Min(
+  204:                                 35UL,
+  205:                                 uploaded * 35UL /
+  206:                                 (ulong)sqlLength)
+  207:                             : 60;
+  208: 
+  209:                         progress?.Report(
+  210:                             new DatabaseDeploymentProgress(
+  211:                                 percent,
+  212:                                 "Загрузка SQL: " +
+  213:                                 uploaded +
+  214:                                 " из " +
+  215:                                 sqlLength +
+  216:                                 " байт."));
+  217:                     });
+  218:             }
+  219: 
+  220:             cancellationToken.ThrowIfCancellationRequested();
+  221: 
+  222:             using (var secretStream = new MemoryStream(
+  223:                        new UTF8Encoding(false).GetBytes(
+  224:                            databasePassword)))
+  225:             {
+  226:                 sftp.UploadFile(
+  227:                     secretStream,
+  228:                     remoteSecret,
+  229:                     true);
+  230:             }
+  231: 
+  232:             var scriptText = CreateRemoteScript(
+  233:                 databaseName,
+  234:                 databaseUser,
+  235:                 settings.Owner,
+  236:                 remoteSql,
+  237:                 remoteSecret);
+  238: 
+  239:             var normalizedScriptText = scriptText
+  240:                 .Replace(
+  241:                     "\r\n",
+  242:                     "\n",
+  243:                     StringComparison.Ordinal)
+  244:                 .Replace(
+  245:                     "\r",
+  246:                     "\n",
+  247:                     StringComparison.Ordinal);
+  248: 
+  249:             using (var scriptStream = new MemoryStream(
+  250:                        new UTF8Encoding(false).GetBytes(
+  251:                            normalizedScriptText)))
+  252:             {
+  253:                 sftp.UploadFile(
+  254:                     scriptStream,
+  255:                     remoteScript,
+  256:                     true);
+  257:             }
+  258: 
+  259:             RunChecked(
+  260:                 ssh,
+  261:                 "chmod 700 -- " +
+  262:                 ShellQuote(remoteDirectory) +
+  263:                 " && chmod 600 -- " +
+  264:                 ShellQuote(remoteSql) +
+  265:                 " " +
+  266:                 ShellQuote(remoteSecret) +
+  267:                 " " +
+  268:                 ShellQuote(remoteScript));
+  269: 
+  270:             progress?.Report(
+  271:                 new DatabaseDeploymentProgress(
+  272:                     65,
+  273:                     "Проверка БД и создание при необходимости."));
+  274: 
+  275:             cancellationToken.ThrowIfCancellationRequested();
+  276: 
+  277:             var output = RunChecked(
+  278:                 ssh,
+  279:                 "/bin/sh " +
+  280:                 ShellQuote(remoteScript));
+  281: 
+  282:             var databaseWasCreated =
+  283:                 output.Contains(
+  284:                     "DATABASE_CREATED",
+  285:                     StringComparison.Ordinal);
+  286: 
+  287:             if (!output.Contains(
+  288:                     "SQL_IMPORT_OK",
+  289:                     StringComparison.Ordinal))
+  290:             {
+  291:                 throw new InvalidOperationException(
+  292:                     "Сервер не подтвердил успешный импорт SQL.");
+  293:             }
+  294: 
+  295:             progress?.Report(
+  296:                 new DatabaseDeploymentProgress(
+  297:                     100,
+  298:                     "База данных готова, SQL импортирован."));
+  299: 
+  300:             return new DatabaseDeploymentResult
+  301:             {
+  302:                 DatabaseName = databaseName,
+  303:                 DatabaseUser = databaseUser,
+  304:                 SqlFile = sqlFile,
+  305:                 DatabaseWasCreated = databaseWasCreated
+  306:             };
+  307:         }
+  308:         catch (Exception exception)
+  309:         {
+  310:             var safeMessage = exception.Message.Replace(
+  311:                 databasePassword,
+  312:                 "[СКРЫТО]",
+  313:                 StringComparison.Ordinal);
+  314: 
+  315:             throw new InvalidOperationException(
+  316:                 safeMessage,
+  317:                 exception);
+  318:         }
+  319:         finally
+  320:         {
+  321:             if (temporaryDirectoryCreated &&
+  322:                 ssh.IsConnected)
+  323:             {
+  324:                 TryRun(
+  325:                     ssh,
+  326:                     "rm -rf -- " +
+  327:                     ShellQuote(remoteDirectory));
+  328:             }
+  329: 
+  330:             if (sftp.IsConnected)
+  331:             {
+  332:                 sftp.Disconnect();
+  333:             }
+  334: 
+  335:             if (ssh.IsConnected)
+  336:             {
+  337:                 ssh.Disconnect();
+  338:             }
+  339:         }
+  340:     }
+  341: 
+  342:     private static string CreateRemoteScript(
+  343:         string databaseName,
+  344:         string databaseUser,
+  345:         string owner,
+  346:         string remoteSql,
+  347:         string remoteSecret)
+  348:     {
+  349:         return
+  350: $$"""
+  351: #!/bin/sh
+  352: set -u
+  353: 
+  354: DATABASE_NAME={{ShellQuote(databaseName)}}
+  355: DATABASE_USER={{ShellQuote(databaseUser)}}
+  356: DATABASE_OWNER={{ShellQuote(owner)}}
+  357: REMOTE_SQL={{ShellQuote(remoteSql)}}
+  358: SECRET_FILE={{ShellQuote(remoteSecret)}}
+  359: 
+  360: if [ ! -f "$REMOTE_SQL" ]; then
+  361:     echo "SQL-файл не найден." >&2
+  362:     exit 31
+  363: fi
+  364: 
+  365: if [ ! -f "$SECRET_FILE" ]; then
+  366:     echo "Файл с паролем БД не найден." >&2
+  367:     exit 32
+  368: fi
+  369: 
+  370: DB_PASSWORD="$(cat -- "$SECRET_FILE")"
+  371: 
+  372: if [ -z "$DB_PASSWORD" ]; then
+  373:     echo "Пароль базы данных пуст." >&2
+  374:     exit 33
+  375: fi
+  376: 
+  377: export MYSQL_PWD="$DB_PASSWORD"
+  378: export DB_PASSWORD
+  379: 
+  380: if command -v mariadb >/dev/null 2>&1; then
+  381:     DB_CLIENT="mariadb"
+  382: elif command -v mysql >/dev/null 2>&1; then
+  383:     DB_CLIENT="mysql"
+  384: else
+  385:     echo "Не найден клиент mariadb или mysql." >&2
+  386:     exit 34
+  387: fi
+  388: 
+  389: check_database_access()
+  390: {
+  391:     "$DB_CLIENT" \
+  392:         --connect-timeout=10 \
+  393:         --user="$DATABASE_USER" \
+  394:         --database="$DATABASE_NAME" \
+  395:         --execute="SELECT 1" \
+  396:         >/dev/null 2>&1
+  397: }
+  398: 
+  399: DATABASE_CREATED=0
+  400: 
+  401: if check_database_access; then
+  402:     echo "DATABASE_ALREADY_AVAILABLE"
+  403: else
+  404:     echo "Доступ к БД отсутствует. Синхронизация реквизитов ISPmanager."
+  405: 
+  406:     EDIT_OUTPUT="$(
+  407:         /usr/local/mgr5/sbin/mgrctl \
+  408:             -m ispmgr \
+  409:             db.edit \
+  410:             elid="$DATABASE_NAME" \
+  411:             name="$DATABASE_NAME" \
+  412:             owner="$DATABASE_OWNER" \
+  413:             server="MySQL" \
+  414:             charset="utf8mb4" \
+  415:             user="*" \
+  416:             username="$DATABASE_USER" \
+  417:             -e 'password=$DB_PASSWORD' \
+  418:             -e 'confirm=$DB_PASSWORD' \
+  419:             hide_remote_access=on \
+  420:             remote_access=off \
+  421:             sok=ok 2>&1
+  422:     )"
+  423:     EDIT_STATUS=$?
+  424: 
+  425:     if [ "$EDIT_STATUS" -eq 0 ]; then
+  426:         echo "DATABASE_CREDENTIALS_UPDATED"
+  427:     else
+  428:         echo "БД не найдена для редактирования. Выполняется создание."
+  429: 
+  430:         CREATE_OUTPUT="$(
+  431:             /usr/local/mgr5/sbin/mgrctl \
+  432:                 -m ispmgr \
+  433:                 db.edit \
+  434:                 name="$DATABASE_NAME" \
+  435:                 owner="$DATABASE_OWNER" \
+  436:                 server="MySQL" \
+  437:                 charset="utf8mb4" \
+  438:                 user="*" \
+  439:                 username="$DATABASE_USER" \
+  440:                 -e 'password=$DB_PASSWORD' \
+  441:                 -e 'confirm=$DB_PASSWORD' \
+  442:                 hide_remote_access=on \
+  443:                 remote_access=off \
+  444:                 sok=ok 2>&1
+  445:         )"
+  446:         CREATE_STATUS=$?
+  447: 
+  448:         if [ "$CREATE_STATUS" -ne 0 ]; then
+  449:             printf '%s\n' "$EDIT_OUTPUT" >&2
+  450:             printf '%s\n' "$CREATE_OUTPUT" >&2
+  451:             echo "ISPmanager не создал и не обновил базу данных." >&2
+  452:             exit "$CREATE_STATUS"
+  453:         fi
+  454: 
+  455:         DATABASE_CREATED=1
+  456:         echo "DATABASE_CREATED"
+  457:     fi
+  458: 
+  459:     if ! check_database_access; then
+  460:         unset MYSQL_PWD
+  461:         unset DB_PASSWORD
+  462:         DB_PASSWORD=""
+  463: 
+  464:         echo "ISPmanager обработал команду, но пароль пользователя MySQL" >&2
+  465:         echo "не совпадает с паролем из config.php." >&2
+  466:         echo "Повторные подключения не выполняются: ERROR 1045 не является ожиданием запуска БД." >&2
+  467:         exit 41
+  468:     fi
+  469: fi
+  470: 
+  471: "$DB_CLIENT" \
+  472:     --default-character-set=utf8mb4 \
+  473:     --connect-timeout=10 \
+  474:     --user="$DATABASE_USER" \
+  475:     --database="$DATABASE_NAME" \
+  476:     < "$REMOTE_SQL"
+  477: 
+  478: IMPORT_STATUS=$?
+  479: 
+  480: unset MYSQL_PWD
+  481: unset DB_PASSWORD
+  482: DB_PASSWORD=""
+  483: 
+  484: if [ "$IMPORT_STATUS" -ne 0 ]; then
+  485:     echo "Ошибка импорта SQL. Код: $IMPORT_STATUS" >&2
+  486:     exit "$IMPORT_STATUS"
+  487: fi
+  488: 
+  489: echo "SQL_IMPORT_OK"
+  490: exit 0
+  491: """;
+  492:     }
+  493:     private static string ReadPhpValue(
+  494:         string configText,
+  495:         string key)
+  496:     {
+  497:         var pattern =
+  498:             @"[""']" +
+  499:             Regex.Escape(key) +
+  500:             @"[""']\s*=>\s*" +
+  501:             @"(?<quote>[""'])" +
+  502:             @"(?<value>(?:\\.|(?!\k<quote>).)*)" +
+  503:             @"\k<quote>";
+  504: 
+  505:         var match = Regex.Match(
+  506:             configText,
+  507:             pattern,
+  508:             RegexOptions.CultureInvariant |
+  509:             RegexOptions.Singleline);
+  510: 
+  511:         if (!match.Success)
+  512:         {
+  513:             throw new InvalidOperationException(
+  514:                 $"В config.php не найден параметр '{key}'.");
+  515:         }
+  516: 
+  517:         var value = match
+  518:             .Groups["value"]
+  519:             .Value;
+  520: 
+  521:         value = Regex.Replace(
+  522:             value,
+  523:             @"\\(['""\\])",
+  524:             "$1");
+  525: 
+  526:         if (string.IsNullOrWhiteSpace(value))
+  527:         {
+  528:             throw new InvalidOperationException(
+  529:                 $"Параметр '{key}' в config.php пуст.");
+  530:         }
+  531: 
+  532:         return value;
+  533:     }
+  534: 
+  535:     private static void ValidateDatabaseCredentials(
+  536:         string databaseName,
+  537:         string databaseUser,
+  538:         string databasePassword)
+  539:     {
+  540:         if (!DatabaseNameRegex.IsMatch(databaseName))
+  541:         {
+  542:             throw new InvalidOperationException(
+  543:                 $"Некорректное имя БД: {databaseName}");
+  544:         }
+  545: 
+  546:         if (!DatabaseUserRegex.IsMatch(databaseUser))
+  547:         {
+  548:             throw new InvalidOperationException(
+  549:                 $"Некорректный пользователь БД: {databaseUser}");
+  550:         }
+  551: 
+  552:         if (databasePassword.Length > 1024 ||
+  553:             databasePassword.Contains('\0') ||
+  554:             databasePassword.Contains('\r') ||
+  555:             databasePassword.Contains('\n'))
+  556:         {
+  557:             throw new InvalidOperationException(
+  558:                 "Пароль БД имеет недопустимый формат.");
+  559:         }
+  560:     }
+  561: 
+  562:     private static string FindSqlFile(
+  563:         string siteDirectory)
+  564:     {
+  565:         var files = Directory
+  566:             .EnumerateFiles(
+  567:                 siteDirectory,
+  568:                 "*.sql",
+  569:                 SearchOption.AllDirectories)
+  570:             .OrderBy(
+  571:                 path => path,
+  572:                 StringComparer.OrdinalIgnoreCase)
+  573:             .ToList();
+  574: 
+  575:         if (files.Count == 0)
+  576:         {
+  577:             throw new InvalidOperationException(
+  578:                 "В папке результата не найден SQL-файл.");
+  579:         }
+  580: 
+  581:         if (files.Count == 1)
+  582:         {
+  583:             return files[0];
+  584:         }
+  585: 
+  586:         var rootFiles = files
+  587:             .Where(path =>

@@ -1,0 +1,308 @@
+,
+                        $"mv -- {ShellQuote(targetDirectory)} " +
+                        $"{ShellQuote(backupDirectory)}");
+
+                    targetMoved = true;
+
+                    progress?.Report(
+                        new SftpDeploymentProgress(
+                            90,
+                            "Переключение каталога сайта."));
+
+                    RunChecked(
+                        ssh,
+                        $"mv -- {ShellQuote(uploadDirectory)} " +
+                        $"{ShellQuote(targetDirectory)}");
+
+                    uploadMoved = true;
+
+                    RunChecked(
+                        ssh,
+                        $"chown -R -- " +
+                        $"{ShellQuote(settings.Owner + ":" + settings.Group)} " +
+                        $"{ShellQuote(targetDirectory)}");
+
+                    RunChecked(
+                        ssh,
+                        $"find {ShellQuote(targetDirectory)} " +
+                        "-type d -exec chmod 0755 {} +");
+
+                    RunChecked(
+                        ssh,
+                        $"find {ShellQuote(targetDirectory)} " +
+                        "-type f -exec chmod 0644 {} +");
+
+                    var finalStartFile =
+                        CombineRemote(
+                            targetDirectory,
+                            startFile.RelativePath);
+
+                    RunChecked(
+                        ssh,
+                        $"test -f {ShellQuote(finalStartFile)}");
+
+                    progress?.Report(
+                        new SftpDeploymentProgress(
+                            97,
+                            "Удаление серверной резервной папки."));
+
+                    RemoveTemporaryDirectory(
+                        ssh,
+                        backupDirectory);
+
+                    targetMoved = false;
+
+                    progress?.Report(
+                        new SftpDeploymentProgress(
+                            100,
+                            "Загрузка сайта завершена."));
+
+                    return new SiteDeploymentResult
+                    {
+                        Domain = domain,
+                        RemoteDirectory = targetDirectory,
+                        UploadedFiles = manifest.Files.Count,
+                        UploadedBytes = manifest.TotalBytes
+                    };
+                }
+                catch
+                {
+                    TryRollback(
+                        ssh,
+                        targetDirectory,
+                        uploadDirectory,
+                        backupDirectory,
+                        targetMoved,
+                        uploadMoved);
+
+                    throw;
+                }
+                finally
+                {
+                    if (sftp.IsConnected)
+                    {
+                        sftp.Disconnect();
+                    }
+
+                    if (ssh.IsConnected)
+                    {
+                        ssh.Disconnect();
+                    }
+                }
+            },
+            cancellationToken);
+    }
+
+    private static LocalManifest BuildManifest(
+        string localRoot,
+        CancellationToken cancellationToken)
+    {
+        var files = new List<LocalFile>();
+        var directories = new HashSet<string>(
+            StringComparer.OrdinalIgnoreCase);
+
+        var options = new EnumerationOptions
+        {
+            RecurseSubdirectories = true,
+            IgnoreInaccessible = false,
+            ReturnSpecialDirectories = false,
+            AttributesToSkip = FileAttributes.ReparsePoint
+        };
+
+        foreach (var directory in
+                 Directory.EnumerateDirectories(
+                     localRoot,
+                     "*",
+                     options))
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            var relative = NormalizeRelativePath(
+                Path.GetRelativePath(
+                    localRoot,
+                    directory));
+
+            directories.Add(relative);
+        }
+
+        foreach (var path in
+                 Directory.EnumerateFiles(
+                     localRoot,
+                     "*",
+                     options))
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            var file = new FileInfo(path);
+
+            if ((file.Attributes &
+                 FileAttributes.ReparsePoint) != 0)
+            {
+                continue;
+            }
+
+            if (string.Equals(
+                    file.Extension,
+                    ".sql",
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            if (string.Equals(
+                    file.Name,
+                    "Thumbs.db",
+                    StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(
+                    file.Name,
+                    "desktop.ini",
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            var relative = NormalizeRelativePath(
+                Path.GetRelativePath(
+                    localRoot,
+                    path));
+
+            files.Add(
+                new LocalFile(
+                    file.FullName,
+                    relative,
+                    file.Length));
+        }
+
+        var orderedDirectories = directories
+            .OrderBy(path =>
+                path.Count(character => character == '/'))
+            .ThenBy(
+                path => path,
+                StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        files.Sort(
+            (left, right) =>
+                StringComparer.OrdinalIgnoreCase.Compare(
+                    left.RelativePath,
+                    right.RelativePath));
+
+        return new LocalManifest(
+            files,
+            orderedDirectories,
+            files.Sum(file => file.Length));
+    }
+
+    private static LocalFile? FindStartFile(
+        IReadOnlyCollection<LocalFile> files)
+    {
+        var names = new[]
+        {
+            "index.php",
+            "index.html",
+            "index.htm"
+        };
+
+        foreach (var name in names)
+        {
+            var result = files.FirstOrDefault(
+                file =>
+                    string.Equals(
+                        file.RelativePath,
+                        name,
+                        StringComparison.OrdinalIgnoreCase));
+
+            if (result is not null)
+            {
+                return result;
+            }
+        }
+
+        return null;
+    }
+
+    private static void UploadManifest(
+        SftpClient sftp,
+        LocalManifest manifest,
+        string remoteRoot,
+        IProgress<SftpDeploymentProgress>? progress,
+        CancellationToken cancellationToken)
+    {
+        foreach (var relativeDirectory in manifest.Directories)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            EnsureSftpDirectory(
+                sftp,
+                CombineRemote(
+                    remoteRoot,
+                    relativeDirectory));
+        }
+
+        var uploadedFiles = 0;
+        long uploadedBytes = 0;
+
+        foreach (var file in manifest.Files)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            var remoteFile = CombineRemote(
+                remoteRoot,
+                file.RelativePath);
+
+            EnsureSftpDirectory(
+                sftp,
+                GetRemoteDirectoryName(remoteFile));
+
+            using var input = new FileStream(
+                file.FullPath,
+                FileMode.Open,
+                FileAccess.Read,
+                FileShare.Read,
+                1024 * 1024,
+                FileOptions.SequentialScan);
+
+            sftp.UploadFile(
+                input,
+                remoteFile,
+                true);
+
+            uploadedFiles++;
+            uploadedBytes += file.Length;
+
+            var percent = manifest.TotalBytes > 0
+                ? 5 + (int)Math.Min(
+                    70,
+                    uploadedBytes * 70 /
+                    manifest.TotalBytes)
+                : 75;
+
+            progress?.Report(
+                new SftpDeploymentProgress(
+                    percent,
+                    $"Загружено: {uploadedFiles}/" +
+                    $"{manifest.Files.Count}; " +
+                    file.RelativePath));
+        }
+    }
+
+    private static void VerifyManifest(
+        SftpClient sftp,
+        LocalManifest manifest,
+        string remoteRoot,
+        CancellationToken cancellationToken)
+    {
+        var verifiedCount = 0;
+        long verifiedBytes = 0;
+
+        foreach (var file in manifest.Files)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            var remoteFile = CombineRemote(
+                remoteRoot,
+                file.RelativePath);
+
+            if (!sftp.Exists(remoteFile))
+            {
+                throw new InvalidOperationException(

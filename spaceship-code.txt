@@ -1,0 +1,2520 @@
+﻿
+===== C:\Users\User\Desktop\Adminki\Программа домены\Новая папка\MainWindow.Build10.cs:126 =====
+                Color.FromRgb(238, 246, 255)),
+            BorderBrush = new SolidColorBrush(
+                Color.FromRgb(120, 165, 210)),
+            BorderThickness = new Thickness(1)
+        };
+
+        descriptionBorder.Child = new TextBlock
+        {
+            TextWrapping = TextWrapping.Wrap,
+            Text =
+                "Программа пройдёт по доменам из основного поля " +
+                "«Домены», получит для каждого домена две записи " +
+>>>                 "_acme-challenge из ISPmanager и заменит значения " +
+                "двух существующих TXT-записей в Spaceship. " +
+                "Остальные DNS-записи будут сохранены."
+        };
+
+        Grid.SetRow(descriptionBorder, 0);
+        root.Children.Add(descriptionBorder);
+
+        var buttonPanel = new WrapPanel
+        {
+            Margin = new Thickness(0, 0, 0, 12)
+        };
+
+        _build10SyncButton = new Button
+        {
+            Content = "ПОЛУЧИТЬ И ЗАМЕНИТЬ 2 ACME TXT",
+            Width = 310,
+            Padding = new Thickness(12, 9, 12, 9),
+            Margin = new Thickness(0, 0, 10, 0),
+            FontWeight = FontWeights.Bold,
+            Foreground = Brushes.White,
+            Background = new SolidColorBrush(
+                Color.FromRgb(31, 122, 63))
+        };
+
+        _build10SyncButton.Click +=
+
+===== C:\Users\User\Desktop\Adminki\Программа домены\Новая папка\MainWindow.Build10.cs:225 =====
+                this,
+                "Дождитесь завершения текущей операции.",
+                "ACME TXT",
+                MessageBoxButton.OK,
+                MessageBoxImage.Information);
+
+            return;
+        }
+
+        var confirmation = MessageBox.Show(
+            this,
+            "Для каждого указанного домена программа:\n\n" +
+>>>             "1. Получит две TXT-записи _acme-challenge " +
+            "из ISPmanager.\n" +
+            "2. Прочитает всю DNS-зону Spaceship.\n" +
+            "3. Заменит значения двух существующих TXT-записей.\n" +
+            "4. Сохранит DNS-зону и проверит результат.\n\n" +
+            "Продолжить?",
+            "Подтверждение синхронизации",
+            MessageBoxButton.YesNo,
+            MessageBoxImage.Question);
+
+        if (confirmation != MessageBoxResult.Yes)
+        {
+            return;
+        }
+
+        _isRunning = true;
+
+        if (_build10SyncButton is not null)
+        {
+            _build10SyncButton.IsEnabled = false;
+        }
+
+        StartButton.IsEnabled = false;
+        CancelButton.IsEnabled = true;
+
+        _cancellationTokenSource =
+
+===== C:\Users\User\Desktop\Adminki\Программа домены\Новая папка\MainWindow.Build10.cs:410 =====
+
+                    SetBuild10Status(
+                        baseProgress + 100.0 / domains.Count,
+                        $"{domain}: TXT уже подтверждены.");
+
+                    continue;
+                }
+
+                if (txtValues.Count != 2)
+                {
+                    /*
+ * BUILD10: проверка количества/совпадения TXT отключена.
+>>>  * Наличие старых _acme-challenge в Spaceship допустимо.
+ */
+                }
+
+                AddLog(
+                        "INFO",
+                        domain,
+                        "ISPmanager: получены два значения " +
+                        "_acme-challenge. Значения скрыты.");
+
+                    SetBuild10Status(
+                        baseProgress +
+                        25.0 / domains.Count,
+                        $"{domain}: чтение DNS-зоны Spaceship...");
+
+                    var currentRecords =
+                        await Build10GetSpaceshipRecordsAsync(
+                            spaceshipSettings.BaseUrl,
+                            spaceshipSettings.ApiKey,
+                            spaceshipSettings.ApiSecret,
+                            spaceshipSettings.DnsPath,
+                            domain,
+                            cancellationToken);
+
+                    var updatedRecords =
+                        Build10ReplaceAcmeRecords(
+
+===== C:\Users\User\Desktop\Adminki\Программа домены\Новая папка\MainWindow.Build10.cs:418 =====
+                if (txtValues.Count != 2)
+                {
+                    /*
+ * BUILD10: проверка количества/совпадения TXT отключена.
+ * Наличие старых _acme-challenge в Spaceship допустимо.
+ */
+                }
+
+                AddLog(
+                        "INFO",
+                        domain,
+                        "ISPmanager: получены два значения " +
+>>>                         "_acme-challenge. Значения скрыты.");
+
+                    SetBuild10Status(
+                        baseProgress +
+                        25.0 / domains.Count,
+                        $"{domain}: чтение DNS-зоны Spaceship...");
+
+                    var currentRecords =
+                        await Build10GetSpaceshipRecordsAsync(
+                            spaceshipSettings.BaseUrl,
+                            spaceshipSettings.ApiKey,
+                            spaceshipSettings.ApiSecret,
+                            spaceshipSettings.DnsPath,
+                            domain,
+                            cancellationToken);
+
+                    var updatedRecords =
+                        Build10ReplaceAcmeRecords(
+                            currentRecords,
+                            domain,
+                            txtValues);
+
+                    SetBuild10Status(
+                        baseProgress +
+                        50.0 / domains.Count,
+                        $"{domain}: сохранение двух TXT " +
+
+===== C:\Users\User\Desktop\Adminki\Программа домены\Новая папка\MainWindow.Build10.cs:483 =====
+                            cancellationToken);
+
+                    Build10VerifyAcmeRecords(
+                        verificationRecords,
+                        domain,
+                        txtValues);
+
+                    successfulDomains++;
+
+                    AddLog(
+                        "INFO",
+                        domain,
+>>>                         "Две TXT-записи _acme-challenge " +
+                        "обновлены и проверены в Spaceship.");
+
+                    SetBuild10Status(
+                        (index + 1) * 100.0 / domains.Count,
+                        $"{domain}: две TXT-записи успешно " +
+                        "заменены и проверены.");
+                }
+                catch (Exception exception)
+                {
+                    failedDomains++;
+
+                    var safeMessage =
+                        SensitiveDataRedactor.Redact(
+                            exception.Message);
+
+                    AddLog(
+                        "ERROR",
+                        domain,
+                        safeMessage);
+
+                    SetBuild10Status(
+                        (index + 1) * 100.0 / domains.Count,
+                        $"{domain}: ОШИБКА — {safeMessage}");
+
+                    // Следующий домен не обрабатываем автоматически,
+
+===== C:\Users\User\Desktop\Adminki\Программа домены\Новая папка\MainWindow.Build10.cs:823 =====
+        {
+            // ISPmanager уже обнаружил TXT и начал выпуск сертификата.
+            // В Spaceship ничего менять не требуется.
+            return values;
+        }
+
+        if (values.Count != 2)
+        {
+            throw new InvalidOperationException(
+                $"В ответе webdomain.letsencrypt.txt для " +
+                $"{domain} найдено значений: {values.Count}. " +
+                "ACME-парсер v2: TXT ещё не подтверждены, но ISPmanager не вернул " +
+>>>                 "два значения _acme-challenge.");
+        }
+
+        return values;
+    }
+
+    private static string Build10FindXmlChild(
+        IEnumerable<XElement> children,
+        params string[] names)
+    {
+        foreach (var name in names)
+        {
+            var element = children.FirstOrDefault(item =>
+                string.Equals(
+                    item.Name.LocalName,
+                    name,
+                    StringComparison.OrdinalIgnoreCase));
+
+            if (element is not null)
+            {
+                return element.Value.Trim();
+            }
+        }
+
+        return string.Empty;
+    }
+
+===== C:\Users\User\Desktop\Adminki\Программа домены\Новая папка\MainWindow.Build10.cs:1145 =====
+                    StringComparison.OrdinalIgnoreCase) &&
+                Build10IsAcmeName(
+                    Build10GetJsonString(
+                        record,
+                        "name"),
+                    domain))
+            .ToList();
+
+        if (matches.Count != 2)
+        {
+            /*
+ * BUILD10: проверка количества/совпадения TXT отключена.
+>>>  * Наличие старых _acme-challenge в Spaceship допустимо.
+ */
+        }
+
+        for (var index = 0;
+             index < 2;
+             index++)
+        {
+            Build10SetJsonString(
+                matches[index],
+                "value",
+                txtValues[index]);
+        }
+
+        return records;
+    }
+
+    private async Task Build10PutSpaceshipRecordsAsync(
+        string baseUrl,
+        string apiKey,
+        string apiSecret,
+        string dnsPath,
+        string domain,
+        List<JsonObject> records,
+        CancellationToken cancellationToken)
+    {
+
+===== C:\Users\User\Desktop\Adminki\Программа домены\Новая папка\MainWindow.Build10.cs:1238 =====
+            await _spaceshipHttpClient.SendAsync(
+                request,
+                HttpCompletionOption.ResponseHeadersRead,
+                cancellationToken);
+
+        var body =
+            await response.Content.ReadAsStringAsync(
+                cancellationToken);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            throw new InvalidOperationException(
+>>>                 "Spaceship API не сохранил DNS-зону. HTTP " +
+                $"{(int)response.StatusCode} " +
+                $"{response.ReasonPhrase}. " +
+                LimitAndRedact(
+                    body,
+                    apiKey,
+                    apiSecret));
+        }
+    }
+
+    private static JsonObject
+        Build10PrepareRecordForSave(
+            JsonObject source)
+    {
+        var copy =
+            (JsonObject)source.DeepClone();
+
+        // Возможные служебные поля ответа Spaceship,
+        // которые не должны отправляться при PUT.
+        var readOnlyNames = new HashSet<string>(
+            new[]
+            {
+                "id",
+                "recordId",
+                "domain",
+                "createdAt",
+
+===== C:\Users\User\Desktop\Adminki\Программа домены\Новая папка\MainWindow.Build10.cs:1302 =====
+                string.Equals(
+                    Build10GetJsonString(
+                        record,
+                        "type"),
+                    "TXT",
+                    StringComparison.OrdinalIgnoreCase) &&
+                Build10IsAcmeName(
+                    Build10GetJsonString(
+                        record,
+                        "name"),
+                    domain))
+            .Select(record =>
+>>>                 Build10NormalizeTxtValue(
+                    Build10GetJsonString(
+                        record,
+                        "value")))
+            .OrderBy(value => value, StringComparer.Ordinal)
+            .ToList();
+
+        var expected = expectedValues
+            .Select(Build10NormalizeTxtValue)
+            .OrderBy(value => value, StringComparer.Ordinal)
+            .ToList();
+
+        if (actualValues.Count < 2)
+{
+            /*
+ * BUILD10: проверка TXT после сохранения отключена.
+ * Старые и новые записи _acme-challenge не сравниваются.
+ * Общее количество записей не проверяется.
+ */
+        }
+
+        if (!actualValues.SequenceEqual(
+                expected,
+                StringComparer.Ordinal))
+        {
+            /*
+
+===== C:\Users\User\Desktop\Adminki\Программа домены\Новая папка\MainWindow.Build10.cs:1310 =====
+                        record,
+                        "name"),
+                    domain))
+            .Select(record =>
+                Build10NormalizeTxtValue(
+                    Build10GetJsonString(
+                        record,
+                        "value")))
+            .OrderBy(value => value, StringComparer.Ordinal)
+            .ToList();
+
+        var expected = expectedValues
+>>>             .Select(Build10NormalizeTxtValue)
+            .OrderBy(value => value, StringComparer.Ordinal)
+            .ToList();
+
+        if (actualValues.Count < 2)
+{
+            /*
+ * BUILD10: проверка TXT после сохранения отключена.
+ * Старые и новые записи _acme-challenge не сравниваются.
+ * Общее количество записей не проверяется.
+ */
+        }
+
+        if (!actualValues.SequenceEqual(
+                expected,
+                StringComparer.Ordinal))
+        {
+            /*
+ * BUILD10: проверка TXT после сохранения отключена.
+ * Старые и новые записи _acme-challenge не сравниваются.
+ * Общее количество записей не проверяется.
+ */
+        }
+    }
+
+    private static void Build10AddSpaceshipHeaders(
+
+===== C:\Users\User\Desktop\Adminki\Программа домены\Новая папка\MainWindow.Build10.cs:1318 =====
+            .OrderBy(value => value, StringComparer.Ordinal)
+            .ToList();
+
+        var expected = expectedValues
+            .Select(Build10NormalizeTxtValue)
+            .OrderBy(value => value, StringComparer.Ordinal)
+            .ToList();
+
+        if (actualValues.Count < 2)
+{
+            /*
+ * BUILD10: проверка TXT после сохранения отключена.
+>>>  * Старые и новые записи _acme-challenge не сравниваются.
+ * Общее количество записей не проверяется.
+ */
+        }
+
+        if (!actualValues.SequenceEqual(
+                expected,
+                StringComparer.Ordinal))
+        {
+            /*
+ * BUILD10: проверка TXT после сохранения отключена.
+ * Старые и новые записи _acme-challenge не сравниваются.
+ * Общее количество записей не проверяется.
+ */
+        }
+    }
+
+    private static void Build10AddSpaceshipHeaders(
+        HttpRequestMessage request,
+        string apiKey,
+        string apiSecret)
+    {
+        request.Headers.TryAddWithoutValidation(
+            "X-API-Key",
+            apiKey);
+
+
+===== C:\Users\User\Desktop\Adminki\Программа домены\Новая папка\MainWindow.Build10.cs:1329 =====
+ * BUILD10: проверка TXT после сохранения отключена.
+ * Старые и новые записи _acme-challenge не сравниваются.
+ * Общее количество записей не проверяется.
+ */
+        }
+
+        if (!actualValues.SequenceEqual(
+                expected,
+                StringComparer.Ordinal))
+        {
+            /*
+ * BUILD10: проверка TXT после сохранения отключена.
+>>>  * Старые и новые записи _acme-challenge не сравниваются.
+ * Общее количество записей не проверяется.
+ */
+        }
+    }
+
+    private static void Build10AddSpaceshipHeaders(
+        HttpRequestMessage request,
+        string apiKey,
+        string apiSecret)
+    {
+        request.Headers.TryAddWithoutValidation(
+            "X-API-Key",
+            apiKey);
+
+        request.Headers.TryAddWithoutValidation(
+            "X-API-Secret",
+            apiSecret);
+
+        request.Headers.TryAddWithoutValidation(
+            "Accept",
+            "application/json");
+    }
+
+    private static JsonNode? Build10GetJsonProperty(
+        JsonObject record,
+
+===== C:\Users\User\Desktop\Adminki\Программа домены\Новая папка\MainWindow.Build10.cs:1440 =====
+
+        var name = recordName
+            .Trim()
+            .TrimEnd('.')
+            .ToLowerInvariant();
+
+        var normalizedDomain = domain
+            .Trim()
+            .TrimEnd('.')
+            .ToLowerInvariant();
+
+        return
+>>>             name == "_acme-challenge" ||
+            name == "_acme-challenge." + normalizedDomain;
+    }
+
+    private static string Build10NormalizeTxtValue(
+        string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return string.Empty;
+        }
+
+        var result = value.Trim();
+
+        if (result.Length >= 2 &&
+            result.StartsWith('"') &&
+            result.EndsWith('"'))
+        {
+            result =
+                result[1..^1];
+        }
+
+        return result;
+    }
+
+    private void SetBuild10Status(
+
+===== C:\Users\User\Desktop\Adminki\Программа домены\Новая папка\MainWindow.Build10.cs:1441 =====
+        var name = recordName
+            .Trim()
+            .TrimEnd('.')
+            .ToLowerInvariant();
+
+        var normalizedDomain = domain
+            .Trim()
+            .TrimEnd('.')
+            .ToLowerInvariant();
+
+        return
+            name == "_acme-challenge" ||
+>>>             name == "_acme-challenge." + normalizedDomain;
+    }
+
+    private static string Build10NormalizeTxtValue(
+        string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return string.Empty;
+        }
+
+        var result = value.Trim();
+
+        if (result.Length >= 2 &&
+            result.StartsWith('"') &&
+            result.EndsWith('"'))
+        {
+            result =
+                result[1..^1];
+        }
+
+        return result;
+    }
+
+    private void SetBuild10Status(
+        double progress,
+
+===== C:\Users\User\Desktop\Adminki\Программа домены\Новая папка\MainWindow.Build10.cs:1444 =====
+            .ToLowerInvariant();
+
+        var normalizedDomain = domain
+            .Trim()
+            .TrimEnd('.')
+            .ToLowerInvariant();
+
+        return
+            name == "_acme-challenge" ||
+            name == "_acme-challenge." + normalizedDomain;
+    }
+
+>>>     private static string Build10NormalizeTxtValue(
+        string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return string.Empty;
+        }
+
+        var result = value.Trim();
+
+        if (result.Length >= 2 &&
+            result.StartsWith('"') &&
+            result.EndsWith('"'))
+        {
+            result =
+                result[1..^1];
+        }
+
+        return result;
+    }
+
+    private void SetBuild10Status(
+        double progress,
+        string message)
+    {
+        if (_build10ProgressBar is not null)
+
+===== C:\Users\User\Desktop\Adminki\Программа домены\Новая папка\.build10-backup-20260906-203150\MainWindow.Build10.cs:126 =====
+                Color.FromRgb(238, 246, 255)),
+            BorderBrush = new SolidColorBrush(
+                Color.FromRgb(120, 165, 210)),
+            BorderThickness = new Thickness(1)
+        };
+
+        descriptionBorder.Child = new TextBlock
+        {
+            TextWrapping = TextWrapping.Wrap,
+            Text =
+                "Программа пройдёт по доменам из основного поля " +
+                "«Домены», получит для каждого домена две записи " +
+>>>                 "_acme-challenge из ISPmanager и заменит значения " +
+                "двух существующих TXT-записей в Spaceship. " +
+                "Остальные DNS-записи будут сохранены."
+        };
+
+        Grid.SetRow(descriptionBorder, 0);
+        root.Children.Add(descriptionBorder);
+
+        var buttonPanel = new WrapPanel
+        {
+            Margin = new Thickness(0, 0, 0, 12)
+        };
+
+        _build10SyncButton = new Button
+        {
+            Content = "ПОЛУЧИТЬ И ЗАМЕНИТЬ 2 ACME TXT",
+            Width = 310,
+            Padding = new Thickness(12, 9, 12, 9),
+            Margin = new Thickness(0, 0, 10, 0),
+            FontWeight = FontWeights.Bold,
+            Foreground = Brushes.White,
+            Background = new SolidColorBrush(
+                Color.FromRgb(31, 122, 63))
+        };
+
+        _build10SyncButton.Click +=
+
+===== C:\Users\User\Desktop\Adminki\Программа домены\Новая папка\.build10-backup-20260906-203150\MainWindow.Build10.cs:225 =====
+                this,
+                "Дождитесь завершения текущей операции.",
+                "ACME TXT",
+                MessageBoxButton.OK,
+                MessageBoxImage.Information);
+
+            return;
+        }
+
+        var confirmation = MessageBox.Show(
+            this,
+            "Для каждого указанного домена программа:\n\n" +
+>>>             "1. Получит две TXT-записи _acme-challenge " +
+            "из ISPmanager.\n" +
+            "2. Прочитает всю DNS-зону Spaceship.\n" +
+            "3. Заменит значения двух существующих TXT-записей.\n" +
+            "4. Сохранит DNS-зону и проверит результат.\n\n" +
+            "Продолжить?",
+            "Подтверждение синхронизации",
+            MessageBoxButton.YesNo,
+            MessageBoxImage.Question);
+
+        if (confirmation != MessageBoxResult.Yes)
+        {
+            return;
+        }
+
+        _isRunning = true;
+
+        if (_build10SyncButton is not null)
+        {
+            _build10SyncButton.IsEnabled = false;
+        }
+
+        StartButton.IsEnabled = false;
+        CancelButton.IsEnabled = true;
+
+        _cancellationTokenSource =
+
+===== C:\Users\User\Desktop\Adminki\Программа домены\Новая папка\.build10-backup-20260906-203150\MainWindow.Build10.cs:365 =====
+                    var txtValues =
+                        await Build10GetIspTxtValuesAsync(
+                            ispClient,
+                            ispUrl,
+                            sessionId,
+                            domain,
+                            cancellationToken);
+
+                    if (txtValues.Count != 2)
+                    {
+                        /*
+ * BUILD10: проверка количества/совпадения TXT отключена.
+>>>  * Наличие старых _acme-challenge в Spaceship допустимо.
+ */
+                    }
+
+                    AddLog(
+                        "INFO",
+                        domain,
+                        "ISPmanager: получены два значения " +
+                        "_acme-challenge. Значения скрыты.");
+
+                    SetBuild10Status(
+                        baseProgress +
+                        25.0 / domains.Count,
+                        $"{domain}: чтение DNS-зоны Spaceship...");
+
+                    var currentRecords =
+                        await Build10GetSpaceshipRecordsAsync(
+                            spaceshipSettings.BaseUrl,
+                            spaceshipSettings.ApiKey,
+                            spaceshipSettings.ApiSecret,
+                            spaceshipSettings.DnsPath,
+                            domain,
+                            cancellationToken);
+
+                    var updatedRecords =
+                        Build10ReplaceAcmeRecords(
+
+===== C:\Users\User\Desktop\Adminki\Программа домены\Новая папка\.build10-backup-20260906-203150\MainWindow.Build10.cs:373 =====
+                    if (txtValues.Count != 2)
+                    {
+                        /*
+ * BUILD10: проверка количества/совпадения TXT отключена.
+ * Наличие старых _acme-challenge в Spaceship допустимо.
+ */
+                    }
+
+                    AddLog(
+                        "INFO",
+                        domain,
+                        "ISPmanager: получены два значения " +
+>>>                         "_acme-challenge. Значения скрыты.");
+
+                    SetBuild10Status(
+                        baseProgress +
+                        25.0 / domains.Count,
+                        $"{domain}: чтение DNS-зоны Spaceship...");
+
+                    var currentRecords =
+                        await Build10GetSpaceshipRecordsAsync(
+                            spaceshipSettings.BaseUrl,
+                            spaceshipSettings.ApiKey,
+                            spaceshipSettings.ApiSecret,
+                            spaceshipSettings.DnsPath,
+                            domain,
+                            cancellationToken);
+
+                    var updatedRecords =
+                        Build10ReplaceAcmeRecords(
+                            currentRecords,
+                            domain,
+                            txtValues);
+
+                    SetBuild10Status(
+                        baseProgress +
+                        50.0 / domains.Count,
+                        $"{domain}: сохранение двух TXT " +
+
+===== C:\Users\User\Desktop\Adminki\Программа домены\Новая папка\.build10-backup-20260906-203150\MainWindow.Build10.cs:438 =====
+                            cancellationToken);
+
+                    Build10VerifyAcmeRecords(
+                        verificationRecords,
+                        domain,
+                        txtValues);
+
+                    successfulDomains++;
+
+                    AddLog(
+                        "INFO",
+                        domain,
+>>>                         "Две TXT-записи _acme-challenge " +
+                        "обновлены и проверены в Spaceship.");
+
+                    SetBuild10Status(
+                        (index + 1) * 100.0 / domains.Count,
+                        $"{domain}: две TXT-записи успешно " +
+                        "заменены и проверены.");
+                }
+                catch (Exception exception)
+                {
+                    failedDomains++;
+
+                    var safeMessage =
+                        SensitiveDataRedactor.Redact(
+                            exception.Message);
+
+                    AddLog(
+                        "ERROR",
+                        domain,
+                        safeMessage);
+
+                    SetBuild10Status(
+                        (index + 1) * 100.0 / domains.Count,
+                        $"{domain}: ОШИБКА — {safeMessage}");
+
+                    // Следующий домен не обрабатываем автоматически,
+
+===== C:\Users\User\Desktop\Adminki\Программа домены\Новая папка\.build10-backup-20260906-203150\MainWindow.Build10.cs:738 =====
+            if (!Build10IsAcmeName(name, domain))
+            {
+                continue;
+            }
+
+            var value = Build10FindXmlChild(
+                children,
+                "value",
+                "data",
+                "text",
+                "content");
+
+>>>             value = Build10NormalizeTxtValue(value);
+
+            if (!string.IsNullOrWhiteSpace(value))
+            {
+                values.Add(value);
+            }
+        }
+
+        if (values.Count == 0)
+        {
+            // Дополнительный разбор ответа ISPmanager, если
+            // name и value находятся внутри разных контейнеров.
+            var nameElements = document
+                .Descendants()
+                .Where(element =>
+                    string.Equals(
+                        element.Name.LocalName,
+                        "name",
+                        StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(
+                        element.Name.LocalName,
+                        "record",
+                        StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(
+                        element.Name.LocalName,
+                        "host",
+
+===== C:\Users\User\Desktop\Adminki\Программа домены\Новая папка\.build10-backup-20260906-203150\MainWindow.Build10.cs:802 =====
+                            "data",
+                            StringComparison.OrdinalIgnoreCase) ||
+                        string.Equals(
+                            element.Name.LocalName,
+                            "text",
+                            StringComparison.OrdinalIgnoreCase) ||
+                        string.Equals(
+                            element.Name.LocalName,
+                            "content",
+                            StringComparison.OrdinalIgnoreCase));
+
+                var value =
+>>>                     Build10NormalizeTxtValue(
+                        valueElement?.Value);
+
+                if (!string.IsNullOrWhiteSpace(value))
+                {
+                    values.Add(value);
+                }
+            }
+        }
+
+        if (values.Count != 2)
+        {
+            throw new InvalidOperationException(
+                $"В ответе webdomain.letsencrypt.txt для " +
+                $"{domain} найдено значений: {values.Count}. " +
+                "Ожидалось ровно два. Убедитесь, что в " +
+                "ISPmanager уже открыт/создан запрос wildcard " +
+                "Let’s Encrypt для домена и *.домена.");
+        }
+
+        return values;
+    }
+
+    private static string Build10FindXmlChild(
+        IEnumerable<XElement> children,
+        params string[] names)
+
+===== C:\Users\User\Desktop\Adminki\Программа домены\Новая папка\.build10-backup-20260906-203150\MainWindow.Build10.cs:1141 =====
+                    StringComparison.OrdinalIgnoreCase) &&
+                Build10IsAcmeName(
+                    Build10GetJsonString(
+                        record,
+                        "name"),
+                    domain))
+            .ToList();
+
+        if (matches.Count != 2)
+        {
+            /*
+ * BUILD10: проверка количества/совпадения TXT отключена.
+>>>  * Наличие старых _acme-challenge в Spaceship допустимо.
+ */
+        }
+
+        for (var index = 0;
+             index < 2;
+             index++)
+        {
+            Build10SetJsonString(
+                matches[index],
+                "value",
+                txtValues[index]);
+        }
+
+        return records;
+    }
+
+    private async Task Build10PutSpaceshipRecordsAsync(
+        string baseUrl,
+        string apiKey,
+        string apiSecret,
+        string dnsPath,
+        string domain,
+        List<JsonObject> records,
+        CancellationToken cancellationToken)
+    {
+
+===== C:\Users\User\Desktop\Adminki\Программа домены\Новая папка\.build10-backup-20260906-203150\MainWindow.Build10.cs:1234 =====
+            await _spaceshipHttpClient.SendAsync(
+                request,
+                HttpCompletionOption.ResponseHeadersRead,
+                cancellationToken);
+
+        var body =
+            await response.Content.ReadAsStringAsync(
+                cancellationToken);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            throw new InvalidOperationException(
+>>>                 "Spaceship API не сохранил DNS-зону. HTTP " +
+                $"{(int)response.StatusCode} " +
+                $"{response.ReasonPhrase}. " +
+                LimitAndRedact(
+                    body,
+                    apiKey,
+                    apiSecret));
+        }
+    }
+
+    private static JsonObject
+        Build10PrepareRecordForSave(
+            JsonObject source)
+    {
+        var copy =
+            (JsonObject)source.DeepClone();
+
+        // Возможные служебные поля ответа Spaceship,
+        // которые не должны отправляться при PUT.
+        var readOnlyNames = new HashSet<string>(
+            new[]
+            {
+                "id",
+                "recordId",
+                "domain",
+                "createdAt",
+
+===== C:\Users\User\Desktop\Adminki\Программа домены\Новая папка\.build10-backup-20260906-203150\MainWindow.Build10.cs:1298 =====
+                string.Equals(
+                    Build10GetJsonString(
+                        record,
+                        "type"),
+                    "TXT",
+                    StringComparison.OrdinalIgnoreCase) &&
+                Build10IsAcmeName(
+                    Build10GetJsonString(
+                        record,
+                        "name"),
+                    domain))
+            .Select(record =>
+>>>                 Build10NormalizeTxtValue(
+                    Build10GetJsonString(
+                        record,
+                        "value")))
+            .OrderBy(value => value, StringComparer.Ordinal)
+            .ToList();
+
+        var expected = expectedValues
+            .Select(Build10NormalizeTxtValue)
+            .OrderBy(value => value, StringComparer.Ordinal)
+            .ToList();
+
+        if (actualValues.Count != 2)
+        {
+            /*
+ * BUILD10: проверка количества/совпадения TXT отключена.
+ * Наличие старых _acme-challenge в Spaceship допустимо.
+ */
+        }
+
+        if (!actualValues.SequenceEqual(
+                expected,
+                StringComparer.Ordinal))
+        {
+            /*
+ * BUILD10: проверка количества/совпадения TXT отключена.
+
+===== C:\Users\User\Desktop\Adminki\Программа домены\Новая папка\.build10-backup-20260906-203150\MainWindow.Build10.cs:1306 =====
+                        record,
+                        "name"),
+                    domain))
+            .Select(record =>
+                Build10NormalizeTxtValue(
+                    Build10GetJsonString(
+                        record,
+                        "value")))
+            .OrderBy(value => value, StringComparer.Ordinal)
+            .ToList();
+
+        var expected = expectedValues
+>>>             .Select(Build10NormalizeTxtValue)
+            .OrderBy(value => value, StringComparer.Ordinal)
+            .ToList();
+
+        if (actualValues.Count != 2)
+        {
+            /*
+ * BUILD10: проверка количества/совпадения TXT отключена.
+ * Наличие старых _acme-challenge в Spaceship допустимо.
+ */
+        }
+
+        if (!actualValues.SequenceEqual(
+                expected,
+                StringComparer.Ordinal))
+        {
+            /*
+ * BUILD10: проверка количества/совпадения TXT отключена.
+ * Наличие старых _acme-challenge в Spaceship допустимо.
+ */
+        }
+    }
+
+    private static void Build10AddSpaceshipHeaders(
+        HttpRequestMessage request,
+        string apiKey,
+
+===== C:\Users\User\Desktop\Adminki\Программа домены\Новая папка\.build10-backup-20260906-203150\MainWindow.Build10.cs:1314 =====
+            .OrderBy(value => value, StringComparer.Ordinal)
+            .ToList();
+
+        var expected = expectedValues
+            .Select(Build10NormalizeTxtValue)
+            .OrderBy(value => value, StringComparer.Ordinal)
+            .ToList();
+
+        if (actualValues.Count != 2)
+        {
+            /*
+ * BUILD10: проверка количества/совпадения TXT отключена.
+>>>  * Наличие старых _acme-challenge в Spaceship допустимо.
+ */
+        }
+
+        if (!actualValues.SequenceEqual(
+                expected,
+                StringComparer.Ordinal))
+        {
+            /*
+ * BUILD10: проверка количества/совпадения TXT отключена.
+ * Наличие старых _acme-challenge в Spaceship допустимо.
+ */
+        }
+    }
+
+    private static void Build10AddSpaceshipHeaders(
+        HttpRequestMessage request,
+        string apiKey,
+        string apiSecret)
+    {
+        request.Headers.TryAddWithoutValidation(
+            "X-API-Key",
+            apiKey);
+
+        request.Headers.TryAddWithoutValidation(
+            "X-API-Secret",
+
+===== C:\Users\User\Desktop\Adminki\Программа домены\Новая папка\.build10-backup-20260906-203150\MainWindow.Build10.cs:1324 =====
+            /*
+ * BUILD10: проверка количества/совпадения TXT отключена.
+ * Наличие старых _acme-challenge в Spaceship допустимо.
+ */
+        }
+
+        if (!actualValues.SequenceEqual(
+                expected,
+                StringComparer.Ordinal))
+        {
+            /*
+ * BUILD10: проверка количества/совпадения TXT отключена.
+>>>  * Наличие старых _acme-challenge в Spaceship допустимо.
+ */
+        }
+    }
+
+    private static void Build10AddSpaceshipHeaders(
+        HttpRequestMessage request,
+        string apiKey,
+        string apiSecret)
+    {
+        request.Headers.TryAddWithoutValidation(
+            "X-API-Key",
+            apiKey);
+
+        request.Headers.TryAddWithoutValidation(
+            "X-API-Secret",
+            apiSecret);
+
+        request.Headers.TryAddWithoutValidation(
+            "Accept",
+            "application/json");
+    }
+
+    private static JsonNode? Build10GetJsonProperty(
+        JsonObject record,
+        string propertyName)
+
+===== C:\Users\User\Desktop\Adminki\Программа домены\Новая папка\.build10-backup-20260906-203150\MainWindow.Build10.cs:1434 =====
+
+        var name = recordName
+            .Trim()
+            .TrimEnd('.')
+            .ToLowerInvariant();
+
+        var normalizedDomain = domain
+            .Trim()
+            .TrimEnd('.')
+            .ToLowerInvariant();
+
+        return
+>>>             name == "_acme-challenge" ||
+            name == "_acme-challenge." + normalizedDomain;
+    }
+
+    private static string Build10NormalizeTxtValue(
+        string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return string.Empty;
+        }
+
+        var result = value.Trim();
+
+        if (result.Length >= 2 &&
+            result.StartsWith('"') &&
+            result.EndsWith('"'))
+        {
+            result =
+                result[1..^1];
+        }
+
+        return result;
+    }
+
+    private void SetBuild10Status(
+
+===== C:\Users\User\Desktop\Adminki\Программа домены\Новая папка\.build10-backup-20260906-203150\MainWindow.Build10.cs:1435 =====
+        var name = recordName
+            .Trim()
+            .TrimEnd('.')
+            .ToLowerInvariant();
+
+        var normalizedDomain = domain
+            .Trim()
+            .TrimEnd('.')
+            .ToLowerInvariant();
+
+        return
+            name == "_acme-challenge" ||
+>>>             name == "_acme-challenge." + normalizedDomain;
+    }
+
+    private static string Build10NormalizeTxtValue(
+        string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return string.Empty;
+        }
+
+        var result = value.Trim();
+
+        if (result.Length >= 2 &&
+            result.StartsWith('"') &&
+            result.EndsWith('"'))
+        {
+            result =
+                result[1..^1];
+        }
+
+        return result;
+    }
+
+    private void SetBuild10Status(
+        double progress,
+
+===== C:\Users\User\Desktop\Adminki\Программа домены\Новая папка\.build10-backup-20260906-203150\MainWindow.Build10.cs:1438 =====
+            .ToLowerInvariant();
+
+        var normalizedDomain = domain
+            .Trim()
+            .TrimEnd('.')
+            .ToLowerInvariant();
+
+        return
+            name == "_acme-challenge" ||
+            name == "_acme-challenge." + normalizedDomain;
+    }
+
+>>>     private static string Build10NormalizeTxtValue(
+        string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return string.Empty;
+        }
+
+        var result = value.Trim();
+
+        if (result.Length >= 2 &&
+            result.StartsWith('"') &&
+            result.EndsWith('"'))
+        {
+            result =
+                result[1..^1];
+        }
+
+        return result;
+    }
+
+    private void SetBuild10Status(
+        double progress,
+        string message)
+    {
+        if (_build10ProgressBar is not null)
+
+===== C:\Users\User\Desktop\Adminki\Программа домены\Новая папка\.build10-backup-20260906-203417\MainWindow.Build10.cs:126 =====
+                Color.FromRgb(238, 246, 255)),
+            BorderBrush = new SolidColorBrush(
+                Color.FromRgb(120, 165, 210)),
+            BorderThickness = new Thickness(1)
+        };
+
+        descriptionBorder.Child = new TextBlock
+        {
+            TextWrapping = TextWrapping.Wrap,
+            Text =
+                "Программа пройдёт по доменам из основного поля " +
+                "«Домены», получит для каждого домена две записи " +
+>>>                 "_acme-challenge из ISPmanager и заменит значения " +
+                "двух существующих TXT-записей в Spaceship. " +
+                "Остальные DNS-записи будут сохранены."
+        };
+
+        Grid.SetRow(descriptionBorder, 0);
+        root.Children.Add(descriptionBorder);
+
+        var buttonPanel = new WrapPanel
+        {
+            Margin = new Thickness(0, 0, 0, 12)
+        };
+
+        _build10SyncButton = new Button
+        {
+            Content = "ПОЛУЧИТЬ И ЗАМЕНИТЬ 2 ACME TXT",
+            Width = 310,
+            Padding = new Thickness(12, 9, 12, 9),
+            Margin = new Thickness(0, 0, 10, 0),
+            FontWeight = FontWeights.Bold,
+            Foreground = Brushes.White,
+            Background = new SolidColorBrush(
+                Color.FromRgb(31, 122, 63))
+        };
+
+        _build10SyncButton.Click +=
+
+===== C:\Users\User\Desktop\Adminki\Программа домены\Новая папка\.build10-backup-20260906-203417\MainWindow.Build10.cs:225 =====
+                this,
+                "Дождитесь завершения текущей операции.",
+                "ACME TXT",
+                MessageBoxButton.OK,
+                MessageBoxImage.Information);
+
+            return;
+        }
+
+        var confirmation = MessageBox.Show(
+            this,
+            "Для каждого указанного домена программа:\n\n" +
+>>>             "1. Получит две TXT-записи _acme-challenge " +
+            "из ISPmanager.\n" +
+            "2. Прочитает всю DNS-зону Spaceship.\n" +
+            "3. Заменит значения двух существующих TXT-записей.\n" +
+            "4. Сохранит DNS-зону и проверит результат.\n\n" +
+            "Продолжить?",
+            "Подтверждение синхронизации",
+            MessageBoxButton.YesNo,
+            MessageBoxImage.Question);
+
+        if (confirmation != MessageBoxResult.Yes)
+        {
+            return;
+        }
+
+        _isRunning = true;
+
+        if (_build10SyncButton is not null)
+        {
+            _build10SyncButton.IsEnabled = false;
+        }
+
+        StartButton.IsEnabled = false;
+        CancelButton.IsEnabled = true;
+
+        _cancellationTokenSource =
+
+===== C:\Users\User\Desktop\Adminki\Программа домены\Новая папка\.build10-backup-20260906-203417\MainWindow.Build10.cs:365 =====
+                    var txtValues =
+                        await Build10GetIspTxtValuesAsync(
+                            ispClient,
+                            ispUrl,
+                            sessionId,
+                            domain,
+                            cancellationToken);
+
+                    if (txtValues.Count != 2)
+                    {
+                        /*
+ * BUILD10: проверка количества/совпадения TXT отключена.
+>>>  * Наличие старых _acme-challenge в Spaceship допустимо.
+ */
+                    }
+
+                    AddLog(
+                        "INFO",
+                        domain,
+                        "ISPmanager: получены два значения " +
+                        "_acme-challenge. Значения скрыты.");
+
+                    SetBuild10Status(
+                        baseProgress +
+                        25.0 / domains.Count,
+                        $"{domain}: чтение DNS-зоны Spaceship...");
+
+                    var currentRecords =
+                        await Build10GetSpaceshipRecordsAsync(
+                            spaceshipSettings.BaseUrl,
+                            spaceshipSettings.ApiKey,
+                            spaceshipSettings.ApiSecret,
+                            spaceshipSettings.DnsPath,
+                            domain,
+                            cancellationToken);
+
+                    var updatedRecords =
+                        Build10ReplaceAcmeRecords(
+
+===== C:\Users\User\Desktop\Adminki\Программа домены\Новая папка\.build10-backup-20260906-203417\MainWindow.Build10.cs:373 =====
+                    if (txtValues.Count != 2)
+                    {
+                        /*
+ * BUILD10: проверка количества/совпадения TXT отключена.
+ * Наличие старых _acme-challenge в Spaceship допустимо.
+ */
+                    }
+
+                    AddLog(
+                        "INFO",
+                        domain,
+                        "ISPmanager: получены два значения " +
+>>>                         "_acme-challenge. Значения скрыты.");
+
+                    SetBuild10Status(
+                        baseProgress +
+                        25.0 / domains.Count,
+                        $"{domain}: чтение DNS-зоны Spaceship...");
+
+                    var currentRecords =
+                        await Build10GetSpaceshipRecordsAsync(
+                            spaceshipSettings.BaseUrl,
+                            spaceshipSettings.ApiKey,
+                            spaceshipSettings.ApiSecret,
+                            spaceshipSettings.DnsPath,
+                            domain,
+                            cancellationToken);
+
+                    var updatedRecords =
+                        Build10ReplaceAcmeRecords(
+                            currentRecords,
+                            domain,
+                            txtValues);
+
+                    SetBuild10Status(
+                        baseProgress +
+                        50.0 / domains.Count,
+                        $"{domain}: сохранение двух TXT " +
+
+===== C:\Users\User\Desktop\Adminki\Программа домены\Новая папка\.build10-backup-20260906-203417\MainWindow.Build10.cs:438 =====
+                            cancellationToken);
+
+                    Build10VerifyAcmeRecords(
+                        verificationRecords,
+                        domain,
+                        txtValues);
+
+                    successfulDomains++;
+
+                    AddLog(
+                        "INFO",
+                        domain,
+>>>                         "Две TXT-записи _acme-challenge " +
+                        "обновлены и проверены в Spaceship.");
+
+                    SetBuild10Status(
+                        (index + 1) * 100.0 / domains.Count,
+                        $"{domain}: две TXT-записи успешно " +
+                        "заменены и проверены.");
+                }
+                catch (Exception exception)
+                {
+                    failedDomains++;
+
+                    var safeMessage =
+                        SensitiveDataRedactor.Redact(
+                            exception.Message);
+
+                    AddLog(
+                        "ERROR",
+                        domain,
+                        safeMessage);
+
+                    SetBuild10Status(
+                        (index + 1) * 100.0 / domains.Count,
+                        $"{domain}: ОШИБКА — {safeMessage}");
+
+                    // Следующий домен не обрабатываем автоматически,
+
+===== C:\Users\User\Desktop\Adminki\Программа домены\Новая папка\.build10-backup-20260906-203417\MainWindow.Build10.cs:738 =====
+            if (!Build10IsAcmeName(name, domain))
+            {
+                continue;
+            }
+
+            var value = Build10FindXmlChild(
+                children,
+                "value",
+                "data",
+                "text",
+                "content");
+
+>>>             value = Build10NormalizeTxtValue(value);
+
+            if (!string.IsNullOrWhiteSpace(value))
+            {
+                values.Add(value);
+            }
+        }
+
+        if (values.Count == 0)
+        {
+            // Дополнительный разбор ответа ISPmanager, если
+            // name и value находятся внутри разных контейнеров.
+            var nameElements = document
+                .Descendants()
+                .Where(element =>
+                    string.Equals(
+                        element.Name.LocalName,
+                        "name",
+                        StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(
+                        element.Name.LocalName,
+                        "record",
+                        StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(
+                        element.Name.LocalName,
+                        "host",
+
+===== C:\Users\User\Desktop\Adminki\Программа домены\Новая папка\.build10-backup-20260906-203417\MainWindow.Build10.cs:802 =====
+                            "data",
+                            StringComparison.OrdinalIgnoreCase) ||
+                        string.Equals(
+                            element.Name.LocalName,
+                            "text",
+                            StringComparison.OrdinalIgnoreCase) ||
+                        string.Equals(
+                            element.Name.LocalName,
+                            "content",
+                            StringComparison.OrdinalIgnoreCase));
+
+                var value =
+>>>                     Build10NormalizeTxtValue(
+                        valueElement?.Value);
+
+                if (!string.IsNullOrWhiteSpace(value))
+                {
+                    values.Add(value);
+                }
+            }
+        }
+
+        if (values.Count != 2)
+        {
+            throw new InvalidOperationException(
+                $"В ответе webdomain.letsencrypt.txt для " +
+                $"{domain} найдено значений: {values.Count}. " +
+                "Ожидалось ровно два. Убедитесь, что в " +
+                "ISPmanager уже открыт/создан запрос wildcard " +
+                "Let’s Encrypt для домена и *.домена.");
+        }
+
+        return values;
+    }
+
+    private static string Build10FindXmlChild(
+        IEnumerable<XElement> children,
+        params string[] names)
+
+===== C:\Users\User\Desktop\Adminki\Программа домены\Новая папка\.build10-backup-20260906-203417\MainWindow.Build10.cs:1141 =====
+                    StringComparison.OrdinalIgnoreCase) &&
+                Build10IsAcmeName(
+                    Build10GetJsonString(
+                        record,
+                        "name"),
+                    domain))
+            .ToList();
+
+        if (matches.Count != 2)
+        {
+            /*
+ * BUILD10: проверка количества/совпадения TXT отключена.
+>>>  * Наличие старых _acme-challenge в Spaceship допустимо.
+ */
+        }
+
+        for (var index = 0;
+             index < 2;
+             index++)
+        {
+            Build10SetJsonString(
+                matches[index],
+                "value",
+                txtValues[index]);
+        }
+
+        return records;
+    }
+
+    private async Task Build10PutSpaceshipRecordsAsync(
+        string baseUrl,
+        string apiKey,
+        string apiSecret,
+        string dnsPath,
+        string domain,
+        List<JsonObject> records,
+        CancellationToken cancellationToken)
+    {
+
+===== C:\Users\User\Desktop\Adminki\Программа домены\Новая папка\.build10-backup-20260906-203417\MainWindow.Build10.cs:1234 =====
+            await _spaceshipHttpClient.SendAsync(
+                request,
+                HttpCompletionOption.ResponseHeadersRead,
+                cancellationToken);
+
+        var body =
+            await response.Content.ReadAsStringAsync(
+                cancellationToken);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            throw new InvalidOperationException(
+>>>                 "Spaceship API не сохранил DNS-зону. HTTP " +
+                $"{(int)response.StatusCode} " +
+                $"{response.ReasonPhrase}. " +
+                LimitAndRedact(
+                    body,
+                    apiKey,
+                    apiSecret));
+        }
+    }
+
+    private static JsonObject
+        Build10PrepareRecordForSave(
+            JsonObject source)
+    {
+        var copy =
+            (JsonObject)source.DeepClone();
+
+        // Возможные служебные поля ответа Spaceship,
+        // которые не должны отправляться при PUT.
+        var readOnlyNames = new HashSet<string>(
+            new[]
+            {
+                "id",
+                "recordId",
+                "domain",
+                "createdAt",
+
+===== C:\Users\User\Desktop\Adminki\Программа домены\Новая папка\.build10-backup-20260906-203417\MainWindow.Build10.cs:1298 =====
+                string.Equals(
+                    Build10GetJsonString(
+                        record,
+                        "type"),
+                    "TXT",
+                    StringComparison.OrdinalIgnoreCase) &&
+                Build10IsAcmeName(
+                    Build10GetJsonString(
+                        record,
+                        "name"),
+                    domain))
+            .Select(record =>
+>>>                 Build10NormalizeTxtValue(
+                    Build10GetJsonString(
+                        record,
+                        "value")))
+            .OrderBy(value => value, StringComparer.Ordinal)
+            .ToList();
+
+        var expected = expectedValues
+            .Select(Build10NormalizeTxtValue)
+            .OrderBy(value => value, StringComparer.Ordinal)
+            .ToList();
+
+        if (actualValues.Count != 2)
+        {
+            /*
+ * BUILD10: проверка количества/совпадения TXT отключена.
+ * Наличие старых _acme-challenge в Spaceship допустимо.
+ */
+        }
+
+        if (!actualValues.SequenceEqual(
+                expected,
+                StringComparer.Ordinal))
+        {
+            /*
+ * BUILD10: проверка количества/совпадения TXT отключена.
+
+===== C:\Users\User\Desktop\Adminki\Программа домены\Новая папка\.build10-backup-20260906-203417\MainWindow.Build10.cs:1306 =====
+                        record,
+                        "name"),
+                    domain))
+            .Select(record =>
+                Build10NormalizeTxtValue(
+                    Build10GetJsonString(
+                        record,
+                        "value")))
+            .OrderBy(value => value, StringComparer.Ordinal)
+            .ToList();
+
+        var expected = expectedValues
+>>>             .Select(Build10NormalizeTxtValue)
+            .OrderBy(value => value, StringComparer.Ordinal)
+            .ToList();
+
+        if (actualValues.Count != 2)
+        {
+            /*
+ * BUILD10: проверка количества/совпадения TXT отключена.
+ * Наличие старых _acme-challenge в Spaceship допустимо.
+ */
+        }
+
+        if (!actualValues.SequenceEqual(
+                expected,
+                StringComparer.Ordinal))
+        {
+            /*
+ * BUILD10: проверка количества/совпадения TXT отключена.
+ * Наличие старых _acme-challenge в Spaceship допустимо.
+ */
+        }
+    }
+
+    private static void Build10AddSpaceshipHeaders(
+        HttpRequestMessage request,
+        string apiKey,
+
+===== C:\Users\User\Desktop\Adminki\Программа домены\Новая папка\.build10-backup-20260906-203417\MainWindow.Build10.cs:1314 =====
+            .OrderBy(value => value, StringComparer.Ordinal)
+            .ToList();
+
+        var expected = expectedValues
+            .Select(Build10NormalizeTxtValue)
+            .OrderBy(value => value, StringComparer.Ordinal)
+            .ToList();
+
+        if (actualValues.Count != 2)
+        {
+            /*
+ * BUILD10: проверка количества/совпадения TXT отключена.
+>>>  * Наличие старых _acme-challenge в Spaceship допустимо.
+ */
+        }
+
+        if (!actualValues.SequenceEqual(
+                expected,
+                StringComparer.Ordinal))
+        {
+            /*
+ * BUILD10: проверка количества/совпадения TXT отключена.
+ * Наличие старых _acme-challenge в Spaceship допустимо.
+ */
+        }
+    }
+
+    private static void Build10AddSpaceshipHeaders(
+        HttpRequestMessage request,
+        string apiKey,
+        string apiSecret)
+    {
+        request.Headers.TryAddWithoutValidation(
+            "X-API-Key",
+            apiKey);
+
+        request.Headers.TryAddWithoutValidation(
+            "X-API-Secret",
+
+===== C:\Users\User\Desktop\Adminki\Программа домены\Новая папка\.build10-backup-20260906-203417\MainWindow.Build10.cs:1324 =====
+            /*
+ * BUILD10: проверка количества/совпадения TXT отключена.
+ * Наличие старых _acme-challenge в Spaceship допустимо.
+ */
+        }
+
+        if (!actualValues.SequenceEqual(
+                expected,
+                StringComparer.Ordinal))
+        {
+            /*
+ * BUILD10: проверка количества/совпадения TXT отключена.
+>>>  * Наличие старых _acme-challenge в Spaceship допустимо.
+ */
+        }
+    }
+
+    private static void Build10AddSpaceshipHeaders(
+        HttpRequestMessage request,
+        string apiKey,
+        string apiSecret)
+    {
+        request.Headers.TryAddWithoutValidation(
+            "X-API-Key",
+            apiKey);
+
+        request.Headers.TryAddWithoutValidation(
+            "X-API-Secret",
+            apiSecret);
+
+        request.Headers.TryAddWithoutValidation(
+            "Accept",
+            "application/json");
+    }
+
+    private static JsonNode? Build10GetJsonProperty(
+        JsonObject record,
+        string propertyName)
+
+===== C:\Users\User\Desktop\Adminki\Программа домены\Новая папка\.build10-backup-20260906-203417\MainWindow.Build10.cs:1434 =====
+
+        var name = recordName
+            .Trim()
+            .TrimEnd('.')
+            .ToLowerInvariant();
+
+        var normalizedDomain = domain
+            .Trim()
+            .TrimEnd('.')
+            .ToLowerInvariant();
+
+        return
+>>>             name == "_acme-challenge" ||
+            name == "_acme-challenge." + normalizedDomain;
+    }
+
+    private static string Build10NormalizeTxtValue(
+        string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return string.Empty;
+        }
+
+        var result = value.Trim();
+
+        if (result.Length >= 2 &&
+            result.StartsWith('"') &&
+            result.EndsWith('"'))
+        {
+            result =
+                result[1..^1];
+        }
+
+        return result;
+    }
+
+    private void SetBuild10Status(
+
+===== C:\Users\User\Desktop\Adminki\Программа домены\Новая папка\.build10-backup-20260906-203417\MainWindow.Build10.cs:1435 =====
+        var name = recordName
+            .Trim()
+            .TrimEnd('.')
+            .ToLowerInvariant();
+
+        var normalizedDomain = domain
+            .Trim()
+            .TrimEnd('.')
+            .ToLowerInvariant();
+
+        return
+            name == "_acme-challenge" ||
+>>>             name == "_acme-challenge." + normalizedDomain;
+    }
+
+    private static string Build10NormalizeTxtValue(
+        string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return string.Empty;
+        }
+
+        var result = value.Trim();
+
+        if (result.Length >= 2 &&
+            result.StartsWith('"') &&
+            result.EndsWith('"'))
+        {
+            result =
+                result[1..^1];
+        }
+
+        return result;
+    }
+
+    private void SetBuild10Status(
+        double progress,
+
+===== C:\Users\User\Desktop\Adminki\Программа домены\Новая папка\.build10-backup-20260906-203417\MainWindow.Build10.cs:1438 =====
+            .ToLowerInvariant();
+
+        var normalizedDomain = domain
+            .Trim()
+            .TrimEnd('.')
+            .ToLowerInvariant();
+
+        return
+            name == "_acme-challenge" ||
+            name == "_acme-challenge." + normalizedDomain;
+    }
+
+>>>     private static string Build10NormalizeTxtValue(
+        string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return string.Empty;
+        }
+
+        var result = value.Trim();
+
+        if (result.Length >= 2 &&
+            result.StartsWith('"') &&
+            result.EndsWith('"'))
+        {
+            result =
+                result[1..^1];
+        }
+
+        return result;
+    }
+
+    private void SetBuild10Status(
+        double progress,
+        string message)
+    {
+        if (_build10ProgressBar is not null)
+
+===== C:\Users\User\Desktop\Adminki\Программа домены\Новая папка\.build10-backup-20260906-203603\MainWindow.Build10.cs:126 =====
+                Color.FromRgb(238, 246, 255)),
+            BorderBrush = new SolidColorBrush(
+                Color.FromRgb(120, 165, 210)),
+            BorderThickness = new Thickness(1)
+        };
+
+        descriptionBorder.Child = new TextBlock
+        {
+            TextWrapping = TextWrapping.Wrap,
+            Text =
+                "Программа пройдёт по доменам из основного поля " +
+                "«Домены», получит для каждого домена две записи " +
+>>>                 "_acme-challenge из ISPmanager и заменит значения " +
+                "двух существующих TXT-записей в Spaceship. " +
+                "Остальные DNS-записи будут сохранены."
+        };
+
+        Grid.SetRow(descriptionBorder, 0);
+        root.Children.Add(descriptionBorder);
+
+        var buttonPanel = new WrapPanel
+        {
+            Margin = new Thickness(0, 0, 0, 12)
+        };
+
+        _build10SyncButton = new Button
+        {
+            Content = "ПОЛУЧИТЬ И ЗАМЕНИТЬ 2 ACME TXT",
+            Width = 310,
+            Padding = new Thickness(12, 9, 12, 9),
+            Margin = new Thickness(0, 0, 10, 0),
+            FontWeight = FontWeights.Bold,
+            Foreground = Brushes.White,
+            Background = new SolidColorBrush(
+                Color.FromRgb(31, 122, 63))
+        };
+
+        _build10SyncButton.Click +=
+
+===== C:\Users\User\Desktop\Adminki\Программа домены\Новая папка\.build10-backup-20260906-203603\MainWindow.Build10.cs:225 =====
+                this,
+                "Дождитесь завершения текущей операции.",
+                "ACME TXT",
+                MessageBoxButton.OK,
+                MessageBoxImage.Information);
+
+            return;
+        }
+
+        var confirmation = MessageBox.Show(
+            this,
+            "Для каждого указанного домена программа:\n\n" +
+>>>             "1. Получит две TXT-записи _acme-challenge " +
+            "из ISPmanager.\n" +
+            "2. Прочитает всю DNS-зону Spaceship.\n" +
+            "3. Заменит значения двух существующих TXT-записей.\n" +
+            "4. Сохранит DNS-зону и проверит результат.\n\n" +
+            "Продолжить?",
+            "Подтверждение синхронизации",
+            MessageBoxButton.YesNo,
+            MessageBoxImage.Question);
+
+        if (confirmation != MessageBoxResult.Yes)
+        {
+            return;
+        }
+
+        _isRunning = true;
+
+        if (_build10SyncButton is not null)
+        {
+            _build10SyncButton.IsEnabled = false;
+        }
+
+        StartButton.IsEnabled = false;
+        CancelButton.IsEnabled = true;
+
+        _cancellationTokenSource =
+
+===== C:\Users\User\Desktop\Adminki\Программа домены\Новая папка\.build10-backup-20260906-203603\MainWindow.Build10.cs:365 =====
+                    var txtValues =
+                        await Build10GetIspTxtValuesAsync(
+                            ispClient,
+                            ispUrl,
+                            sessionId,
+                            domain,
+                            cancellationToken);
+
+                    if (txtValues.Count != 2)
+                    {
+                        /*
+ * BUILD10: проверка количества/совпадения TXT отключена.
+>>>  * Наличие старых _acme-challenge в Spaceship допустимо.
+ */
+                    }
+
+                    AddLog(
+                        "INFO",
+                        domain,
+                        "ISPmanager: получены два значения " +
+                        "_acme-challenge. Значения скрыты.");
+
+                    SetBuild10Status(
+                        baseProgress +
+                        25.0 / domains.Count,
+                        $"{domain}: чтение DNS-зоны Spaceship...");
+
+                    var currentRecords =
+                        await Build10GetSpaceshipRecordsAsync(
+                            spaceshipSettings.BaseUrl,
+                            spaceshipSettings.ApiKey,
+                            spaceshipSettings.ApiSecret,
+                            spaceshipSettings.DnsPath,
+                            domain,
+                            cancellationToken);
+
+                    var updatedRecords =
+                        Build10ReplaceAcmeRecords(
+
+===== C:\Users\User\Desktop\Adminki\Программа домены\Новая папка\.build10-backup-20260906-203603\MainWindow.Build10.cs:373 =====
+                    if (txtValues.Count != 2)
+                    {
+                        /*
+ * BUILD10: проверка количества/совпадения TXT отключена.
+ * Наличие старых _acme-challenge в Spaceship допустимо.
+ */
+                    }
+
+                    AddLog(
+                        "INFO",
+                        domain,
+                        "ISPmanager: получены два значения " +
+>>>                         "_acme-challenge. Значения скрыты.");
+
+                    SetBuild10Status(
+                        baseProgress +
+                        25.0 / domains.Count,
+                        $"{domain}: чтение DNS-зоны Spaceship...");
+
+                    var currentRecords =
+                        await Build10GetSpaceshipRecordsAsync(
+                            spaceshipSettings.BaseUrl,
+                            spaceshipSettings.ApiKey,
+                            spaceshipSettings.ApiSecret,
+                            spaceshipSettings.DnsPath,
+                            domain,
+                            cancellationToken);
+
+                    var updatedRecords =
+                        Build10ReplaceAcmeRecords(
+                            currentRecords,
+                            domain,
+                            txtValues);
+
+                    SetBuild10Status(
+                        baseProgress +
+                        50.0 / domains.Count,
+                        $"{domain}: сохранение двух TXT " +
+
+===== C:\Users\User\Desktop\Adminki\Программа домены\Новая папка\.build10-backup-20260906-203603\MainWindow.Build10.cs:438 =====
+                            cancellationToken);
+
+                    Build10VerifyAcmeRecords(
+                        verificationRecords,
+                        domain,
+                        txtValues);
+
+                    successfulDomains++;
+
+                    AddLog(
+                        "INFO",
+                        domain,
+>>>                         "Две TXT-записи _acme-challenge " +
+                        "обновлены и проверены в Spaceship.");
+
+                    SetBuild10Status(
+                        (index + 1) * 100.0 / domains.Count,
+                        $"{domain}: две TXT-записи успешно " +
+                        "заменены и проверены.");
+                }
+                catch (Exception exception)
+                {
+                    failedDomains++;
+
+                    var safeMessage =
+                        SensitiveDataRedactor.Redact(
+                            exception.Message);
+
+                    AddLog(
+                        "ERROR",
+                        domain,
+                        safeMessage);
+
+                    SetBuild10Status(
+                        (index + 1) * 100.0 / domains.Count,
+                        $"{domain}: ОШИБКА — {safeMessage}");
+
+                    // Следующий домен не обрабатываем автоматически,
+
+===== C:\Users\User\Desktop\Adminki\Программа домены\Новая папка\.build10-backup-20260906-203603\MainWindow.Build10.cs:738 =====
+            if (!Build10IsAcmeName(name, domain))
+            {
+                continue;
+            }
+
+            var value = Build10FindXmlChild(
+                children,
+                "value",
+                "data",
+                "text",
+                "content");
+
+>>>             value = Build10NormalizeTxtValue(value);
+
+            if (!string.IsNullOrWhiteSpace(value))
+            {
+                values.Add(value);
+            }
+        }
+
+        if (values.Count == 0)
+        {
+            // Дополнительный разбор ответа ISPmanager, если
+            // name и value находятся внутри разных контейнеров.
+            var nameElements = document
+                .Descendants()
+                .Where(element =>
+                    string.Equals(
+                        element.Name.LocalName,
+                        "name",
+                        StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(
+                        element.Name.LocalName,
+                        "record",
+                        StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(
+                        element.Name.LocalName,
+                        "host",
+
+===== C:\Users\User\Desktop\Adminki\Программа домены\Новая папка\.build10-backup-20260906-203603\MainWindow.Build10.cs:802 =====
+                            "data",
+                            StringComparison.OrdinalIgnoreCase) ||
+                        string.Equals(
+                            element.Name.LocalName,
+                            "text",
+                            StringComparison.OrdinalIgnoreCase) ||
+                        string.Equals(
+                            element.Name.LocalName,
+                            "content",
+                            StringComparison.OrdinalIgnoreCase));
+
+                var value =
+>>>                     Build10NormalizeTxtValue(
+                        valueElement?.Value);
+
+                if (!string.IsNullOrWhiteSpace(value))
+                {
+                    values.Add(value);
+                }
+            }
+        }
+
+        if (values.Count != 2)
+        {
+            throw new InvalidOperationException(
+                $"В ответе webdomain.letsencrypt.txt для " +
+                $"{domain} найдено значений: {values.Count}. " +
+                "Ожидалось ровно два. Убедитесь, что в " +
+                "ISPmanager уже открыт/создан запрос wildcard " +
+                "Let’s Encrypt для домена и *.домена.");
+        }
+
+        return values;
+    }
+
+    private static string Build10FindXmlChild(
+        IEnumerable<XElement> children,
+        params string[] names)
+
+===== C:\Users\User\Desktop\Adminki\Программа домены\Новая папка\.build10-backup-20260906-203603\MainWindow.Build10.cs:1141 =====
+                    StringComparison.OrdinalIgnoreCase) &&
+                Build10IsAcmeName(
+                    Build10GetJsonString(
+                        record,
+                        "name"),
+                    domain))
+            .ToList();
+
+        if (matches.Count != 2)
+        {
+            /*
+ * BUILD10: проверка количества/совпадения TXT отключена.
+>>>  * Наличие старых _acme-challenge в Spaceship допустимо.
+ */
+        }
+
+        for (var index = 0;
+             index < 2;
+             index++)
+        {
+            Build10SetJsonString(
+                matches[index],
+                "value",
+                txtValues[index]);
+        }
+
+        return records;
+    }
+
+    private async Task Build10PutSpaceshipRecordsAsync(
+        string baseUrl,
+        string apiKey,
+        string apiSecret,
+        string dnsPath,
+        string domain,
+        List<JsonObject> records,
+        CancellationToken cancellationToken)
+    {
+
+===== C:\Users\User\Desktop\Adminki\Программа домены\Новая папка\.build10-backup-20260906-203603\MainWindow.Build10.cs:1234 =====
+            await _spaceshipHttpClient.SendAsync(
+                request,
+                HttpCompletionOption.ResponseHeadersRead,
+                cancellationToken);
+
+        var body =
+            await response.Content.ReadAsStringAsync(
+                cancellationToken);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            throw new InvalidOperationException(
+>>>                 "Spaceship API не сохранил DNS-зону. HTTP " +
+                $"{(int)response.StatusCode} " +
+                $"{response.ReasonPhrase}. " +
+                LimitAndRedact(
+                    body,
+                    apiKey,
+                    apiSecret));
+        }
+    }
+
+    private static JsonObject
+        Build10PrepareRecordForSave(
+            JsonObject source)
+    {
+        var copy =
+            (JsonObject)source.DeepClone();
+
+        // Возможные служебные поля ответа Spaceship,
+        // которые не должны отправляться при PUT.
+        var readOnlyNames = new HashSet<string>(
+            new[]
+            {
+                "id",
+                "recordId",
+                "domain",
+                "createdAt",
+
+===== C:\Users\User\Desktop\Adminki\Программа домены\Новая папка\.build10-backup-20260906-203603\MainWindow.Build10.cs:1298 =====
+                string.Equals(
+                    Build10GetJsonString(
+                        record,
+                        "type"),
+                    "TXT",
+                    StringComparison.OrdinalIgnoreCase) &&
+                Build10IsAcmeName(
+                    Build10GetJsonString(
+                        record,
+                        "name"),
+                    domain))
+            .Select(record =>
+>>>                 Build10NormalizeTxtValue(
+                    Build10GetJsonString(
+                        record,
+                        "value")))
+            .OrderBy(value => value, StringComparer.Ordinal)
+            .ToList();
+
+        var expected = expectedValues
+            .Select(Build10NormalizeTxtValue)
+            .OrderBy(value => value, StringComparer.Ordinal)
+            .ToList();
+
+        if (actualValues.Count != 2)
+        {
+            /*
+ * BUILD10: проверка количества/совпадения TXT отключена.
+ * Наличие старых _acme-challenge в Spaceship допустимо.
+ */
+        }
+
+        if (!actualValues.SequenceEqual(
+                expected,
+                StringComparer.Ordinal))
+        {
+            /*
+ * BUILD10: проверка количества/совпадения TXT отключена.
+
+===== C:\Users\User\Desktop\Adminki\Программа домены\Новая папка\.build10-backup-20260906-203603\MainWindow.Build10.cs:1306 =====
+                        record,
+                        "name"),
+                    domain))
+            .Select(record =>
+                Build10NormalizeTxtValue(
+                    Build10GetJsonString(
+                        record,
+                        "value")))
+            .OrderBy(value => value, StringComparer.Ordinal)
+            .ToList();
+
+        var expected = expectedValues
+>>>             .Select(Build10NormalizeTxtValue)
+            .OrderBy(value => value, StringComparer.Ordinal)
+            .ToList();
+
+        if (actualValues.Count != 2)
+        {
+            /*
+ * BUILD10: проверка количества/совпадения TXT отключена.
+ * Наличие старых _acme-challenge в Spaceship допустимо.
+ */
+        }
+
+        if (!actualValues.SequenceEqual(
+                expected,
+                StringComparer.Ordinal))
+        {
+            /*
+ * BUILD10: проверка количества/совпадения TXT отключена.
+ * Наличие старых _acme-challenge в Spaceship допустимо.
+ */
+        }
+    }
+
+    private static void Build10AddSpaceshipHeaders(
+        HttpRequestMessage request,
+        string apiKey,
+
+===== C:\Users\User\Desktop\Adminki\Программа домены\Новая папка\.build10-backup-20260906-203603\MainWindow.Build10.cs:1314 =====
+            .OrderBy(value => value, StringComparer.Ordinal)
+            .ToList();
+
+        var expected = expectedValues
+            .Select(Build10NormalizeTxtValue)
+            .OrderBy(value => value, StringComparer.Ordinal)
+            .ToList();
+
+        if (actualValues.Count != 2)
+        {
+            /*
+ * BUILD10: проверка количества/совпадения TXT отключена.
+>>>  * Наличие старых _acme-challenge в Spaceship допустимо.
+ */
+        }
+
+        if (!actualValues.SequenceEqual(
+                expected,
+                StringComparer.Ordinal))
+        {
+            /*
+ * BUILD10: проверка количества/совпадения TXT отключена.
+ * Наличие старых _acme-challenge в Spaceship допустимо.
+ */
+        }
+    }
+
+    private static void Build10AddSpaceshipHeaders(
+        HttpRequestMessage request,
+        string apiKey,
+        string apiSecret)
+    {
+        request.Headers.TryAddWithoutValidation(
+            "X-API-Key",
+            apiKey);
+
+        request.Headers.TryAddWithoutValidation(
+            "X-API-Secret",
+
+===== C:\Users\User\Desktop\Adminki\Программа домены\Новая папка\.build10-backup-20260906-203603\MainWindow.Build10.cs:1324 =====
+            /*
+ * BUILD10: проверка количества/совпадения TXT отключена.
+ * Наличие старых _acme-challenge в Spaceship допустимо.
+ */
+        }
+
+        if (!actualValues.SequenceEqual(
+                expected,
+                StringComparer.Ordinal))
+        {
+            /*
+ * BUILD10: проверка количества/совпадения TXT отключена.
+>>>  * Наличие старых _acme-challenge в Spaceship допустимо.
+ */
+        }
+    }
+
+    private static void Build10AddSpaceshipHeaders(
+        HttpRequestMessage request,
+        string apiKey,
+        string apiSecret)
+    {
+        request.Headers.TryAddWithoutValidation(
+            "X-API-Key",
+            apiKey);
+
+        request.Headers.TryAddWithoutValidation(
+            "X-API-Secret",
+            apiSecret);
+
+        request.Headers.TryAddWithoutValidation(
+            "Accept",
+            "application/json");
+    }
+
+    private static JsonNode? Build10GetJsonProperty(
+        JsonObject record,
+        string propertyName)
+
+===== C:\Users\User\Desktop\Adminki\Программа домены\Новая папка\.build10-backup-20260906-203603\MainWindow.Build10.cs:1434 =====
+
+        var name = recordName
+            .Trim()
+            .TrimEnd('.')
+            .ToLowerInvariant();
+
+        var normalizedDomain = domain
+            .Trim()
+            .TrimEnd('.')
+            .ToLowerInvariant();
+
+        return
+>>>             name == "_acme-challenge" ||
+            name == "_acme-challenge." + normalizedDomain;
+    }
+
+    private static string Build10NormalizeTxtValue(
+        string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return string.Empty;
+        }
+
+        var result = value.Trim();
+
+        if (result.Length >= 2 &&
+            result.StartsWith('"') &&
+            result.EndsWith('"'))
+        {
+            result =
+                result[1..^1];
+        }
+
+        return result;
+    }
+
+    private void SetBuild10Status(
+
+===== C:\Users\User\Desktop\Adminki\Программа домены\Новая папка\.build10-backup-20260906-203603\MainWindow.Build10.cs:1435 =====
+        var name = recordName
+            .Trim()
+            .TrimEnd('.')
+            .ToLowerInvariant();
+
+        var normalizedDomain = domain
+            .Trim()
+            .TrimEnd('.')
+            .ToLowerInvariant();
+
+        return
+            name == "_acme-challenge" ||
+>>>             name == "_acme-challenge." + normalizedDomain;
+    }
+
+    private static string Build10NormalizeTxtValue(
+        string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return string.Empty;
+        }
+
+        var result = value.Trim();
+
+        if (result.Length >= 2 &&
+            result.StartsWith('"') &&
+            result.EndsWith('"'))
+        {
+            result =
+                result[1..^1];
+        }
+
+        return result;
+    }
+
+    private void SetBuild10Status(
+        double progress,
+
+===== C:\Users\User\Desktop\Adminki\Программа домены\Новая папка\.build10-backup-20260906-203603\MainWindow.Build10.cs:1438 =====
+            .ToLowerInvariant();
+
+        var normalizedDomain = domain
+            .Trim()
+            .TrimEnd('.')
+            .ToLowerInvariant();
+
+        return
+            name == "_acme-challenge" ||
+            name == "_acme-challenge." + normalizedDomain;
+    }
+
+>>>     private static string Build10NormalizeTxtValue(
+        string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return string.Empty;
+        }
+
+        var result = value.Trim();
+
+        if (result.Length >= 2 &&
+            result.StartsWith('"') &&
+            result.EndsWith('"'))
+        {
+            result =
+                result[1..^1];
+        }
+
+        return result;
+    }
+
+    private void SetBuild10Status(
+        double progress,
+        string message)
+    {
+        if (_build10ProgressBar is not null)

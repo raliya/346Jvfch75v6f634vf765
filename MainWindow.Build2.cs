@@ -1,0 +1,311 @@
+using System.Windows;
+using TextFileProcessor.Models;
+using TextFileProcessor.Services;
+
+namespace TextFileProcessor;
+
+public partial class MainWindow
+{
+    private readonly IspmanagerSettingsService
+        _ispmanagerSettingsService = new();
+
+    private readonly IspmanagerAutomationService
+        _ispmanagerAutomationService = new();
+
+    private IspmanagerSettings _ispmanagerSettings = new();
+
+    private void Build2_Loaded(
+        object sender,
+        RoutedEventArgs e)
+    {
+        try
+        {
+            _ispmanagerSettings =
+                _ispmanagerSettingsService.Load();
+
+            IspmanagerUrlTextBox.Text =
+                _ispmanagerSettings.PanelUrl;
+
+            IspmanagerLoginTextBox.Text =
+                _ispmanagerSettings.Login;
+
+            IspmanagerOwnerTextBox.Text =
+                _ispmanagerSettings.Owner;
+
+            IspmanagerPhpVersionTextBox.Text =
+                _ispmanagerSettings.PhpVersion;
+
+            IgnoreCertificateErrorsCheckBox.IsChecked =
+                _ispmanagerSettings.IgnoreCertificateErrors;
+
+            ShowBrowserCheckBox.IsChecked =
+                _ispmanagerSettings.ShowBrowser;
+
+            PasswordSavedTextBlock.Text =
+                string.IsNullOrWhiteSpace(
+                    _ispmanagerSettings.EncryptedPassword)
+                    ? "Пароль ещё не сохранён."
+                    : "Зашифрованный пароль сохранён для " +
+                      "текущего пользователя Windows.";
+
+            Build2StatusTextBlock.Text =
+                "Сборка 2 готова. Сначала проверьте подключение.";
+        }
+        catch (Exception exception)
+        {
+            Build2StatusTextBlock.Text =
+                SensitiveDataRedactor.Redact(
+                    exception.Message);
+        }
+    }
+
+    private IspmanagerSettings ReadIspmanagerSettings()
+    {
+        return new IspmanagerSettings
+        {
+            PanelUrl =
+                IspmanagerUrlTextBox.Text.Trim(),
+
+            Login =
+                IspmanagerLoginTextBox.Text.Trim(),
+
+            Owner =
+                IspmanagerOwnerTextBox.Text.Trim(),
+
+            PhpVersion =
+                IspmanagerPhpVersionTextBox.Text.Trim(),
+
+            IgnoreCertificateErrors =
+                IgnoreCertificateErrorsCheckBox.IsChecked == true,
+
+            ShowBrowser =
+                ShowBrowserCheckBox.IsChecked == true,
+
+            EncryptedPassword =
+                _ispmanagerSettings.EncryptedPassword
+        };
+    }
+
+    private void SaveIspmanagerSettings_Click(
+        object sender,
+        RoutedEventArgs e)
+    {
+        try
+        {
+            var settings = ReadIspmanagerSettings();
+
+            _ispmanagerSettingsService.Save(
+                settings,
+                IspmanagerPasswordBox.Password);
+
+            _ispmanagerSettings = settings;
+
+            IspmanagerPasswordBox.Clear();
+
+            PasswordSavedTextBlock.Text =
+                "Настройки сохранены. Пароль зашифрован DPAPI.";
+
+            Build2StatusTextBlock.Text =
+                "Настройки ISPmanager сохранены.";
+
+            AddLog(
+                "INFO",
+                string.Empty,
+                "Настройки ISPmanager сохранены. " +
+                "Пароль в журнал не записан.");
+        }
+        catch (Exception exception)
+        {
+            ShowBuild2Error(exception);
+        }
+    }
+
+    private async void TestIspmanagerConnection_Click(
+        object sender,
+        RoutedEventArgs e)
+    {
+        await ExecuteIspmanagerActionAsync(
+            "Проверка подключения к ISPmanager...",
+            async (settings, password, token) =>
+            {
+                return await _ispmanagerAutomationService
+                    .TestConnectionAsync(
+                        settings,
+                        password,
+                        token);
+            });
+    }
+
+    private async void CreateSelectedWebDomain_Click(
+        object sender,
+        RoutedEventArgs e)
+    {
+        var selectedJob =
+            JobsGrid.SelectedItem as DomainJob;
+
+        if (selectedJob is null)
+        {
+            MessageBox.Show(
+                this,
+                "Сначала выберите домен в таблице «Задания».",
+                "WWW-домен",
+                MessageBoxButton.OK,
+                MessageBoxImage.Information);
+
+            return;
+        }
+
+        var confirmation = MessageBox.Show(
+            this,
+            $"Создать WWW-домен {selectedJob.Domain}?\n\n" +
+            $"Владелец: {IspmanagerOwnerTextBox.Text.Trim()}\n" +
+            $"PHP: {IspmanagerPhpVersionTextBox.Text.Trim()}\n" +
+            $"Алиасы: www.{selectedJob.Domain} " +
+            $"*.{selectedJob.Domain}",
+            "Подтверждение создания",
+            MessageBoxButton.YesNo,
+            MessageBoxImage.Question);
+
+        if (confirmation != MessageBoxResult.Yes)
+        {
+            return;
+        }
+
+        await ExecuteIspmanagerActionAsync(
+            $"Создание WWW-домена {selectedJob.Domain}...",
+            async (settings, password, token) =>
+            {
+                var result =
+                    await _ispmanagerAutomationService
+                        .CreateWebDomainAsync(
+                            settings,
+                            password,
+                            selectedJob.Domain,
+                            token);
+
+                AddLog(
+                    "INFO",
+                    selectedJob.Domain,
+                    result.Message);
+
+                return result;
+            });
+    }
+
+    private async Task ExecuteIspmanagerActionAsync(
+        string status,
+        Func<
+            IspmanagerSettings,
+            string,
+            CancellationToken,
+            Task<IspmanagerOperationResult>> action)
+    {
+        if (_isRunning)
+        {
+            MessageBox.Show(
+                this,
+                "Дождитесь завершения текущей операции.",
+                "ISPmanager",
+                MessageBoxButton.OK,
+                MessageBoxImage.Information);
+
+            return;
+        }
+
+        string password = string.Empty;
+
+        try
+        {
+            _isRunning = true;
+
+            SaveIspmanagerSettingsButton.IsEnabled = false;
+            TestIspmanagerButton.IsEnabled = false;
+            CreateWebDomainButton.IsEnabled = false;
+
+            Build2StatusTextBlock.Text = status;
+            SetStatus(status);
+
+            var settings = ReadIspmanagerSettings();
+
+            password =
+                _ispmanagerSettingsService.GetPassword(
+                    settings,
+                    IspmanagerPasswordBox.Password);
+
+            _ispmanagerSettingsService.Save(
+                settings,
+                IspmanagerPasswordBox.Password);
+
+            _ispmanagerSettings = settings;
+            IspmanagerPasswordBox.Clear();
+
+            using var cancellation =
+                new CancellationTokenSource(
+                    TimeSpan.FromMinutes(3));
+
+            var result = await action(
+                settings,
+                password,
+                cancellation.Token);
+
+            Build2StatusTextBlock.Text =
+                result.Message;
+
+            SetStatus(result.Message);
+
+            AddLog(
+                "INFO",
+                string.Empty,
+                result.Message);
+
+            PasswordSavedTextBlock.Text =
+                "Зашифрованный пароль сохранён для " +
+                "текущего пользователя Windows.";
+
+            MessageBox.Show(
+                this,
+                result.Message,
+                "ISPmanager",
+                MessageBoxButton.OK,
+                MessageBoxImage.Information);
+            CompleteBuild7LegacyOperation();
+        }
+        catch (Exception exception)
+        {
+            ShowBuild2Error(exception);
+        }
+        finally
+        {
+            password = string.Empty;
+
+            _isRunning = false;
+
+            SaveIspmanagerSettingsButton.IsEnabled = true;
+            TestIspmanagerButton.IsEnabled = true;
+            CreateWebDomainButton.IsEnabled = true;
+        }
+    }
+
+    private void ShowBuild2Error(Exception exception)
+    {
+        CaptureBuild7Error(exception);
+        var message =
+            SensitiveDataRedactor.Redact(
+                exception.Message);
+
+        Build2StatusTextBlock.Text = message;
+        SetStatus(message);
+
+        AddLog(
+            "ERROR",
+            string.Empty,
+            message);
+
+        MessageBox.Show(
+            this,
+            message,
+            "Ошибка ISPmanager",
+            MessageBoxButton.OK,
+            MessageBoxImage.Error);
+    }
+}

@@ -1,0 +1,212 @@
+﻿
+===== СОВПАДЕНИЕ =====
+                var domain = domains[index];
+
+                var baseProgress =
+                    index * 100.0 / domains.Count;
+
+                try
+                {
+                    SetBuild10Status(
+                        baseProgress,
+                        $"{domain}: получение двух TXT " +
+                        "из ISPmanager...");
+
+                    var txtValues =
+                        await Build10GetIspTxtValuesAsync(
+                            ispClient,
+                            ispUrl,
+                            sessionId,
+                            domain,
+                            cancellationToken);
+
+                    if (txtValues.Count != 2)
+                    {
+                        throw new InvalidOperationException(
+                            $"ISPmanager вернул для {domain} " +
+                            $"{txtValues.Count} значений " +
+                            "_acme-challenge; ожидалось ровно два.");
+                    }
+
+                    AddLog(
+                        "INFO",
+                        domain,
+                        "ISPmanager: получены два значения " +
+                        "_acme-challenge. Значения скрыты.");
+
+                    SetBuild10Status(
+                        baseProgress +
+                        25.0 / domains.Count,
+                        $"{domain}: чтение DNS-зоны Spaceship...");
+
+                    var currentRecords =
+                        await Build10GetSpaceshipRecordsAsync(
+                            spaceshipSettings.BaseUrl,
+                            spaceshipSettings.ApiKey,
+                            spaceshipSettings.ApiSecret,
+                            spaceshipSettings.DnsPath,
+                            domain,
+                            cancellationToken);
+
+                    var updatedRecords =
+                        Build10ReplaceAcmeRecords(
+                            currentRecords,
+
+===== СОВПАДЕНИЕ =====
+                    .Trim();
+        }
+
+        if (string.IsNullOrWhiteSpace(sessionId))
+        {
+            throw new InvalidOperationException(
+                "ISPmanager не вернул номер API-сессии.");
+        }
+
+        return sessionId;
+    }
+
+    private static async Task<List<string>>
+        Build10GetIspTxtValuesAsync(
+            HttpClient client,
+            string panelUrl,
+            string sessionId,
+            string domain,
+            CancellationToken cancellationToken)
+    {
+        var form = new Dictionary<string, string>
+        {
+            ["out"] = "xml",
+            ["lang"] = "ru",
+            ["auth"] = sessionId,
+            ["func"] = "webdomain.letsencrypt.txt",
+            ["elid"] = domain,
+            ["elname"] = domain
+        };
+
+        var document =
+            await Build10PostIspAsync(
+                client,
+                Build10NormalizeIspUrl(panelUrl),
+                form,
+                cancellationToken);
+
+        var values = new List<string>();
+
+        foreach (var record in document.Descendants())
+        {
+            var children =
+                record.Elements().ToList();
+
+            if (children.Count == 0)
+            {
+                continue;
+            }
+
+            var name = Build10FindXmlChild(
+                children,
+
+===== СОВПАДЕНИЕ =====
+                            "data",
+                            StringComparison.OrdinalIgnoreCase) ||
+                        string.Equals(
+                            element.Name.LocalName,
+                            "text",
+                            StringComparison.OrdinalIgnoreCase) ||
+                        string.Equals(
+                            element.Name.LocalName,
+                            "content",
+                            StringComparison.OrdinalIgnoreCase));
+
+                var value =
+                    Build10NormalizeTxtValue(
+                        valueElement?.Value);
+
+                if (!string.IsNullOrWhiteSpace(value))
+                {
+                    values.Add(value);
+                }
+            }
+        }
+
+        if (values.Count != 2)
+        {
+            throw new InvalidOperationException(
+                $"В ответе webdomain.letsencrypt.txt для " +
+                $"{domain} найдено значений: {values.Count}. " +
+                "Ожидалось ровно два. Убедитесь, что в " +
+                "ISPmanager уже открыт/создан запрос wildcard " +
+                "Let’s Encrypt для домена и *.домена.");
+        }
+
+        return values;
+    }
+
+    private static string Build10FindXmlChild(
+        IEnumerable<XElement> children,
+        params string[] names)
+    {
+        foreach (var name in names)
+        {
+            var element = children.FirstOrDefault(item =>
+                string.Equals(
+                    item.Name.LocalName,
+                    name,
+                    StringComparison.OrdinalIgnoreCase));
+
+            if (element is not null)
+            {
+                return element.Value.Trim();
+            }
+
+===== СОВПАДЕНИЕ =====
+                        string.Equals(
+                            element.Name.LocalName,
+                            "text",
+                            StringComparison.OrdinalIgnoreCase) ||
+                        string.Equals(
+                            element.Name.LocalName,
+                            "content",
+                            StringComparison.OrdinalIgnoreCase));
+
+                var value =
+                    Build10NormalizeTxtValue(
+                        valueElement?.Value);
+
+                if (!string.IsNullOrWhiteSpace(value))
+                {
+                    values.Add(value);
+                }
+            }
+        }
+
+        if (values.Count != 2)
+        {
+            throw new InvalidOperationException(
+                $"В ответе webdomain.letsencrypt.txt для " +
+                $"{domain} найдено значений: {values.Count}. " +
+                "Ожидалось ровно два. Убедитесь, что в " +
+                "ISPmanager уже открыт/создан запрос wildcard " +
+                "Let’s Encrypt для домена и *.домена.");
+        }
+
+        return values;
+    }
+
+    private static string Build10FindXmlChild(
+        IEnumerable<XElement> children,
+        params string[] names)
+    {
+        foreach (var name in names)
+        {
+            var element = children.FirstOrDefault(item =>
+                string.Equals(
+                    item.Name.LocalName,
+                    name,
+                    StringComparison.OrdinalIgnoreCase));
+
+            if (element is not null)
+            {
+                return element.Value.Trim();
+            }
+        }
+
