@@ -1075,7 +1075,7 @@ ISPmanager: начать выпуск wildcard-сертификата
 Подготовьте архив исходников
 
 
-отчеты по сброрке https://github.com/raliya/kdhGHf643tf76.git
+отчеты по сброрке https://github.com/raliya/346Jvfch75v6f634vf765.git
 
 Запускаю полученную программу, на этапе загрузки и создания БД в панели идет ошибка 
 "Серверная команда завершилась кодом 1: ERROR exists(name) Name with 'casino71cfd'  already exists ISP manager не создал базу данных" база была создана, удалил в ошибке нажал ок и сразу вторая ошибка - "Spaceship API вернул HTTP 422 Unprocessable Entity. {"detail":"The request is invalid.","data":[{"field":"take","details":"The take field is required."},{"field":"skip","details":"The skip field is required."}]}"
@@ -1094,7 +1094,7 @@ ISPmanager: начать выпуск wildcard-сертификата
 изучи все и пришли ответ!!!
 
 
-все исходники, отчеты, нужные файлы тут https://github.com/raliya/kdhGHf643tf76.git
+все исходники, отчеты, нужные файлы тут https://github.com/raliya/346Jvfch75v6f634vf765.git
 вникай читай и пришли что просил.
 пробежаться по списку указанных доменов и собрать их 2 Значения TXT-записи
 пример ссылка (домен пример)
@@ -1131,7 +1131,7 @@ https://185.115.33.18:1500/ispmgr#/form?elid=casino-deposit.cfd&elname=casino-de
 (пример)
 Эти 2 проблемы не доделаны в программе до сих пор
 Давай граммотно все доделаем с тобой. вот вся информация о программе,- ее пишем на PowerShell на ПК виндовс10
-исходники и полную всю информацию я загрузил сюда: https://github.com/raliya/kdhGHf643tf76.git
+исходники и полную всю информацию я загрузил сюда: https://github.com/raliya/346Jvfch75v6f634vf765.git
 изучи все, там вся инфа
 Работаем командами в ПоверШел, присылай умные полные команды
  
