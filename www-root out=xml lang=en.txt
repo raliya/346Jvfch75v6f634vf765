@@ -1,0 +1,578 @@
+Last login: Sat Sep 12 14:36:04 BST 2026 on pts/0                                                       
+[root@mail ~]# /usr/local/mgr5/sbin/mgrctl -m ispmgr sslcert su=www-root out=xml lang=en                
+<?xml version="1.0" encoding="UTF-8"?>                                                                  
+<doc lang="en" func="sslcert" binary="/ispmgr" host="http://" themename="dragon" features="daf3e401006b5
+2d7112a0e8757f72122" notify="" favorite="no" pin="no"><elem><key>0bets0.com_le1</key><name>0bets0.com_le
+1</name><info>0bets0.com *.0bets0.com</info><type>ssl_existing</type><valid_after>2026-12-06</valid_afte
+r><active>on</active><is_letsencrypt>on</is_letsencrypt><letsencrypt>on</letsencrypt><webdomains>0bets0.
+com</webdomains></elem><elem><key>0casino.cfd_le1</key><name>0casino.cfd_le1</name><info>0casino.cfd *.0
+casino.cfd</info><type>ssl_existing</type><valid_after>2026-10-20</valid_after><active>on</active><is_le
+tsencrypt>on</is_letsencrypt><letsencrypt>on</letsencrypt><webdomains>0casino.cfd</webdomains></elem><el
+em><key>1i3.casino_le1</key><name>1i3.casino_le1</name><info>1i3.casino *.1i3.casino</info><type>ssl_exi
+sting</type><valid_after>2026-10-19</valid_after><active>on</active><is_letsencrypt>on</is_letsencrypt><
+letsencrypt>on</letsencrypt><webdomains>1i3.casino</webdomains></elem><elem><key>2026-08.casino_le1</key
+><name>2026-08.casino_le1</name><info>2026-08.casino *.2026-08.casino</info><type>ssl_existing</type><va
+lid_after>2026-11-01</valid_after><active>on</active><is_letsencrypt>on</is_letsencrypt><letsencrypt>on<
+/letsencrypt><webdomains>2026-08.casino</webdomains></elem><elem><key>2536.cfd_le1</key><name>2536.cfd_l
+e1</name><info>2536.cfd *.2536.cfd</info><type>ssl_existing</type><valid_after>2026-10-20</valid_after><
+active>on</active><is_letsencrypt>on</is_letsencrypt><letsencrypt>on</letsencrypt><webdomains>2536.cfd</
+webdomains></elem><elem><key>2x2.casino_le1</key><name>2x2.casino_le1</name><info>2x2.casino *.2x2.casin
+o</info><type>ssl_existing</type><valid_after>2026-10-20</valid_after><active>on</active><is_letsencrypt
+>on</is_letsencrypt><letsencrypt>on</letsencrypt><webdomains>2x2.casino</webdomains></elem><elem><key>2x
+3.casino_le1</key><name>2x3.casino_le1</name><info>2x3.casino *.2x3.casino</info><type>ssl_existing</typ
+e><valid_after>2026-10-20</valid_after><active>on</active><is_letsencrypt>on</is_letsencrypt><letsencryp
+t>on</letsencrypt><webdomains>2x3.casino</webdomains></elem><elem><key>3678.casino_le1</key><name>3678.c
+asino_le1</name><info>3678.casino *.3678.casino</info><type>ssl_existing</type><valid_after>2026-10-21</
+valid_after><active>on</active><is_letsencrypt>on</is_letsencrypt><letsencrypt>on</letsencrypt><webdomai
+ns>3678.casino</webdomains></elem><elem><key>39i.casino_le1</key><name>39i.casino_le1</name><info>39i.ca
+sino *.39i.casino</info><type>ssl_existing</type><valid_after>2026-12-05</valid_after><active>on</active
+><is_letsencrypt>on</is_letsencrypt><letsencrypt>on</letsencrypt><webdomains>39i.casino</webdomains></el
+em><elem><key>3h3.casino_le1</key><name>3h3.casino_le1</name><info>3h3.casino *.3h3.casino</info><type>s
+sl_existing</type><valid_after>2026-10-16</valid_after><active>on</active><is_letsencrypt>on</is_letsenc
+rypt><letsencrypt>on</letsencrypt><webdomains>3h3.casino</webdomains></elem><elem><key>3j3.casino_le1</k
+ey><name>3j3.casino_le1</name><info>3j3.casino *.3j3.casino</info><type>ssl_existing</type><valid_after>
+2026-12-05</valid_after><active>on</active><is_letsencrypt>on</is_letsencrypt><letsencrypt>on</letsencry
+pt><webdomains>3j3.casino</webdomains></elem><elem><key>3xl-casino.cfd_le1</key><name>3xl-casino.cfd_le1
+</name><info>3xl-casino.cfd *.3xl-casino.cfd</info><type>ssl_existing</type><valid_after>2026-11-19</val
+id_after><active>on</active><is_letsencrypt>on</is_letsencrypt><letsencrypt>on</letsencrypt><webdomains>
+3xl-casino.cfd</webdomains></elem><elem><key>5741.casino_le1</key><name>5741.casino_le1</name><info>5741
+.casino *.5741.casino</info><type>ssl_existing</type><valid_after>2026-12-05</valid_after><active>on</ac
+tive><is_letsencrypt>on</is_letsencrypt><letsencrypt>on</letsencrypt><webdomains>5741.casino</webdomains
+></elem><elem><key>5957.casino_le1</key><name>5957.casino_le1</name><info>5957.casino *.5957.casino</inf
+o><type>ssl_existing</type><valid_after>2026-10-27</valid_after><active>on</active><is_letsencrypt>on</i
+s_letsencrypt><letsencrypt>on</letsencrypt><webdomains>5957.casino</webdomains></elem><elem><key>5s5.cas
+ino_le1</key><name>5s5.casino_le1</name><info>5s5.casino *.5s5.casino</info><type>ssl_existing</type><va
+lid_after>2026-10-16</valid_after><active>on</active><is_letsencrypt>on</is_letsencrypt><letsencrypt>on<
+/letsencrypt><webdomains>5s5.casino</webdomains></elem><elem><key>6-9.casino_le1</key><name>6-9.casino_l
+e1</name><info>6-9.casino *.6-9.casino</info><type>ssl_existing</type><valid_after>2026-11-20</valid_aft
+er><active>on</active><is_letsencrypt>on</is_letsencrypt><letsencrypt>on</letsencrypt><webdomains>6-9.ca
+sino</webdomains></elem><elem><key>67-casino.com_le1</key><name>67-casino.com_le1</name><info>67-casino.
+com *.67-casino.com</info><type>ssl_existing</type><valid_after>2026-12-05</valid_after><active>on</acti
+ve><is_letsencrypt>on</is_letsencrypt><letsencrypt>on</letsencrypt><webdomains>67-casino.com</webdomains
+></elem><elem><key>69e.casino_le1</key><name>69e.casino_le1</name><info>69e.casino *.69e.casino</info><t
+ype>ssl_existing</type><valid_after>2026-10-13</valid_after><active>on</active><is_letsencrypt>on</is_le
+tsencrypt><letsencrypt>on</letsencrypt><webdomains>69e.casino</webdomains></elem><elem><key>6j6.casino_l
+e1</key><name>6j6.casino_le1</name><info>6j6.casino *.6j6.casino</info><type>ssl_existing</type><valid_a
+fter>2026-12-05</valid_after><active>on</active><is_letsencrypt>on</is_letsencrypt><letsencrypt>on</lets
+encrypt><webdomains>6j6.casino</webdomains></elem><elem><key>6j9.casino_le1</key><name>6j9.casino_le1</n
+ame><info>6j9.casino *.6j9.casino</info><type>ssl_existing</type><valid_after>2026-12-05</valid_after><a
+ctive>on</active><is_letsencrypt>on</is_letsencrypt><letsencrypt>on</letsencrypt><webdomains>6j9.casino<
+/webdomains></elem><elem><key>7-joycasino.com_le1</key><name>7-joycasino.com_le1</name><info>7-joycasino
+.com *.7-joycasino.com</info><type>ssl_existing</type><valid_after>2026-11-20</valid_after><active>on</a
+ctive><is_letsencrypt>on</is_letsencrypt><letsencrypt>on</letsencrypt><webdomains>7-joycasino.com</webdo
+mains></elem><elem><key>7j7.casino_le1</key><name>7j7.casino_le1</name><info>7j7.casino *.7j7.casino</in
+fo><type>ssl_existing</type><valid_after>2026-12-05</valid_after><active>on</active><is_letsencrypt>on</
+is_letsencrypt><letsencrypt>on</letsencrypt><webdomains>7j7.casino</webdomains></elem><elem><key>96377.c
+fd_le1</key><name>96377.cfd_le1</name><info>96377.cfd *.96377.cfd</info><type>ssl_existing</type><valid_
+after>2026-11-29</valid_after><active>on</active><is_letsencrypt>on</is_letsencrypt><letsencrypt>on</let
+sencrypt><webdomains>96377.cfd</webdomains></elem><elem><key>9a0.casino_le1</key><name>9a0.casino_le1</n
+ame><info>9a0.casino *.9a0.casino</info><type>ssl_existing</type><valid_after>2026-12-05</valid_after><a
+ctive>on</active><is_letsencrypt>on</is_letsencrypt><letsencrypt>on</letsencrypt><webdomains>9a0.casino<
+/webdomains></elem><elem><key>9j9.casino_le1</key><name>9j9.casino_le1</name><info>9j9.casino *.9j9.casi
+no</info><type>ssl_existing</type><valid_after>2026-12-05</valid_after><active>on</active><is_letsencryp
+t>on</is_letsencrypt><letsencrypt>on</letsencrypt><webdomains>9j9.casino</webdomains></elem><elem><key>a
+dmira1.click_le1</key><name>admira1.click_le1</name><info>admira1.click *.admira1.click</info><type>ssl_
+existing</type><valid_after>2026-12-05</valid_after><active>on</active><is_letsencrypt>on</is_letsencryp
+t><letsencrypt>on</letsencrypt><webdomains>admira1.click</webdomains></elem><elem><key>all-casino.cfd_le
+1</key><name>all-casino.cfd_le1</name><info>all-casino.cfd *.all-casino.cfd</info><type>ssl_existing</ty
+pe><valid_after>2026-11-19</valid_after><active>on</active><is_letsencrypt>on</is_letsencrypt><letsencry
+pt>on</letsencrypt><webdomains>all-casino.cfd</webdomains></elem><elem><key>azino-777.cfd_le1</key><name
+>azino-777.cfd_le1</name><info>azino-777.cfd www.azino-777.cfd</info><type>ssl_existing</type><valid_aft
+er>2026-11-07</valid_after><active>on</active><is_letsencrypt>on</is_letsencrypt><letsencrypt>on</letsen
+crypt><webdomains>azino-777.cfd</webdomains></elem><elem><key>azino-site.cfd_le1</key><name>azino-site.c
+fd_le1</name><info>azino-site.cfd www.azino-site.cfd</info><type>ssl_existing</type><valid_after>2026-11
+-20</valid_after><active>on</active><is_letsencrypt>on</is_letsencrypt><letsencrypt>on</letsencrypt><web
+domains>azino-site.cfd</webdomains></elem><elem><key>azino.cfd_le1</key><name>azino.cfd_le1</name><info>
+azino.cfd www.azino.cfd</info><type>ssl_existing</type><valid_after>2026-11-20</valid_after><active>on</
+active><is_letsencrypt>on</is_letsencrypt><letsencrypt>on</letsencrypt><webdomains>azino.cfd</webdomains
+></elem><elem><key>azino2026.cfd_le1</key><name>azino2026.cfd_le1</name><info>azino2026.cfd www.azino202
+6.cfd</info><type>ssl_existing</type><valid_after>2026-11-20</valid_after><active>on</active><is_letsenc
+rypt>on</is_letsencrypt><letsencrypt>on</letsencrypt><webdomains>azino2026.cfd</webdomains></elem><elem>
+<key>azino2026.top_le1</key><name>azino2026.top_le1</name><info>azino2026.top www.azino2026.top</info><t
+ype>ssl_existing</type><valid_after>2026-11-20</valid_after><active>on</active><is_letsencrypt>on</is_le
+tsencrypt><letsencrypt>on</letsencrypt><webdomains>azino2026.top</webdomains></elem><elem><key>azino5.cl
+ick_le1</key><name>azino5.click_le1</name><info>azino5.click *.azino5.click</info><type>ssl_existing</ty
+pe><valid_after>2026-12-05</valid_after><active>on</active><is_letsencrypt>on</is_letsencrypt><letsencry
+pt>on</letsencrypt><webdomains>azino5.click</webdomains></elem><elem><key>azino77.cfd_le1</key><name>azi
+no77.cfd_le1</name><info>azino77.cfd www.azino77.cfd</info><type>ssl_existing</type><valid_after>2026-11
+-20</valid_after><active>on</active><is_letsencrypt>on</is_letsencrypt><letsencrypt>on</letsencrypt><web
+domains>azino77.cfd</webdomains></elem><elem><key>azino777-casinos.cfd_le1</key><name>azino777-casinos.c
+fd_le1</name><info>azino777-casinos.cfd www.azino777-casinos.cfd</info><type>ssl_existing</type><valid_a
+fter>2026-11-20</valid_after><active>on</active><is_letsencrypt>on</is_letsencrypt><letsencrypt>on</lets
+encrypt><webdomains>azino777-casinos.cfd</webdomains></elem><elem><key>azino777-mobilnaya-versiya.cfd_le
+1</key><name>azino777-mobilnaya-versiya.cfd_le1</name><info>azino777-mobilnaya-versiya.cfd www.azino777-
+mobilnaya-versiya.cfd</info><type>ssl_existing</type><valid_after>2026-11-07</valid_after><active>on</ac
+tive><is_letsencrypt>on</is_letsencrypt><letsencrypt>on</letsencrypt><webdomains>azino777-mobilnaya-vers
+iya.cfd</webdomains></elem><elem><key>azino777-mobilnaya.cfd_le1</key><name>azino777-mobilnaya.cfd_le1</
+name><info>azino777-mobilnaya.cfd www.azino777-mobilnaya.cfd</info><type>ssl_existing</type><valid_after
+>2026-11-07</valid_after><active>on</active><is_letsencrypt>on</is_letsencrypt><letsencrypt>on</letsencr
+ypt><webdomains>azino777-mobilnaya.cfd</webdomains></elem><elem><key>azino777-oficialnyj-mobilnaya.cfd_l
+e1</key><name>azino777-oficialnyj-mobilnaya.cfd_le1</name><info>azino777-oficialnyj-mobilnaya.cfd www.az
+ino777-oficialnyj-mobilnaya.cfd</info><type>ssl_existing</type><valid_after>2026-11-07</valid_after><act
+ive>on</active><is_letsencrypt>on</is_letsencrypt><letsencrypt>on</letsencrypt><webdomains>azino777-ofic
+ialnyj-mobilnaya.cfd</webdomains></elem><elem><key>azino777-oficialnyj-site-mobilnaya.cfd_le1</key><name
+>azino777-oficialnyj-site-mobilnaya.cfd_le1</name><info>azino777-oficialnyj-site-mobilnaya.cfd www.azino
+777-oficialnyj-site-mobilnaya.cfd</info><type>ssl_existing</type><valid_after>2026-11-07</valid_after><a
+ctive>on</active><is_letsencrypt>on</is_letsencrypt><letsencrypt>on</letsencrypt><webdomains>azino777-of
+icialnyj-site-mobilnaya.cfd</webdomains></elem><elem><key>azino777-oficialnyj-site.cfd_le1</key><name>az
+ino777-oficialnyj-site.cfd_le1</name><info>azino777-oficialnyj-site.cfd www.azino777-oficialnyj-site.cfd
+</info><type>ssl_existing</type><valid_after>2026-11-07</valid_after><active>on</active><is_letsencrypt>
+on</is_letsencrypt><letsencrypt>on</letsencrypt><webdomains>azino777-oficialnyj-site.cfd</webdomains></e
+lem><elem><key>azino777-oficialnyj.cfd_le1</key><name>azino777-oficialnyj.cfd_le1</name><info>azino777-o
+ficialnyj.cfd www.azino777-oficialnyj.cfd</info><type>ssl_existing</type><valid_after>2026-11-07</valid_
+after><active>on</active><is_letsencrypt>on</is_letsencrypt><letsencrypt>on</letsencrypt><webdomains>azi
+no777-oficialnyj.cfd</webdomains></elem><elem><key>azino777-site-mobilnaya.cfd_le1</key><name>azino777-s
+ite-mobilnaya.cfd_le1</name><info>azino777-site-mobilnaya.cfd www.azino777-site-mobilnaya.cfd</info><typ
+e>ssl_existing</type><valid_after>2026-11-07</valid_after><active>on</active><is_letsencrypt>on</is_lets
+encrypt><letsencrypt>on</letsencrypt><webdomains>azino777-site-mobilnaya.cfd</webdomains></elem><elem><k
+ey>azino777-site.cfd_le1</key><name>azino777-site.cfd_le1</name><info>azino777-site.cfd www.azino777-sit
+e.cfd</info><type>ssl_existing</type><valid_after>2026-11-19</valid_after><active>on</active><is_letsenc
+rypt>on</is_letsencrypt><letsencrypt>on</letsencrypt><webdomains>azino777-site.cfd</webdomains></elem><e
+lem><key>azino777-versiya.cfd_le1</key><name>azino777-versiya.cfd_le1</name><info>azino777-versiya.cfd w
+ww.azino777-versiya.cfd</info><type>ssl_existing</type><valid_after>2026-11-07</valid_after><active>on</
+active><is_letsencrypt>on</is_letsencrypt><letsencrypt>on</letsencrypt><webdomains>azino777-versiya.cfd<
+/webdomains></elem><elem><key>bc-game-casino.xyz_le1</key><name>bc-game-casino.xyz_le1</name><info>bc-ga
+me-casino.xyz *.bc-game-casino.xyz</info><type>ssl_existing</type><valid_after>2026-12-05</valid_after><
+active>on</active><is_letsencrypt>on</is_letsencrypt><letsencrypt>on</letsencrypt><webdomains>bc-game-ca
+sino.xyz</webdomains></elem><elem><key>bc-game-mirror.cfd_le1</key><name>bc-game-mirror.cfd_le1</name><i
+nfo>bc-game-mirror.cfd www.bc-game-mirror.cfd</info><type>ssl_existing</type><valid_after>2026-11-11</va
+lid_after><active>on</active><is_letsencrypt>on</is_letsencrypt><letsencrypt>on</letsencrypt><webdomains
+>bc-game-mirror.cfd</webdomains></elem><elem><key>bc-game.love_le1</key><name>bc-game.love_le1</name><in
+fo>bc-game.love *.bc-game.love</info><type>ssl_existing</type><valid_after>2026-12-05</valid_after><acti
+ve>on</active><is_letsencrypt>on</is_letsencrypt><letsencrypt>on</letsencrypt><webdomains>bc-game.love</
+webdomains></elem><elem><key>bc-game2026.com_le1</key><name>bc-game2026.com_le1</name><info>bc-game2026.
+com *.bc-game2026.com</info><type>ssl_existing</type><valid_after>2026-12-05</valid_after><active>on</ac
+tive><is_letsencrypt>on</is_letsencrypt><letsencrypt>on</letsencrypt><webdomains>bc-game2026.com</webdom
+ains></elem><elem><key>best2026bonus.com_le1</key><name>best2026bonus.com_le1</name><info>best2026bonus.
+com *.best2026bonus.com</info><type>ssl_existing</type><valid_after>2026-10-24</valid_after><active>on</
+active><is_letsencrypt>on</is_letsencrypt><letsencrypt>on</letsencrypt><webdomains>best2026bonus.com</we
+bdomains></elem><elem><key>bet-futebol.com_le1</key><name>bet-futebol.com_le1</name><info>bet-futebol.co
+m *.bet-futebol.com</info><type>ssl_existing</type><valid_after>2026-12-05</valid_after><active>on</acti
+ve><is_letsencrypt>on</is_letsencrypt><letsencrypt>on</letsencrypt><webdomains>bet-futebol.com</webdomai
+ns></elem><elem><key>bet123.cfd_le1</key><name>bet123.cfd_le1</name><info>bet123.cfd *.bet123.cfd</info>
+<type>ssl_existing</type><valid_after>2026-12-06</valid_after><active>on</active><is_letsencrypt>on</is_
+letsencrypt><letsencrypt>on</letsencrypt><webdomains>bet123.cfd</webdomains></elem><elem><key>bet456.cfd
+_le1</key><name>bet456.cfd_le1</name><info>bet456.cfd *.bet456.cfd</info><type>ssl_existing</type><valid
+_after>2026-12-06</valid_after><active>on</active><is_letsencrypt>on</is_letsencrypt><letsencrypt>on</le
+tsencrypt><webdomains>bet456.cfd</webdomains></elem><elem><key>bet456.space_le1</key><name>bet456.space_
+le1</name><info>bet456.space *.bet456.space</info><type>ssl_existing</type><valid_after>2026-12-06</vali
+d_after><active>on</active><is_letsencrypt>on</is_letsencrypt><letsencrypt>on</letsencrypt><webdomains>b
+et456.space</webdomains></elem><elem><key>bet789.cfd_le1</key><name>bet789.cfd_le1</name><info>bet789.cf
+d *.bet789.cfd</info><type>ssl_existing</type><valid_after>2026-12-06</valid_after><active>on</active><i
+s_letsencrypt>on</is_letsencrypt><letsencrypt>on</letsencrypt><webdomains>bet789.cfd</webdomains></elem>
+<elem><key>bet789.space_le1</key><name>bet789.space_le1</name><info>bet789.space *.bet789.space</info><t
+ype>ssl_existing</type><valid_after>2026-12-06</valid_after><active>on</active><is_letsencrypt>on</is_le
+tsencrypt><letsencrypt>on</letsencrypt><webdomains>bet789.space</webdomains></elem><elem><key>bets-footb
+all.com_le1</key><name>bets-football.com_le1</name><info>bets-football.com *.bets-football.com</info><ty
+pe>ssl_existing</type><valid_after>2026-12-06</valid_after><active>on</active><is_letsencrypt>on</is_let
+sencrypt><letsencrypt>on</letsencrypt><webdomains>bets-football.com</webdomains></elem><elem><key>bettin
+g-on-football.com_le1</key><name>betting-on-football.com_le1</name><info>betting-on-football.com *.betti
+ng-on-football.com</info><type>ssl_existing</type><valid_after>2026-12-05</valid_after><active>on</activ
+e><is_letsencrypt>on</is_letsencrypt><letsencrypt>on</letsencrypt><webdomains>betting-on-football.com</w
+ebdomains></elem><elem><key>betting-on.football_le1</key><name>betting-on.football_le1</name><info>betti
+ng-on.football *.betting-on.football</info><type>ssl_existing</type><valid_after>2026-12-05</valid_after
+><active>on</active><is_letsencrypt>on</is_letsencrypt><letsencrypt>on</letsencrypt><webdomains>betting-
+on.football</webdomains></elem><elem><key>bonus-casino.cfd_le1</key><name>bonus-casino.cfd_le1</name><in
+fo>bonus-casino.cfd *.bonus-casino.cfd</info><type>ssl_existing</type><valid_after>2026-11-19</valid_aft
+er><active>on</active><is_letsencrypt>on</is_letsencrypt><letsencrypt>on</letsencrypt><webdomains>bonus-
+casino.cfd</webdomains></elem><elem><key>bonus-kazino.cfd_le1</key><name>bonus-kazino.cfd_le1</name><inf
+o>bonus-kazino.cfd *.bonus-kazino.cfd</info><type>ssl_existing</type><valid_after>2026-10-21</valid_afte
+r><active>on</active><is_letsencrypt>on</is_letsencrypt><letsencrypt>on</letsencrypt><webdomains>bonus-k
+azino.cfd</webdomains></elem><elem><key>bonus-za-registratsiyu.cfd_le1</key><name>bonus-za-registratsiyu
+.cfd_le1</name><info>bonus-za-registratsiyu.cfd *.bonus-za-registratsiyu.cfd</info><type>ssl_existing</t
+ype><valid_after>2026-10-21</valid_after><active>on</active><is_letsencrypt>on</is_letsencrypt><letsencr
+ypt>on</letsencrypt><webdomains>bonus-za-registratsiyu.cfd</webdomains></elem><elem><key>bonus1l.com_le1
+</key><name>bonus1l.com_le1</name><info>bonus1l.com *.bonus1l.com</info><type>ssl_existing</type><valid_
+after>2026-10-28</valid_after><active>on</active><is_letsencrypt>on</is_letsencrypt><letsencrypt>on</let
+sencrypt><webdomains>bonus1l.com</webdomains></elem><elem><key>bonusup.casino_le1</key><name>bonusup.cas
+ino_le1</name><info>bonusup.casino www.bonusup.casino</info><type>ssl_existing</type><valid_after>2026-1
+1-28</valid_after><active>on</active><is_letsencrypt>on</is_letsencrypt><letsencrypt>on</letsencrypt><we
+bdomains>bonusup.casino</webdomains></elem><elem><key>bystryy-vyvod-sredstv.cfd_le1</key><name>bystryy-v
+yvod-sredstv.cfd_le1</name><info>bystryy-vyvod-sredstv.cfd *.bystryy-vyvod-sredstv.cfd</info><type>ssl_e
+xisting</type><valid_after>2026-10-21</valid_after><active>on</active><is_letsencrypt>on</is_letsencrypt
+><letsencrypt>on</letsencrypt><webdomains>bystryy-vyvod-sredstv.cfd</webdomains></elem><elem><key>casade
+-bet.com_le1</key><name>casade-bet.com_le1</name><info>casade-bet.com *.casade-bet.com</info><type>ssl_e
+xisting</type><valid_after>2026-12-05</valid_after><active>on</active><is_letsencrypt>on</is_letsencrypt
+><letsencrypt>on</letsencrypt><webdomains>casade-bet.com</webdomains></elem><elem><key>cash-casino.cfd_l
+e1</key><name>cash-casino.cfd_le1</name><info>cash-casino.cfd *.cash-casino.cfd</info><type>ssl_existing
+</type><valid_after>2026-11-19</valid_after><active>on</active><is_letsencrypt>on</is_letsencrypt><letse
+ncrypt>on</letsencrypt><webdomains>cash-casino.cfd</webdomains></elem><elem><key>casino-bet.cfd_le1</key
+><name>casino-bet.cfd_le1</name><info>casino-bet.cfd *.casino-bet.cfd</info><type>ssl_existing</type><va
+lid_after>2026-12-05</valid_after><active>on</active><is_letsencrypt>on</is_letsencrypt><letsencrypt>on<
+/letsencrypt><webdomains>casino-bet.cfd</webdomains></elem><elem><key>casino-bonus.cfd_le1</key><name>ca
+sino-bonus.cfd_le1</name><info>casino-bonus.cfd *.casino-bonus.cfd</info><type>ssl_existing</type><valid
+_after>2026-11-19</valid_after><active>on</active><is_letsencrypt>on</is_letsencrypt><letsencrypt>on</le
+tsencrypt><webdomains>casino-bonus.cfd</webdomains></elem><elem><key>casino-bonusi.cfd_le1</key><name>ca
+sino-bonusi.cfd_le1</name><info>casino-bonusi.cfd *.casino-bonusi.cfd</info><type>ssl_existing</type><va
+lid_after>2026-12-05</valid_after><active>on</active><is_letsencrypt>on</is_letsencrypt><letsencrypt>on<
+/letsencrypt><webdomains>casino-bonusi.cfd</webdomains></elem><elem><key>casino-cash.cfd_le1</key><name>
+casino-cash.cfd_le1</name><info>casino-cash.cfd *.casino-cash.cfd</info><type>ssl_existing</type><valid_
+after>2026-11-19</valid_after><active>on</active><is_letsencrypt>on</is_letsencrypt><letsencrypt>on</let
+sencrypt><webdomains>casino-cash.cfd</webdomains></elem><elem><key>casino-check.cfd_le1</key><name>casin
+o-check.cfd_le1</name><info>casino-check.cfd *.casino-check.cfd</info><type>ssl_existing</type><valid_af
+ter>2026-12-05</valid_after><active>on</active><is_letsencrypt>on</is_letsencrypt><letsencrypt>on</letse
+ncrypt><webdomains>casino-check.cfd</webdomains></elem><elem><key>casino-deposit.cfd_le1</key><name>casi
+no-deposit.cfd_le1</name><info>casino-deposit.cfd *.casino-deposit.cfd</info><type>ssl_existing</type><v
+alid_after>2026-12-05</valid_after><active>on</active><is_letsencrypt>on</is_letsencrypt><letsencrypt>on
+</letsencrypt><webdomains>casino-deposit.cfd</webdomains></elem><elem><key>casino-fold.cfd_le1</key><nam
+e>casino-fold.cfd_le1</name><info>casino-fold.cfd *.casino-fold.cfd</info><type>ssl_existing</type><vali
+d_after>2026-12-05</valid_after><active>on</active><is_letsencrypt>on</is_letsencrypt><letsencrypt>on</l
+etsencrypt><webdomains>casino-fold.cfd</webdomains></elem><elem><key>casino-free.cfd_le1</key><name>casi
+no-free.cfd_le1</name><info>casino-free.cfd *.casino-free.cfd</info><type>ssl_existing</type><valid_afte
+r>2026-11-19</valid_after><active>on</active><is_letsencrypt>on</is_letsencrypt><letsencrypt>on</letsenc
+rypt><webdomains>casino-free.cfd</webdomains></elem><elem><key>casino-free.top_le1</key><name>casino-fre
+e.top_le1</name><info>casino-free.top *.casino-free.top</info><type>ssl_existing</type><valid_after>2026
+-11-20</valid_after><active>on</active><is_letsencrypt>on</is_letsencrypt><letsencrypt>on</letsencrypt><
+webdomains>casino-free.top</webdomains></elem><elem><key>casino-freespins.cfd_le1</key><name>casino-free
+spins.cfd_le1</name><info>casino-freespins.cfd *.casino-freespins.cfd</info><type>ssl_existing</type><va
+lid_after>2026-12-05</valid_after><active>on</active><is_letsencrypt>on</is_letsencrypt><letsencrypt>on<
+/letsencrypt><webdomains>casino-freespins.cfd</webdomains></elem><elem><key>casino-gamble.cfd_le1</key><
+name>casino-gamble.cfd_le1</name><info>casino-gamble.cfd *.casino-gamble.cfd</info><type>ssl_existing</t
+ype><valid_after>2026-12-05</valid_after><active>on</active><is_letsencrypt>on</is_letsencrypt><letsencr
+ypt>on</letsencrypt><webdomains>casino-gamble.cfd</webdomains></elem><elem><key>casino-gambling.cfd_le1<
+/key><name>casino-gambling.cfd_le1</name><info>casino-gambling.cfd *.casino-gambling.cfd</info><type>ssl
+_existing</type><valid_after>2026-12-05</valid_after><active>on</active><is_letsencrypt>on</is_letsencry
+pt><letsencrypt>on</letsencrypt><webdomains>casino-gambling.cfd</webdomains></elem><elem><key>casino-gam
+es.cfd_le1</key><name>casino-games.cfd_le1</name><info>casino-games.cfd *.casino-games.cfd</info><type>s
+sl_existing</type><valid_after>2026-11-19</valid_after><active>on</active><is_letsencrypt>on</is_letsenc
+rypt><letsencrypt>on</letsencrypt><webdomains>casino-games.cfd</webdomains></elem><elem><key>casino-high
+-roller.cfd_le1</key><name>casino-high-roller.cfd_le1</name><info>casino-high-roller.cfd *.casino-high-r
+oller.cfd</info><type>ssl_existing</type><valid_after>2026-12-05</valid_after><active>on</active><is_let
+sencrypt>on</is_letsencrypt><letsencrypt>on</letsencrypt><webdomains>casino-high-roller.cfd</webdomains>
+</elem><elem><key>casino-hit.cfd_le1</key><name>casino-hit.cfd_le1</name><info>casino-hit.cfd *.casino-h
+it.cfd</info><type>ssl_existing</type><valid_after>2026-12-05</valid_after><active>on</active><is_letsen
+crypt>on</is_letsencrypt><letsencrypt>on</letsencrypt><webdomains>casino-hit.cfd</webdomains></elem><ele
+m><key>casino-jackpot.cfd_le1</key><name>casino-jackpot.cfd_le1</name><info>casino-jackpot.cfd *.casino-
+jackpot.cfd</info><type>ssl_existing</type><valid_after>2026-12-05</valid_after><active>on</active><is_l
+etsencrypt>on</is_letsencrypt><letsencrypt>on</letsencrypt><webdomains>casino-jackpot.cfd</webdomains></
+elem><elem><key>casino-plays.cfd_le1</key><name>casino-plays.cfd_le1</name><info>casino-plays.cfd *.casi
+no-plays.cfd</info><type>ssl_existing</type><valid_after>2026-11-19</valid_after><active>on</active><is_
+letsencrypt>on</is_letsencrypt><letsencrypt>on</letsencrypt><webdomains>casino-plays.cfd</webdomains></e
+lem><elem><key>casino-raise.cfd_le1</key><name>casino-raise.cfd_le1</name><info>casino-raise.cfd *.casin
+o-raise.cfd</info><type>ssl_existing</type><valid_after>2026-12-05</valid_after><active>on</active><is_l
+etsencrypt>on</is_letsencrypt><letsencrypt>on</letsencrypt><webdomains>casino-raise.cfd</webdomains></el
+em><elem><key>casino-respins.cfd_le1</key><name>casino-respins.cfd_le1</name><info>casino-respins.cfd *.
+casino-respins.cfd</info><type>ssl_existing</type><valid_after>2026-12-05</valid_after><active>on</activ
+e><is_letsencrypt>on</is_letsencrypt><letsencrypt>on</letsencrypt><webdomains>casino-respins.cfd</webdom
+ains></elem><elem><key>casino-roll.cfd_le1</key><name>casino-roll.cfd_le1</name><info>casino-roll.cfd *.
+casino-roll.cfd</info><type>ssl_existing</type><valid_after>2026-12-05</valid_after><active>on</active><
+is_letsencrypt>on</is_letsencrypt><letsencrypt>on</letsencrypt><webdomains>casino-roll.cfd</webdomains><
+/elem><elem><key>casino-rtp.cfd_le1</key><name>casino-rtp.cfd_le1</name><info>casino-rtp.cfd *.casino-rt
+p.cfd</info><type>ssl_existing</type><valid_after>2026-12-05</valid_after><active>on</active><is_letsenc
+rypt>on</is_letsencrypt><letsencrypt>on</letsencrypt><webdomains>casino-rtp.cfd</webdomains></elem><elem
+><key>casino-scatter.cfd_le1</key><name>casino-scatter.cfd_le1</name><info>casino-scatter.cfd *.casino-s
+catter.cfd</info><type>ssl_existing</type><valid_after>2026-12-05</valid_after><active>on</active><is_le
+tsencrypt>on</is_letsencrypt><letsencrypt>on</letsencrypt><webdomains>casino-scatter.cfd</webdomains></e
+lem><elem><key>casino-session.cfd_le1</key><name>casino-session.cfd_le1</name><info>casino-session.cfd *
+.casino-session.cfd</info><type>ssl_existing</type><valid_after>2026-12-05</valid_after><active>on</acti
+ve><is_letsencrypt>on</is_letsencrypt><letsencrypt>on</letsencrypt><webdomains>casino-session.cfd</webdo
+mains></elem><elem><key>casino-site-bonus.online_le1</key><name>casino-site-bonus.online_le1</name><info
+>casino-site-bonus.online *.casino-site-bonus.online</info><type>ssl_existing</type><valid_after>2026-12
+-05</valid_after><active>on</active><is_letsencrypt>on</is_letsencrypt><letsencrypt>on</letsencrypt><web
+domains>casino-site-bonus.online</webdomains></elem><elem><key>casino-slots.cfd_le1</key><name>casino-sl
+ots.cfd_le1</name><info>casino-slots.cfd *.casino-slots.cfd</info><type>ssl_existing</type><valid_after>
+2026-12-05</valid_after><active>on</active><is_letsencrypt>on</is_letsencrypt><letsencrypt>on</letsencry
+pt><webdomains>casino-slots.cfd</webdomains></elem><elem><key>casino-wager.cfd_le1</key><name>casino-wag
+er.cfd_le1</name><info>casino-wager.cfd *.casino-wager.cfd</info><type>ssl_existing</type><valid_after>2
+026-12-05</valid_after><active>on</active><is_letsencrypt>on</is_letsencrypt><letsencrypt>on</letsencryp
+t><webdomains>casino-wager.cfd</webdomains></elem><elem><key>casino-wild.cfd_le1</key><name>casino-wild.
+cfd_le1</name><info>casino-wild.cfd *.casino-wild.cfd</info><type>ssl_existing</type><valid_after>2026-1
+2-05</valid_after><active>on</active><is_letsencrypt>on</is_letsencrypt><letsencrypt>on</letsencrypt><we
+bdomains>casino-wild.cfd</webdomains></elem><elem><key>casino-win.games_le1</key><name>casino-win.games_
+le1</name><info>casino-win.games *.casino-win.games</info><type>ssl_existing</type><valid_after>2026-11-
+07</valid_after><active>on</active><is_letsencrypt>on</is_letsencrypt><letsencrypt>on</letsencrypt><webd
+omains>casino-win.games</webdomains></elem><elem><key>casino-zerkalo.cam_le1</key><name>casino-zerkalo.c
+am_le1</name><info>casino-zerkalo.cam *.casino-zerkalo.cam</info><type>ssl_existing</type><valid_after>2
+026-10-20</valid_after><active>on</active><is_letsencrypt>on</is_letsencrypt><letsencrypt>on</letsencryp
+t><webdomains>casino-zerkalo.cam</webdomains></elem><elem><key>casino12.cfd_le1</key><name>casino12.cfd_
+le1</name><info>casino12.cfd *.casino12.cfd</info><type>ssl_existing</type><valid_after>2026-11-07</vali
+d_after><active>on</active><is_letsencrypt>on</is_letsencrypt><letsencrypt>on</letsencrypt><webdomains>c
+asino12.cfd</webdomains></elem><elem><key>casino123.space_le1</key><name>casino123.space_le1</name><info
+>casino123.space *.casino123.space</info><type>ssl_existing</type><valid_after>2026-12-06</valid_after><
+active>on</active><is_letsencrypt>on</is_letsencrypt><letsencrypt>on</letsencrypt><webdomains>casino123.
+space</webdomains></elem><elem><key>casino19.cfd_le1</key><name>casino19.cfd_le1</name><info>casino19.cf
+d *.casino19.cfd</info><type>ssl_existing</type><valid_after>2026-10-27</valid_after><active>on</active>
+<is_letsencrypt>on</is_letsencrypt><letsencrypt>on</letsencrypt><webdomains>casino19.cfd</webdomains></e
+lem><elem><key>casino2.cfd_le1</key><name>casino2.cfd_le1</name><info>casino2.cfd *.casino2.cfd</info><t
+ype>ssl_existing</type><valid_after>2026-10-24</valid_after><active>on</active><is_letsencrypt>on</is_le
+tsencrypt><letsencrypt>on</letsencrypt><webdomains>casino2.cfd</webdomains></elem><elem><key>casino29.cf
+d_le1</key><name>casino29.cfd_le1</name><info>casino29.cfd *.casino29.cfd</info><type>ssl_existing</type
+><valid_after>2026-10-27</valid_after><active>on</active><is_letsencrypt>on</is_letsencrypt><letsencrypt
+>on</letsencrypt><webdomains>casino29.cfd</webdomains></elem><elem><key>casino39.cfd_le1</key><name>casi
+no39.cfd_le1</name><info>casino39.cfd *.casino39.cfd</info><type>ssl_existing</type><valid_after>2026-10
+-27</valid_after><active>on</active><is_letsencrypt>on</is_letsencrypt><letsencrypt>on</letsencrypt><web
+domains>casino39.cfd</webdomains></elem><elem><key>casino456.space_le1</key><name>casino456.space_le1</n
+ame><info>casino456.space *.casino456.space</info><type>ssl_existing</type><valid_after>2026-12-06</vali
+d_after><active>on</active><is_letsencrypt>on</is_letsencrypt><letsencrypt>on</letsencrypt><webdomains>c
+asino456.space</webdomains></elem><elem><key>casino456.top_le1</key><name>casino456.top_le1</name><info>
+casino456.top *.casino456.top</info><type>ssl_existing</type><valid_after>2026-12-06</valid_after><activ
+e>on</active><is_letsencrypt>on</is_letsencrypt><letsencrypt>on</letsencrypt><webdomains>casino456.top</
+webdomains></elem><elem><key>casino49.cfd_le1</key><name>casino49.cfd_le1</name><info>casino49.cfd *.cas
+ino49.cfd</info><type>ssl_existing</type><valid_after>2026-10-27</valid_after><active>on</active><is_let
+sencrypt>on</is_letsencrypt><letsencrypt>on</letsencrypt><webdomains>casino49.cfd</webdomains></elem><el
+em><key>casino69.best_le1</key><name>casino69.best_le1</name><info>casino69.best *.casino69.best</info><
+type>ssl_existing</type><valid_after>2026-12-05</valid_after><active>on</active><is_letsencrypt>on</is_l
+etsencrypt><letsencrypt>on</letsencrypt><webdomains>casino69.best</webdomains></elem><elem><key>casino70
+.cfd_le1</key><name>casino70.cfd_le1</name><info>casino70.cfd *.casino70.cfd</info><type>ssl_existing</t
+ype><valid_after>2026-12-04</valid_after><active>on</active><is_letsencrypt>on</is_letsencrypt><letsencr
+ypt>on</letsencrypt><webdomains>casino70.cfd</webdomains></elem><elem><key>casino71.cfd_le1</key><name>c
+asino71.cfd_le1</name><info>casino71.cfd *.casino71.cfd www.casino71.cfd</info><type>ssl_selfsigned</typ
+e><valid_after>2027-09-04</valid_after><cert_type>ssl_selfsigned</cert_type><active>off</active></elem><
+elem><key>casino71.cfd_le2</key><name>casino71.cfd_le2</name><info>casino71.cfd *.casino71.cfd</info><ty
+pe>ssl_existing</type><valid_after>2026-12-04</valid_after><active>on</active><is_letsencrypt>on</is_let
+sencrypt><letsencrypt>on</letsencrypt><webdomains>casino71.cfd</webdomains></elem><elem><key>casino72.cf
+d_le1</key><name>casino72.cfd_le1</name><info>casino72.cfd *.casino72.cfd</info><type>ssl_existing</type
+><valid_after>2026-12-04</valid_after><active>on</active><is_letsencrypt>on</is_letsencrypt><letsencrypt
+>on</letsencrypt><webdomains>casino72.cfd</webdomains></elem><elem><key>casino73.cfd_le1</key><name>casi
+no73.cfd_le1</name><info>casino73.cfd *.casino73.cfd</info><type>ssl_existing</type><valid_after>2026-12
+-04</valid_after><active>on</active><is_letsencrypt>on</is_letsencrypt><letsencrypt>on</letsencrypt><web
+domains>casino73.cfd</webdomains></elem><elem><key>casino74.cfd_le1</key><name>casino74.cfd_le1</name><i
+nfo>casino74.cfd *.casino74.cfd</info><type>ssl_existing</type><valid_after>2026-12-04</valid_after><act
+ive>on</active><is_letsencrypt>on</is_letsencrypt><letsencrypt>on</letsencrypt><webdomains>casino74.cfd<
+/webdomains></elem><elem><key>casino75.cfd_le1</key><name>casino75.cfd_le1</name><info>casino75.cfd *.ca
+sino75.cfd</info><type>ssl_existing</type><valid_after>2026-12-04</valid_after><active>on</active><is_le
+tsencrypt>on</is_letsencrypt><letsencrypt>on</letsencrypt><webdomains>casino75.cfd</webdomains></elem><e
+lem><key>casino76.cfd_le1</key><name>casino76.cfd_le1</name><info>casino76.cfd *.casino76.cfd</info><typ
+e>ssl_existing</type><valid_after>2026-12-04</valid_after><active>on</active><is_letsencrypt>on</is_lets
+encrypt><letsencrypt>on</letsencrypt><webdomains>casino76.cfd</webdomains></elem><elem><key>casino779.cf
+d_le1</key><name>casino779.cfd_le1</name><info>casino779.cfd *.casino779.cfd</info><type>ssl_existing</t
+ype><valid_after>2026-11-07</valid_after><active>on</active><is_letsencrypt>on</is_letsencrypt><letsencr
+ypt>on</letsencrypt><webdomains>casino779.cfd</webdomains></elem><elem><key>casino78.cfd_le1</key><name>
+casino78.cfd_le1</name><info>casino78.cfd *.casino78.cfd</info><type>ssl_existing</type><valid_after>202
+6-12-04</valid_after><active>on</active><is_letsencrypt>on</is_letsencrypt><letsencrypt>on</letsencrypt>
+<webdomains>casino78.cfd</webdomains></elem><elem><key>casino780.cfd_le1</key><name>casino780.cfd_le1</n
+ame><info>casino780.cfd *.casino780.cfd</info><type>ssl_existing</type><valid_after>2026-12-09</valid_af
+ter><active>on</active><is_letsencrypt>on</is_letsencrypt><letsencrypt>on</letsencrypt><webdomains>casin
+o780.cfd</webdomains></elem><elem><key>casino789.space_le1</key><name>casino789.space_le1</name><info>ca
+sino789.space *.casino789.space</info><type>ssl_existing</type><valid_after>2026-12-06</valid_after><act
+ive>on</active><is_letsencrypt>on</is_letsencrypt><letsencrypt>on</letsencrypt><webdomains>casino789.spa
+ce</webdomains></elem><elem><key>casino789.top_le1</key><name>casino789.top_le1</name><info>casino789.to
+p *.casino789.top</info><type>ssl_existing</type><valid_after>2026-12-06</valid_after><active>on</active
+><is_letsencrypt>on</is_letsencrypt><letsencrypt>on</letsencrypt><webdomains>casino789.top</webdomains><
+/elem><elem><key>casino79.cfd_le1</key><name>casino79.cfd_le1</name><info>casino79.cfd *.casino79.cfd</i
+nfo><type>ssl_existing</type><valid_after>2026-12-04</valid_after><active>on</active><is_letsencrypt>on<
+/is_letsencrypt><letsencrypt>on</letsencrypt><webdomains>casino79.cfd</webdomains></elem><elem><key>casi
+no80.cfd_le1</key><name>casino80.cfd_le1</name><info>casino80.cfd *.casino80.cfd</info><type>ssl_existin
+g</type><valid_after>2026-12-04</valid_after><active>on</active><is_letsencrypt>on</is_letsencrypt><lets
+encrypt>on</letsencrypt><webdomains>casino80.cfd</webdomains></elem><elem><key>casino9200.cfd_le2</key><
+name>casino9200.cfd_le2</name><info>casino9200.cfd *.casino9200.cfd</info><type>ssl_existing</type><vali
+d_after>2026-12-11</valid_after><active>on</active><is_letsencrypt>on</is_letsencrypt><letsencrypt>on</l
+etsencrypt><webdomains>casino9200.cfd</webdomains></elem><elem><key>casino9300.cfd_le2</key><name>casino
+9300.cfd_le2</name><info>casino9300.cfd *.casino9300.cfd</info><type>ssl_existing</type><valid_after>202
+6-12-11</valid_after><active>on</active><is_letsencrypt>on</is_letsencrypt><letsencrypt>on</letsencrypt>
+<webdomains>casino9300.cfd</webdomains></elem><elem><key>casino9400.cfd_le2</key><name>casino9400.cfd_le
+2</name><info>casino9400.cfd *.casino9400.cfd</info><type>ssl_existing</type><valid_after>2026-12-11</va
+lid_after><active>on</active><is_letsencrypt>on</is_letsencrypt><letsencrypt>on</letsencrypt><webdomains
+>casino9400.cfd</webdomains></elem><elem><key>casino9500.cfd_le2</key><name>casino9500.cfd_le2</name><in
+fo>casino9500.cfd *.casino9500.cfd</info><type>ssl_existing</type><valid_after>2026-12-11</valid_after><
+active>on</active><is_letsencrypt>on</is_letsencrypt><letsencrypt>on</letsencrypt><webdomains>casino9500
+.cfd</webdomains></elem><elem><key>casino9600.cfd_le2</key><name>casino9600.cfd_le2</name><info>casino96
+00.cfd *.casino9600.cfd</info><type>ssl_existing</type><valid_after>2026-12-11</valid_after><active>on</
+active><is_letsencrypt>on</is_letsencrypt><letsencrypt>on</letsencrypt><webdomains>casino9600.cfd</webdo
+mains></elem><elem><key>casinos-bonus.top_le1</key><name>casinos-bonus.top_le1</name><info>casinos-bonus
+.top *.casinos-bonus.top</info><type>ssl_existing</type><valid_after>2026-11-20</valid_after><active>on<
+/active><is_letsencrypt>on</is_letsencrypt><letsencrypt>on</letsencrypt><webdomains>casinos-bonus.top</w
+ebdomains></elem><elem><key>casinos-cash.top_le1</key><name>casinos-cash.top_le1</name><info>casinos-cas
+h.top *.casinos-cash.top</info><type>ssl_existing</type><valid_after>2026-11-20</valid_after><active>on<
+/active><is_letsencrypt>on</is_letsencrypt><letsencrypt>on</letsencrypt><webdomains>casinos-cash.top</we
+bdomains></elem><elem><key>casinos-game.top_le1</key><name>casinos-game.top_le1</name><info>casinos-game
+.top *.casinos-game.top</info><type>ssl_existing</type><valid_after>2026-11-20</valid_after><active>on</
+active><is_letsencrypt>on</is_letsencrypt><letsencrypt>on</letsencrypt><webdomains>casinos-game.top</web
+domains></elem><elem><key>casinos-site.top_le1</key><name>casinos-site.top_le1</name><info>casinos-site.
+top *.casinos-site.top</info><type>ssl_existing</type><valid_after>2026-11-20</valid_after><active>on</a
+ctive><is_letsencrypt>on</is_letsencrypt><letsencrypt>on</letsencrypt><webdomains>casinos-site.top</webd
+omains></elem><elem><key>casinos2026.cfd_le1</key><name>casinos2026.cfd_le1</name><info>casinos2026.cfd 
+*.casinos2026.cfd</info><type>ssl_existing</type><valid_after>2026-11-20</valid_after><active>on</active
+><is_letsencrypt>on</is_letsencrypt><letsencrypt>on</letsencrypt><webdomains>casinos2026.cfd</webdomains
+></elem><elem><key>exemle.com_le1</key><name>exemle.com_le1</name><info>exemle.com www.exemle.com *.exem
+le.com</info><type>ssl_selfsigned</type><valid_after>2027-09-09</valid_after><active>off</active><is_let
+sencrypt>on</is_letsencrypt><letsencrypt_failed>on</letsencrypt_failed></elem><elem><key>f-bets.com_le1<
+/key><name>f-bets.com_le1</name><info>f-bets.com *.f-bets.com</info><type>ssl_existing</type><valid_afte
+r>2026-12-06</valid_after><active>on</active><is_letsencrypt>on</is_letsencrypt><letsencrypt>on</letsenc
+rypt><webdomains>f-bets.com</webdomains></elem><elem><key>free-1bet.com_le1</key><name>free-1bet.com_le1
+</name><info>free-1bet.com *.free-1bet.com</info><type>ssl_existing</type><valid_after>2026-12-06</valid
+_after><active>on</active><is_letsencrypt>on</is_letsencrypt><letsencrypt>on</letsencrypt><webdomains>fr
+ee-1bet.com</webdomains></elem><elem><key>free-casino.cfd_le1</key><name>free-casino.cfd_le1</name><info
+>free-casino.cfd *.free-casino.cfd</info><type>ssl_existing</type><valid_after>2026-11-19</valid_after><
+active>on</active><is_letsencrypt>on</is_letsencrypt><letsencrypt>on</letsencrypt><webdomains>free-casin
+o.cfd</webdomains></elem><elem><key>frispiny-bez-depozita.cfd_le1</key><name>frispiny-bez-depozita.cfd_l
+e1</name><info>frispiny-bez-depozita.cfd *.frispiny-bez-depozita.cfd</info><type>ssl_existing</type><val
+id_after>2026-10-21</valid_after><active>on</active><is_letsencrypt>on</is_letsencrypt><letsencrypt>on</
+letsencrypt><webdomains>frispiny-bez-depozita.cfd</webdomains></elem><elem><key>fute-bet.com_le1</key><n
+ame>fute-bet.com_le1</name><info>fute-bet.com *.fute-bet.com</info><type>ssl_existing</type><valid_after
+>2026-12-05</valid_after><active>on</active><is_letsencrypt>on</is_letsencrypt><letsencrypt>on</letsencr
+ypt><webdomains>fute-bet.com</webdomains></elem><elem><key>fute7bet.com_le1</key><name>fute7bet.com_le1<
+/name><info>fute7bet.com *.fute7bet.com</info><type>ssl_existing</type><valid_after>2026-12-05</valid_af
+ter><active>on</active><is_letsencrypt>on</is_letsencrypt><letsencrypt>on</letsencrypt><webdomains>fute7
+bet.com</webdomains></elem><elem><key>futebolodds.com_le1</key><name>futebolodds.com_le1</name><info>fut
+ebolodds.com *.futebolodds.com</info><type>ssl_existing</type><valid_after>2026-12-05</valid_after><acti
+ve>on</active><is_letsencrypt>on</is_letsencrypt><letsencrypt>on</letsencrypt><webdomains>futebolodds.co
+m</webdomains></elem><elem><key>game-casino.cfd_le1</key><name>game-casino.cfd_le1</name><info>game-casi
+no.cfd *.game-casino.cfd</info><type>ssl_existing</type><valid_after>2026-11-19</valid_after><active>on<
+/active><is_letsencrypt>on</is_letsencrypt><letsencrypt>on</letsencrypt><webdomains>game-casino.cfd</web
+domains></elem><elem><key>go123.cfd_le1</key><name>go123.cfd_le1</name><info>go123.cfd *.go123.cfd</info
+><type>ssl_existing</type><valid_after>2026-12-06</valid_after><active>on</active><is_letsencrypt>on</is
+_letsencrypt><letsencrypt>on</letsencrypt><webdomains>go123.cfd</webdomains></elem><elem><key>go456.cfd_
+le1</key><name>go456.cfd_le1</name><info>go456.cfd *.go456.cfd</info><type>ssl_existing</type><valid_aft
+er>2026-12-06</valid_after><active>on</active><is_letsencrypt>on</is_letsencrypt><letsencrypt>on</letsen
+crypt><webdomains>go456.cfd</webdomains></elem><elem><key>go456.space_le1</key><name>go456.space_le1</na
+me><info>go456.space *.go456.space</info><type>ssl_existing</type><valid_after>2026-12-06</valid_after><
+active>on</active><is_letsencrypt>on</is_letsencrypt><letsencrypt>on</letsencrypt><webdomains>go456.spac
+e</webdomains></elem><elem><key>go456.top_le1</key><name>go456.top_le1</name><info>go456.top *.go456.top
+</info><type>ssl_existing</type><valid_after>2026-12-06</valid_after><active>on</active><is_letsencrypt>
+on</is_letsencrypt><letsencrypt>on</letsencrypt><webdomains>go456.top</webdomains></elem><elem><key>go78
+9.space_le1</key><name>go789.space_le1</name><info>go789.space *.go789.space</info><type>ssl_existing</t
+ype><valid_after>2026-12-06</valid_after><active>on</active><is_letsencrypt>on</is_letsencrypt><letsencr
+ypt>on</letsencrypt><webdomains>go789.space</webdomains></elem><elem><key>igrovye-avtomaty-onlayn.cfd_le
+1</key><name>igrovye-avtomaty-onlayn.cfd_le1</name><info>igrovye-avtomaty-onlayn.cfd *.igrovye-avtomaty-
+onlayn.cfd</info><type>ssl_existing</type><valid_after>2026-10-21</valid_after><active>on</active><is_le
+tsencrypt>on</is_letsencrypt><letsencrypt>on</letsencrypt><webdomains>igrovye-avtomaty-onlayn.cfd</webdo
+mains></elem><elem><key>ii-video.com_le1</key><name>ii-video.com_le1</name><info>ii-video.com www.ii-vid
+eo.com</info><type>ssl_existing</type><valid_after>2026-11-20</valid_after><active>on</active><is_letsen
+crypt>on</is_letsencrypt><letsencrypt>on</letsencrypt><webdomains>ii-video.com</webdomains></elem><elem>
+<key>joycasino77.casino_le1</key><name>joycasino77.casino_le1</name><info>joycasino77.casino *.joycasino
+77.casino</info><type>ssl_existing</type><valid_after>2026-11-20</valid_after><active>on</active><is_let
+sencrypt>on</is_letsencrypt><letsencrypt>on</letsencrypt><webdomains>joycasino77.casino</webdomains></el
+em><elem><key>kazino-onlayn.cfd_le1</key><name>kazino-onlayn.cfd_le1</name><info>kazino-onlayn.cfd *.kaz
+ino-onlayn.cfd</info><type>ssl_existing</type><valid_after>2026-10-21</valid_after><active>on</active><i
+s_letsencrypt>on</is_letsencrypt><letsencrypt>on</letsencrypt><webdomains>kazino-onlayn.cfd</webdomains>
+</elem><elem><key>l7777.cfd_le1</key><name>l7777.cfd_le1</name><info>l7777.cfd *.l7777.cfd</info><type>s
+sl_existing</type><valid_after>2026-10-21</valid_after><active>on</active><is_letsencrypt>on</is_letsenc
+rypt><letsencrypt>on</letsencrypt><webdomains>l7777.cfd</webdomains></elem><elem><key>ljx.casino_le1</ke
+y><name>ljx.casino_le1</name><info>ljx.casino *.ljx.casino</info><type>ssl_existing</type><valid_after>2
+026-12-05</valid_after><active>on</active><is_letsencrypt>on</is_letsencrypt><letsencrypt>on</letsencryp
+t><webdomains>ljx.casino</webdomains></elem><elem><key>melbet-bet.casino_le1</key><name>melbet-bet.casin
+o_le1</name><info>melbet-bet.casino *.melbet-bet.casino</info><type>ssl_existing</type><valid_after>2026
+-12-05</valid_after><active>on</active><is_letsencrypt>on</is_letsencrypt><letsencrypt>on</letsencrypt><
+webdomains>melbet-bet.casino</webdomains></elem><elem><key>nodep-casino.cfd_le1</key><name>nodep-casino.
+cfd_le1</name><info>nodep-casino.cfd *.nodep-casino.cfd</info><type>ssl_existing</type><valid_after>2026
+-11-19</valid_after><active>on</active><is_letsencrypt>on</is_letsencrypt><letsencrypt>on</letsencrypt><
+webdomains>nodep-casino.cfd</webdomains></elem><elem><key>ofisial.casino_le1</key><name>ofisial.casino_l
+e1</name><info>ofisial.casino *.ofisial.casino</info><type>ssl_existing</type><valid_after>2026-11-07</v
+alid_after><active>on</active><is_letsencrypt>on</is_letsencrypt><letsencrypt>on</letsencrypt><webdomain
+s>ofisial.casino</webdomains></elem><elem><key>ofitsialnyy-sayt-kazino.cfd_le1</key><name>ofitsialnyy-sa
+yt-kazino.cfd_le1</name><info>ofitsialnyy-sayt-kazino.cfd *.ofitsialnyy-sayt-kazino.cfd</info><type>ssl_
+existing</type><valid_after>2026-10-21</valid_after><active>on</active><is_letsencrypt>on</is_letsencryp
+t><letsencrypt>on</letsencrypt><webdomains>ofitsialnyy-sayt-kazino.cfd</webdomains></elem><elem><key>on-
+bets.com_le1</key><name>on-bets.com_le1</name><info>on-bets.com *.on-bets.com</info><type>ssl_existing</
+type><valid_after>2026-12-06</valid_after><active>on</active><is_letsencrypt>on</is_letsencrypt><letsenc
+rypt>on</letsencrypt><webdomains>on-bets.com</webdomains></elem><elem><key>onlayn-kazino.cfd_le1</key><n
+ame>onlayn-kazino.cfd_le1</name><info>onlayn-kazino.cfd *.onlayn-kazino.cfd</info><type>ssl_existing</ty
+pe><valid_after>2026-10-21</valid_after><active>on</active><is_letsencrypt>on</is_letsencrypt><letsencry
+pt>on</letsencrypt><webdomains>onlayn-kazino.cfd</webdomains></elem><elem><key>pin-up-casino7.best_le1</
+key><name>pin-up-casino7.best_le1</name><info>pin-up-casino7.best *.pin-up-casino7.best</info><type>ssl_
+existing</type><valid_after>2026-12-06</valid_after><active>on</active><is_letsencrypt>on</is_letsencryp
+t><letsencrypt>on</letsencrypt><webdomains>pin-up-casino7.best</webdomains></elem><elem><key>pin-up-casi
+no7.buzz_le1</key><name>pin-up-casino7.buzz_le1</name><info>pin-up-casino7.buzz *.pin-up-casino7.buzz</i
+nfo><type>ssl_existing</type><valid_after>2026-12-05</valid_after><active>on</active><is_letsencrypt>on<
+/is_letsencrypt><letsencrypt>on</letsencrypt><webdomains>pin-up-casino7.buzz</webdomains></elem><elem><k
+ey>pin-up-casino7.click_le1</key><name>pin-up-casino7.click_le1</name><info>pin-up-casino7.click *.pin-u
+p-casino7.click</info><type>ssl_existing</type><valid_after>2026-09-21</valid_after><active>on</active><
+is_letsencrypt>on</is_letsencrypt><letsencrypt_verifying>on</letsencrypt_verifying><letsencrypt_txt>on</
+letsencrypt_txt><webdomains>pin-up-casino7.click</webdomains></elem><elem><key>pin-up-casino7.online_le1
+</key><name>pin-up-casino7.online_le1</name><info>pin-up-casino7.online *.pin-up-casino7.online</info><t
+ype>ssl_existing</type><valid_after>2026-12-05</valid_after><active>on</active><is_letsencrypt>on</is_le
+tsencrypt><letsencrypt>on</letsencrypt><webdomains>pin-up-casino7.online</webdomains></elem><elem><key>p
+in-up-casino7.site_le1</key><name>pin-up-casino7.site_le1</name><info>pin-up-casino7.site *.pin-up-casin
+o7.site</info><type>ssl_existing</type><valid_after>2026-12-05</valid_after><active>on</active><is_letse
+ncrypt>on</is_letsencrypt><letsencrypt>on</letsencrypt><webdomains>pin-up-casino7.site</webdomains></ele
+m><elem><key>pin-up97.casino_le1</key><name>pin-up97.casino_le1</name><info>pin-up97.casino *.pin-up97.c
+asino</info><type>ssl_existing</type><valid_after>2026-11-25</valid_after><active>on</active><is_letsenc
+rypt>on</is_letsencrypt><letsencrypt>on</letsencrypt><webdomains>pin-up97.casino</webdomains></elem><ele
+m><key>play123.cfd_le1</key><name>play123.cfd_le1</name><info>play123.cfd *.play123.cfd</info><type>ssl_
+existing</type><valid_after>2026-12-06</valid_after><active>on</active><is_letsencrypt>on</is_letsencryp
+t><letsencrypt>on</letsencrypt><webdomains>play123.cfd</webdomains></elem><elem><key>play123.space_le1</
+key><name>play123.space_le1</name><info>play123.space *.play123.space</info><type>ssl_existing</type><va
+lid_after>2026-12-06</valid_after><active>on</active><is_letsencrypt>on</is_letsencrypt><letsencrypt>on<
+/letsencrypt><webdomains>play123.space</webdomains></elem><elem><key>play456.cfd_le1</key><name>play456.
+cfd_le1</name><info>play456.cfd *.play456.cfd</info><type>ssl_existing</type><valid_after>2026-12-06</va
+lid_after><active>on</active><is_letsencrypt>on</is_letsencrypt><letsencrypt>on</letsencrypt><webdomains
+>play456.cfd</webdomains></elem><elem><key>play456.space_le1</key><name>play456.space_le1</name><info>pl
+ay456.space *.play456.space</info><type>ssl_existing</type><valid_after>2026-12-06</valid_after><active>
+on</active><is_letsencrypt>on</is_letsencrypt><letsencrypt>on</letsencrypt><webdomains>play456.space</we
+bdomains></elem><elem><key>play456.top_le1</key><name>play456.top_le1</name><info>play456.top *.play456.
+top</info><type>ssl_existing</type><valid_after>2026-12-06</valid_after><active>on</active><is_letsencry
+pt>on</is_letsencrypt><letsencrypt>on</letsencrypt><webdomains>play456.top</webdomains></elem><elem><key
+>play789.cfd_le1</key><name>play789.cfd_le1</name><info>play789.cfd *.play789.cfd</info><type>ssl_existi
+ng</type><valid_after>2026-12-06</valid_after><active>on</active><is_letsencrypt>on</is_letsencrypt><let
+sencrypt>on</letsencrypt><webdomains>play789.cfd</webdomains></elem><elem><key>play789.space_le1</key><n
+ame>play789.space_le1</name><info>play789.space *.play789.space</info><type>ssl_existing</type><valid_af
+ter>2026-12-06</valid_after><active>on</active><is_letsencrypt>on</is_letsencrypt><letsencrypt>on</letse
+ncrypt><webdomains>play789.space</webdomains></elem><elem><key>plays-casino.cfd_le1</key><name>plays-cas
+ino.cfd_le1</name><info>plays-casino.cfd *.plays-casino.cfd</info><type>ssl_existing</type><valid_after>
+2026-11-19</valid_after><active>on</active><is_letsencrypt>on</is_letsencrypt><letsencrypt>on</letsencry
+pt><webdomains>plays-casino.cfd</webdomains></elem><elem><key>privetstvennyy-bonus.cfd_le1</key><name>pr
+ivetstvennyy-bonus.cfd_le1</name><info>privetstvennyy-bonus.cfd *.privetstvennyy-bonus.cfd</info><type>s
+sl_existing</type><valid_after>2026-10-21</valid_after><active>on</active><is_letsencrypt>on</is_letsenc
+rypt><letsencrypt>on</letsencrypt><webdomains>privetstvennyy-bonus.cfd</webdomains></elem><elem><key>rot
+orix.casino_le1</key><name>rotorix.casino_le1</name><info>rotorix.casino *.rotorix.casino</info><type>ss
+l_existing</type><valid_after>2026-12-05</valid_after><active>on</active><is_letsencrypt>on</is_letsencr
+ypt><letsencrypt>on</letsencrypt><webdomains>rotorix.casino</webdomains></elem><elem><key>s7s.casino_le1
+</key><name>s7s.casino_le1</name><info>s7s.casino *.s7s.casino</info><type>ssl_existing</type><valid_aft
+er>2026-10-12</valid_after><active>on</active><is_letsencrypt>on</is_letsencrypt><letsencrypt>on</letsen
+crypt><webdomains>s7s.casino</webdomains></elem><elem><key>save96.com_le1</key><name>save96.com_le1</nam
+e><info>save96.com www.save96.com</info><type>ssl_existing</type><valid_after>2026-11-29</valid_after><a
+ctive>on</active><is_letsencrypt>on</is_letsencrypt><letsencrypt>on</letsencrypt><webdomains>save96.com<
+/webdomains></elem><elem><key>site-azino777.cfd_le1</key><name>site-azino777.cfd_le1</name><info>site-az
+ino777.cfd www.site-azino777.cfd</info><type>ssl_existing</type><valid_after>2026-11-07</valid_after><ac
+tive>on</active><is_letsencrypt>on</is_letsencrypt><letsencrypt>on</letsencrypt><webdomains>site-azino77
+7.cfd</webdomains></elem><elem><key>site-casino.cfd_le1</key><name>site-casino.cfd_le1</name><info>site-
+casino.cfd *.site-casino.cfd</info><type>ssl_existing</type><valid_after>2026-11-19</valid_after><active
+>on</active><is_letsencrypt>on</is_letsencrypt><letsencrypt>on</letsencrypt><webdomains>site-casino.cfd<
+/webdomains></elem><elem><key>sjm.casino_le1</key><name>sjm.casino_le1</name><info>sjm.casino *.sjm.casi
+no</info><type>ssl_existing</type><valid_after>2026-10-07</valid_after><active>off</active><is_letsencry
+pt>on</is_letsencrypt><letsencrypt_verifying>on</letsencrypt_verifying><letsencrypt_txt>on</letsencrypt_
+txt></elem><elem><key>stake-mirrors.casino_le1</key><name>stake-mirrors.casino_le1</name><info>stake-mir
+rors.casino *.stake-mirrors.casino</info><type>ssl_existing</type><valid_after>2026-12-05</valid_after><
+active>on</active><is_letsencrypt>on</is_letsencrypt><letsencrypt>on</letsencrypt><webdomains>stake-mirr
+ors.casino</webdomains></elem><elem><key>stake2027.casino_le1</key><name>stake2027.casino_le1</name><inf
+o>stake2027.casino www.stake2027.casino</info><type>ssl_existing</type><valid_after>2026-12-08</valid_af
+ter><active>on</active><is_letsencrypt>on</is_letsencrypt><letsencrypt>on</letsencrypt><webdomains>stake
+2027.casino</webdomains></elem><elem><key>stake3.best_le1</key><name>stake3.best_le1</name><info>stake3.
+best *.stake3.best</info><type>ssl_existing</type><valid_after>2026-12-06</valid_after><active>on</activ
+e><is_letsencrypt>on</is_letsencrypt><letsencrypt>on</letsencrypt><webdomains>stake3.best</webdomains></
+elem><elem><key>stake356.com_le1</key><name>stake356.com_le1</name><info>stake356.com *.stake356.com</in
+fo><type>ssl_existing</type><valid_after>2026-12-05</valid_after><active>on</active><is_letsencrypt>on</
+is_letsencrypt><letsencrypt>on</letsencrypt><webdomains>stake356.com</webdomains></elem><elem><key>stake
+73.casino_le1</key><name>stake73.casino_le1</name><info>stake73.casino *.stake73.casino</info><type>ssl_
+existing</type><valid_after>2026-12-05</valid_after><active>on</active><is_letsencrypt>on</is_letsencryp
+t><letsencrypt>on</letsencrypt><webdomains>stake73.casino</webdomains></elem><elem><key>stake79.casino_l
+e1</key><name>stake79.casino_le1</name><info>stake79.casino *.stake79.casino</info><type>ssl_existing</t
+ype><valid_after>2026-11-09</valid_after><active>on</active><is_letsencrypt>on</is_letsencrypt><letsencr
+ypt>on</letsencrypt><webdomains>stake79.casino</webdomains></elem><elem><key>stakebonus9.com_le1</key><n
+ame>stakebonus9.com_le1</name><info>stakebonus9.com *.stakebonus9.com</info><type>ssl_existing</type><va
+lid_after>2026-12-05</valid_after><active>on</active><is_letsencrypt>on</is_letsencrypt><letsencrypt>on<
+/letsencrypt><webdomains>stakebonus9.com</webdomains></elem><elem><key>stavki-footbol.com_le1</key><name
+>stavki-footbol.com_le1</name><info>stavki-footbol.com *.stavki-footbol.com</info><type>ssl_existing</ty
+pe><valid_after>2026-12-05</valid_after><active>on</active><is_letsencrypt>on</is_letsencrypt><letsencry
+pt>on</letsencrypt><webdomains>stavki-footbol.com</webdomains></elem><elem><key>vtb24-banki.online_le1</
+key><name>vtb24-banki.online_le1</name><info>vtb24-banki.online *.vtb24-banki.online</info><type>ssl_exi
+sting</type><valid_after>2026-10-02</valid_after><active>on</active><is_letsencrypt>on</is_letsencrypt><
+letsencrypt_verifying>on</letsencrypt_verifying><letsencrypt_txt>on</letsencrypt_txt><webdomains>vtb24-b
+anki.online</webdomains></elem><elem><key>x-azino777.cfd_le1</key><name>x-azino777.cfd_le1</name><info>w
+ww.x-azino777.cfd x-azino777.cfd</info><type>ssl_existing</type><valid_after>2026-11-28</valid_after><ac
+tive>on</active><is_letsencrypt>on</is_letsencrypt><letsencrypt>on</letsencrypt><webdomains>x-azino777.c
+fd</webdomains></elem><elem><key>xaf.casino_le1</key><name>xaf.casino_le1</name><info>xaf.casino *.xaf.c
+asino</info><type>ssl_existing</type><valid_after>2026-11-25</valid_after><active>on</active><is_letsenc
+rypt>on</is_letsencrypt><letsencrypt>on</letsencrypt><webdomains>xaf.casino</webdomains></elem><elem><ke
+y>xxx-casino.cfd_le1</key><name>xxx-casino.cfd_le1</name><info>xxx-casino.cfd *.xxx-casino.cfd</info><ty
+pe>ssl_existing</type><valid_after>2026-11-19</valid_after><active>on</active><is_letsencrypt>on</is_let
+sencrypt><letsencrypt>on</letsencrypt><webdomains>xxx-casino.cfd</webdomains></elem><elem><key>z5t.casin
+o_le1</key><name>z5t.casino_le1</name><info>z5t.casino *.z5t.casino</info><type>ssl_existing</type><vali
+d_after>2026-12-05</valid_after><active>on</active><is_letsencrypt>on</is_letsencrypt><letsencrypt>on</l
+etsencrypt><webdomains>z5t.casino</webdomains></elem><elem><key>zerkalo-onlayn-kazino.cfd_le1</key><name
+>zerkalo-onlayn-kazino.cfd_le1</name><info>zerkalo-onlayn-kazino.cfd *.zerkalo-onlayn-kazino.cfd</info><
+type>ssl_existing</type><valid_after>2026-10-21</valid_after><active>on</active><is_letsencrypt>on</is_l
+etsencrypt><letsencrypt>on</letsencrypt><webdomains>zerkalo-onlayn-kazino.cfd</webdomains></elem><elem><
+key>zerkalo.cfd_le1</key><name>zerkalo.cfd_le1</name><info>zerkalo.cfd *.zerkalo.cfd</info><type>ssl_exi
+sting</type><valid_after>2026-10-20</valid_after><active>on</active><is_letsencrypt>on</is_letsencrypt><
+letsencrypt>on</letsencrypt><webdomains>zerkalo.cfd</webdomains></elem><elem><key>zerkalo7.cam_le1</key>
+<name>zerkalo7.cam_le1</name><info>zerkalo7.cam *.zerkalo7.cam</info><type>ssl_existing</type><valid_aft
+er>2026-10-20</valid_after><active>on</active><is_letsencrypt>on</is_letsencrypt><letsencrypt>on</letsen
+crypt><webdomains>zerkalo7.cam</webdomains></elem><elem><key>zerkalo9.cam_le1</key><name>zerkalo9.cam_le
+1</name><info>zerkalo9.cam *.zerkalo9.cam</info><type>ssl_existing</type><valid_after>2026-10-20</valid_
+after><active>on</active><is_letsencrypt>on</is_letsencrypt><letsencrypt>on</letsencrypt><webdomains>zer
+kalo9.cam</webdomains></elem><tparams><lang>en</lang><out>xml</out><su>www-root</su><func>sslcert</func>
+</tparams><saved_filters/></doc>                                                                        
+[root@mail ~]#                                                                                          
+ 
