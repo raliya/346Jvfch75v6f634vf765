@@ -1,0 +1,893 @@
+Да, причина найдена: программа принимает локальную отметку submitted («запрос отправлен») за основание больше ничего не проверять. Это ошибка — отправленный запрос не равен выпущенному сертификату. Предыдущая правка исправила очередь, но эту проверку не затронула.
+
+Правильное поведение:
+
+Состояние в ISPmanager	Действие программы
+Действующий сертификат покрывает домен и *.домен, уже подключён	Ничего не менять
+Подходящий сертификат выпущен, но не подключён	Подключить существующий, не выпускать новый
+Заявка существует и ожидает DNS-проверки	Продолжить её, получить актуальные TXT — не создавать дубликат
+Нет ни подходящего сертификата, ни действующей заявки	Отправить новый запрос, несмотря на старую локальную отметку
+Панель недоступна или вернула ошибку	Сообщить ошибку, не считать это отсутствием сертификата
+Wildcard не появится только от повторной отправки запроса: необходимо завершить DNS-01 с актуальными TXT.
+
+У меня нет доступа к вашим локальным файлам и серверу, поэтому резервную копию выполнит команда ниже. Для исправления без угадывания полей API нужны ещё список SSL-сертификатов и форма выпуска. Предыдущий XML содержал форму сайта и ошибку получения TXT — состояния самих сертификатов там нет.
+
+1. Сохраните рабочую версию
+Закройте программу и вставьте весь блок в PowerShell. Он сохранит исходники, всю папку рабочего EXE, настройки и SQLite. Ничего не изменяет на сервере и не удаляет старую программу.
+
+& {
+ $ErrorActionPreference = 'Stop'
+
+ if (Get-Process -Name TextFileProcessor -ErrorAction SilentlyContinue) {
+ throw 'Сначала закройте TextFileProcessor.'
+ }
+
+ $base = 'C:\Users\User\Desktop\DomainProgram-Fix-20260910-231222\source'
+
+ $source = Join-Path $base `
+ '346Jvfch75v6f634vf765-60ecea8c7bc346c3ed310f3c416beb6549390cac'
+
+ $program = Join-Path $base `
+ 'TextFileProcessor-selected-fix-20260912-174527'
+
+ $data = Join-Path $env:LOCALAPPDATA 'TextFileProcessor'
+
+ if (-not (Test-Path -LiteralPath (
+ Join-Path $source 'TextFileProcessor.csproj'
+ ) -PathType Leaf)) {
+ throw "Не найден проект: $source"
+ }
+
+ if (-not (Test-Path -LiteralPath (
+ Join-Path $program 'TextFileProcessor.exe'
+ ) -PathType Leaf)) {
+ throw "Не найден рабочий EXE: $program"
+ }
+
+ if (-not (Get-Command robocopy.exe -ErrorAction SilentlyContinue)) {
+ throw 'Не найден robocopy.exe.'
+ }
+
+ $stamp = Get-Date -Format 'yyyyMMdd-HHmmss-fff'
+ $backup = Join-Path $env:LOCALAPPDATA `
+ "TextFileProcessor-Backups\before-wildcard-$stamp"
+
+ New-Item -ItemType Directory -Path $backup | Out-Null
+
+ $sets = @(
+ @{ Name = 'source'; Path = $source },
+ @{ Name = 'program'; Path = $program }
+ )
+
+ if (Test-Path -LiteralPath $data -PathType Container) {
+ $sets += @{ Name = 'app-data'; Path = $data }
+ } else {
+ Write-Warning 'Папка данных приложения не найдена.'
+ }
+
+ foreach ($set in $sets) {
+ $destination = Join-Path $backup $set.Name
+ $log = Join-Path $backup ($set.Name + '-copy.log')
+
+ Write-Host "Копирование: $($set.Name)…" -ForegroundColor Cyan
+
+ # /E — копирование, не зеркалирование: удаления нет.
+ # /XJ — не переходить по junction-ссылкам.
+ & robocopy.exe $set.Path $destination `
+ /E /XJ /R:1 /W:1 /COPY:DAT /DCOPY:DAT `
+ /NP /NFL /NDL "/LOG:$log" | Out-Null
+
+ $copyCode = $LASTEXITCODE
+ if ($copyCode -ge 8) {
+ throw "Копирование не завершено. Журнал: $log"
+ }
+ }
+
+ # Проверяем содержимое ключевых файлов по SHA-256.
+ $checks = @(
+ @{
+ Original = Join-Path $program 'TextFileProcessor.exe'
+ Copy = Join-Path $backup 'program\TextFileProcessor.exe'
+ },
+ @{
+ Original = Join-Path $source 'Services\DeploymentSchemaFix.cs'
+ Copy = Join-Path $backup 'source\Services\DeploymentSchemaFix.cs'
+ },
+ @{
+ Original = Join-Path $source 'MainWindow.SelectedJobsFix.cs'
+ Copy = Join-Path $backup 'source\MainWindow.SelectedJobsFix.cs'
+ }
+ )
+
+ if (Test-Path -LiteralPath (Join-Path $data 'app.db')) {
+ $checks += @{
+ Original = Join-Path $data 'app.db'
+ Copy = Join-Path $backup 'app-data\app.db'
+ }
+ }
+
+ foreach ($check in $checks) {
+ $originalHash = (Get-FileHash -LiteralPath $check.Original `
+ -Algorithm SHA256).Hash
+ $copyHash = (Get-FileHash -LiteralPath $check.Copy `
+ -Algorithm SHA256).Hash
+
+ if ($originalHash -ne $copyHash) {
+ throw "Не совпала контрольная сумма: $($check.Original)"
+ }
+ }
+
+ Write-Host "`nРезервная копия создана:" -ForegroundColor Green
+ Write-Host $backup
+ Write-Host 'EXE, ключевые исходники и SQLite проверены по SHA-256.'
+ Write-Host 'Исходная программа и сервер не изменялись.'
+
+ Invoke-Item -LiteralPath $backup
+}
+
+Резервную копию не загружайте на GitHub: в ней находятся настройки и данные приложения. Серверные сайты и БД в эту локальную копию не входят.
+
+2. Получите недостающие данные панели
+Откройте SSH-подключение к серверу и выполните на сервере эти две команды. Они читают список и форму; параметра sok=ok нет, выпуск не запускается.
+
+Список сертификатов владельца www-root:
+
+/usr/local/mgr5/sbin/mgrctl -m ispmgr sslcert su=www-root out=xml lang=en
+
+Форма запроса Wildcard для уже существующего сайта:
+
+/usr/local/mgr5/sbin/mgrctl -m ispmgr letsencrypt.generate \
+ username=www-root \
+ domain_name=casino9600.cfd \
+ 'aliases=*.casino9600.cfd' \
+ crtname=casino9600.cfd_le1 \
+ email=webmaster@casino9600.cfd \
+ from_webdomain=on \
+ wildcard=on \
+ dns_check=on \
+ enable_cert=on \
+ out=devel \
+ lang=en
+
+Здесь www отдельно не добавлен в запрос: его покрывает *.casino9600.cfd. Псевдонимы самого сайта эти команды не меняют.
+
+Пришлите ответы этих двух команд. Если получите ошибку — пришлите её, параметры подбирать не нужно. Пароли, API-ключи и блоки PRIVATE KEY, если встретятся, удалите.
+
+После этого можно сделать точечную замену RequestCertificate, сохранив рабочую очередь и БД. Сейчас исправление сертификатов ещё не применено; удалять .state или повторно выпускать сертификаты вслепую не нужно.
+
+https://github.com/raliya/346Jvfch75v6f634vf765/blob/main/www-root%20out%3Dxml%20lang%3Den.txt
+
+
+Резервная копия создана:
+C:\Users\User\AppData\Local\TextFileProcessor-Backups\before-wildcard-20260912-183518-474
+EXE, ключевые исходники и SQLite проверены по SHA-256.
+Исходная программа и сервер не изменялись.
+PS C:\Users\User\Desktop\DomainProgram-Fix-20260910-231222\source\346Jvfch75v6f634vf765-60ecea8c7bc346c3ed310f3c416beb6549390cac> /usr/local/mgr5/sbin/mgrctl -...
+Развернуть
+GPT-6 Astra
+GPT-6 Astra
+Навык активирован: page_content
+get_page_content
+Содержимое страницы
+Резервная копия, судя по вашему выводу, создана успешно. Ошибки PowerShell ничего не изменили на сервере: Linux-команды там не выполнились.
+
+Я прочитал файл по ссылке. В нём есть важное уточнение: для casino9600.cfd Wildcard уже выпущен, причём под именем _le2, а не _le1.
+
+Что показывает ISPmanager
+В вашем файле присутствует такая запись — ниже восстановлены переносы строк терминала:
+
+<key>casino9600.cfd_le2</key>
+<name>casino9600.cfd_le2</name>
+<info>casino9600.cfd *.casino9600.cfd</info>
+<type>ssl_existing</type>
+<valid_after>2026-12-11</valid_after>
+<active>on</active>
+<is_letsencrypt>on</is_letsencrypt>
+<letsencrypt>on</letsencrypt>
+<webdomains>casino9600.cfd</webdomains>
+
+По этому ответу панели сертификат:
+
+покрывает домен и *.casino9600.cfd;
+отмечен как активный и связанный с сайтом;
+имеет указанную панелью дату окончания 11 декабря 2026 года.
+Аналогичные активные Wildcard-сертификаты _le2 есть у casino9200.cfd, casino9300.cfd, casino9400.cfd и casino9500.cfd.
+
+Повторный выпуск для этих пяти доменов по представленным данным не нужен. Это состояние в панели; какой сертификат фактически отдаёт внешний HTTPS-сервер, данным файлом отдельно не проверяется.
+
+Значит, в исправлении важно не только учитывать локальный submitted, но и искать подходящий сертификат среди всех записей, а не только по имени домен_le1. Само наличие ошибки такого поиска в исходниках этим XML ещё не доказано.
+
+Почему возникли ошибки
+Вы вставили серверные команды в локальный Windows PowerShell:
+
+PS C:\Users\User\Desktop\...>
+
+Но /usr/local/mgr5/sbin/mgrctl находится на Linux-сервере, а \ — перенос строки для Linux-оболочки, не PowerShell.
+
+В загруженном файле команда была выполнена в правильном месте:
+
+[root@mail ~]#
+
+Вернитесь в тот же терминал сервера, из которого получили файл на GitHub. Повторять список сертификатов уже не требуется.
+
+Осталось получить форму API
+Для проверки параметров выпуска на тех доменах, где подходящего сертификата нет, ещё нужен ответ формы. Вставьте следующую команду одной строкой в терминал сервера, без префикса [root@mail ~]#:
+
+/usr/local/mgr5/sbin/mgrctl -m ispmgr letsencrypt.generate username=www-root domain_name=casino9600.cfd 'aliases=*.casino9600.cfd' email=webmaster@casino9600.cfd from_webdomain=on wildcard=on dns_check=on enable_cert=on out=devel lang=en
+
+Это запрос формы без sok=ok, а не команда подтверждения выпуска. Имя нового сертификата здесь не задаём.
+
+Пришлите полученный ответ или ссылку на файл. Если будет ошибка — достаточно её текста. Пароли, токены и закрытые ключи не публикуйте.
+
+Сейчас не нужно удалять .state, менять SQLite, отключать существующие сертификаты или запускать повторный выпуск. Исправление программы пока не применено.
+
+так ты опять забыл все что делали.
+Мы делаем программу на PowerShell
+в ней осталась одна проблема - домены добавляются в панель https://185.115.33.18:1500/ispmgr и псевдоним сайта (*.домен.com) тоже добавляется, но нету у них Wild сертификата - только это осталось добить ничего другого не трогай. сайты должны все выбранные добавляться поочередно в панель управления сайтами.
+Программа тут: C:\Users\User\Desktop\DomainProgram-Fix-20260910-231222
+что то не понятно если то пришли ко...
+Развернуть
+GPT-6 Astra
+GPT-6 Astra
+Вы правы — я ушёл от вашей задачи и начал разбирать отдельные сертификаты вместо последней версии программы. Извините.
+
+Фиксируем границы работы:
+
+все выбранные сайты должны добавляться в ISPmanager поочерёдно;
+добавление домена и псевдонима *.домен уже работает;
+исправляем только получение и подключение Wildcard-сертификата;
+очередь, интерфейс, настройки и БД без необходимости не меняем.
+Старую версию с GitHub за основу брать не буду. Сначала соберём локальные исходники с последними доработками.
+
+Вставьте весь блок в PowerShell
+Он создаст текстовый отчёт на рабочем столе. Не запускает программу, не обращается к панели, не меняет исходники, настройки или БД. Собирает исходный код, расположение EXE и сведения об установленном .NET. Базы, настройки и журналы не включаются.
+
+& {
+    $ErrorActionPreference = 'Stop'
+
+    $root = 'C:\Users\User\Desktop\DomainProgram-Fix-20260910-231222'
+    if (-not (Test-Path -LiteralPath $root -PathType Container)) {
+        throw "Папка не найдена: $root"
+    }
+
+    $desktop = [Environment]::GetFolderPath('Desktop')
+    $report = Join-Path $desktop (
+        'Wildcard-Diagnostic-' + (Get-Date -Format 'yyyyMMdd-HHmmss-fff') + '.txt'
+    )
+
+    # Не заходим в служебные каталоги и резервные копии.
+    $skipDirs = @(
+        '.git', '.vs', '.idea', 'bin', 'obj',
+        'node_modules', 'packages', 'TestResults',
+        'backup', 'backups', 'app-data', 'logs'
+    )
+
+    $extensions = @(
+        '.cs', '.xaml', '.csproj', '.sln',
+        '.ps1', '.psm1', '.props', '.targets'
+    )
+
+    $files = New-Object 'System.Collections.Generic.List[System.IO.FileInfo]'
+    $scanErrors = New-Object 'System.Collections.Generic.List[string]'
+    $dirs = New-Object 'System.Collections.Generic.Stack[string]'
+    $dirs.Push($root)
+
+    while ($dirs.Count -gt 0) {
+        $dir = $dirs.Pop()
+
+        try {
+            $items = @(Get-ChildItem -LiteralPath $dir -Force -ErrorAction Stop)
+        }
+        catch {
+            $scanErrors.Add("$dir : $($_.Exception.Message)")
+            continue
+        }
+
+        foreach ($item in $items) {
+            # Не переходим по ссылкам и junction.
+            if (($item.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0) {
+                continue
+            }
+
+            if ($item.PSIsContainer) {
+                if (
+                    $skipDirs -notcontains $item.Name -and
+                    $item.Name -notmatch '(?i)(^backup[-_]|^before-wildcard-)'
+                ) {
+                    $dirs.Push($item.FullName)
+                }
+            }
+            elseif (
+                $extensions -contains $item.Extension -or
+                $item.Name -eq 'TextFileProcessor.exe'
+            ) {
+                $files.Add($item)
+            }
+        }
+    }
+
+    function Hide-CommonSecrets {
+        param([string]$Text)
+
+        # PEM-ключи.
+        $Text = [regex]::Replace(
+            $Text,
+            '(?s)-----BEGIN [^\r\n]*PRIVATE KEY-----.*?-----END [^\r\n]*PRIVATE KEY-----',
+            '[PRIVATE KEY REMOVED]'
+        )
+
+        # Типичные присваивания секретов в коде и словарях.
+        $pattern = '(?im)((?:["'']?[\w$.-]*(?:password|passwd|pwd|token|secret|api[_-]?key|private[_-]?key)[\w.-]*["'']?)\s*(?:=|:|,)\s*)(["''])([^\r\n]*?)\2'
+        $Text = [regex]::Replace(
+            $Text, $pattern, '$1$2[REDACTED]$2'
+        )
+
+        # Секреты в параметрах URL и заголовках авторизации.
+        $Text = [regex]::Replace(
+            $Text,
+            '(?i)([?&](?:auth|authinfo|password|passwd|token|secret|apikey|api_key)=)[^&\s"''<>]+',
+            '$1[REDACTED]'
+        )
+        $Text = [regex]::Replace(
+            $Text,
+            '(?i)(\b(?:Bearer|Basic)\s+)[A-Za-z0-9+/_.=-]{12,}',
+            '$1[REDACTED]'
+        )
+
+        return $Text
+    }
+
+    $utf8 = New-Object System.Text.UTF8Encoding($true)
+    $writer = New-Object System.IO.StreamWriter($report, $false, $utf8)
+
+    try {
+        $writer.WriteLine('LOCAL WILDCARD DIAGNOSTIC')
+        $writer.WriteLine('Created: ' + (Get-Date -Format 'yyyy-MM-dd HH:mm:ss zzz'))
+        $writer.WriteLine('Root: ' + $root)
+        $writer.WriteLine('PowerShell: ' + $PSVersionTable.PSVersion)
+        $writer.WriteLine('')
+        $writer.WriteLine('TASK: Fix wildcard certificate issuance/attachment only.')
+        $writer.WriteLine('PRESERVE: sequential selected-site queue, aliases, UI, settings, DB.')
+        $writer.WriteLine('NOTE: bin/obj, backups, settings, databases and logs are excluded.')
+        $writer.WriteLine('NOTE: automatic secret masking is best-effort; review before sharing.')
+
+        $writer.WriteLine("`r`n===== DOTNET SDKS =====")
+        if (Get-Command dotnet -ErrorAction SilentlyContinue) {
+            try {
+                $sdkInfo = & dotnet --list-sdks 2>&1 | Out-String
+                $writer.WriteLine($sdkInfo)
+            }
+            catch {
+                $writer.WriteLine($_.Exception.Message)
+            }
+        }
+        else {
+            $writer.WriteLine('dotnet not found in PATH')
+        }
+
+        $writer.WriteLine("`r`n===== FILE INVENTORY =====")
+        foreach ($file in ($files | Sort-Object FullName)) {
+            $relative = $file.FullName.Substring($root.Length).TrimStart('\')
+            $writer.WriteLine(
+                '{0} | {1} bytes | modified {2}' -f
+                $relative,
+                $file.Length,
+                $file.LastWriteTime.ToString('yyyy-MM-dd HH:mm:ss')
+            )
+        }
+
+        $writer.WriteLine("`r`n===== SOURCE CONTENTS =====")
+
+        $totalBytes = 0L
+        $maxFileBytes = 2MB
+        $maxTotalBytes = 20MB
+
+        # Свежие версии идут первыми, если в папке несколько копий проекта.
+        $sources = $files |
+            Where-Object {
+                $extensions -contains $_.Extension -and
+                $_.Name -notmatch '(?i)(AssemblyInfo\.cs$|\.g\.cs$|\.g\.i\.cs$)'
+            } |
+            Sort-Object LastWriteTime -Descending
+
+        foreach ($file in $sources) {
+            $relative = $file.FullName.Substring($root.Length).TrimStart('\')
+
+            $writer.WriteLine("`r`n----------------------------------------")
+            $writer.WriteLine('FILE: ' + $relative)
+
+            if (
+                $file.Length -gt $maxFileBytes -or
+                ($totalBytes + $file.Length) -gt $maxTotalBytes
+            ) {
+                $writer.WriteLine('[CONTENT OMITTED: size limit; file remains in inventory]')
+                continue
+            }
+
+            try {
+                $hash = (Get-FileHash -LiteralPath $file.FullName -Algorithm SHA256).Hash
+                $text = [IO.File]::ReadAllText($file.FullName)
+
+                $writer.WriteLine('SHA256 of original: ' + $hash)
+                $writer.WriteLine('BEGIN SOURCE')
+                $writer.WriteLine((Hide-CommonSecrets -Text $text))
+                $writer.WriteLine('END SOURCE')
+
+                $totalBytes += $file.Length
+            }
+            catch {
+                $writer.WriteLine('[READ ERROR] ' + $_.Exception.Message)
+            }
+        }
+
+        $writer.WriteLine("`r`n===== SCAN ERRORS =====")
+        if ($scanErrors.Count -eq 0) {
+            $writer.WriteLine('None')
+        }
+        else {
+            foreach ($message in $scanErrors) {
+                $writer.WriteLine($message)
+            }
+        }
+    }
+    finally {
+        $writer.Dispose()
+    }
+
+    Write-Host "`nОтчёт создан:" -ForegroundColor Green
+    Write-Host $report
+    Write-Host (
+        'Размер: {0:N2} МБ' -f ((Get-Item -LiteralPath $report).Length / 1MB)
+    )
+    Write-Host "`nИсходники, настройки и БД не изменялись."
+    Write-Host 'Проверьте отчёт на секреты перед отправкой.' -ForegroundColor Yellow
+
+    Invoke-Item -LiteralPath $report
+}
+
+Прикрепите полученный .txt сюда, желательно не публикуя его на GitHub. Маскировка распространённых секретов предусмотрена, но не гарантирует обнаружение всех паролей и ключей — перед отправкой просмотрите файл.
+
+Если вы запускаете EXE из нескольких копий, добавьте путь к тому EXE, которым сейчас пользуетесь. По отчёту разберу актуальный участок выпуска сертификата и подготовлю точечную PowerShell-правку, не затрагивая рабочую очередь.
+
+InvalidOperation:
+Line |
+127 | $writer.WriteLine(
+| ~~~~~~~~~~~~~~~~~~
+| Error formatting a string: Index (zero based) must be greater than or equal to zero and less than the size of the argument list..
+PS C:\Users\User\Desktop\DomainProgram-Fix-20260910-231222\source\346Jvfch75v6f634vf765-60ecea8c7bc346c3ed310f3c416beb6549390cac>
+GPT-6 Astra
+GPT-6 Astra
+Это ошибка в моей команде сбора отчёта, не в вашей программе. PowerShell неверно разобрал форматирование строки внутри WriteLine. Исходники, настройки и БД не менялись, но отчёт остался неполным.
+
+Ниже исправленный блок целиком — вставьте его в PowerShell вместо предыдущего. Он создаст новый текстовый файл на рабочем столе. К панели не подключается и программу не запускает.
+
+& {
+    $ErrorActionPreference = 'Stop'
+
+    $root = 'C:\Users\User\Desktop\DomainProgram-Fix-20260910-231222'
+    if (-not (Test-Path -LiteralPath $root -PathType Container)) {
+        throw "Папка не найдена: $root"
+    }
+
+    $report = Join-Path ([Environment]::GetFolderPath('Desktop')) (
+        'Wildcard-Diagnostic-' + (Get-Date -Format 'yyyyMMdd-HHmmss-fff') + '.txt'
+    )
+
+    $skipDirs = @(
+        '.git', '.vs', '.idea', 'bin', 'obj',
+        'node_modules', 'packages', 'TestResults',
+        'backup', 'backups', 'app-data', 'logs'
+    )
+
+    $extensions = @(
+        '.cs', '.xaml', '.csproj', '.sln',
+        '.ps1', '.psm1', '.props', '.targets'
+    )
+
+    $files = [System.Collections.Generic.List[System.IO.FileInfo]]::new()
+    $scanErrors = [System.Collections.Generic.List[string]]::new()
+    $dirs = [System.Collections.Generic.Stack[string]]::new()
+    $dirs.Push($root)
+
+    while ($dirs.Count -gt 0) {
+        $dir = $dirs.Pop()
+        try {
+            $items = @(Get-ChildItem -LiteralPath $dir -Force -ErrorAction Stop)
+        }
+        catch {
+            $scanErrors.Add($dir + ' : ' + $_.Exception.Message)
+            continue
+        }
+
+        foreach ($item in $items) {
+            if (($item.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0) {
+                continue
+            }
+
+            if ($item.PSIsContainer) {
+                if (
+                    $skipDirs -notcontains $item.Name -and
+                    $item.Name -notmatch '(?i)(^backup[-_]|^before-wildcard-)'
+                ) {
+                    $dirs.Push($item.FullName)
+                }
+            }
+            elseif (
+                $extensions -contains $item.Extension -or
+                $item.Name -eq 'TextFileProcessor.exe'
+            ) {
+                $files.Add($item)
+            }
+        }
+    }
+
+    function Hide-CommonSecrets {
+        param([string]$Text)
+
+        $Text = [regex]::Replace(
+            $Text,
+            '(?s)-----BEGIN [^\r\n]*PRIVATE KEY-----.*?-----END [^\r\n]*PRIVATE KEY-----',
+            '[PRIVATE KEY REMOVED]'
+        )
+
+        $pattern = '(?im)((?:["'']?[\w$.-]*(?:password|passwd|pwd|token|secret|api[_-]?key|private[_-]?key)[\w.-]*["'']?)\s*(?:=|:|,)\s*)(["''])([^\r\n]*?)\2'
+        $Text = [regex]::Replace(
+            $Text, $pattern, '$1$2[REDACTED]$2'
+        )
+
+        $Text = [regex]::Replace(
+            $Text,
+            '(?i)([?&](?:auth|authinfo|password|passwd|token|secret|apikey|api_key)=)[^&\s"''<>]+',
+            '$1[REDACTED]'
+        )
+
+        $Text = [regex]::Replace(
+            $Text,
+            '(?i)(\b(?:Bearer|Basic)\s+)[A-Za-z0-9+/_.=-]{12,}',
+            '$1[REDACTED]'
+        )
+
+        return $Text
+    }
+
+    $utf8 = [System.Text.UTF8Encoding]::new($true)
+    $writer = [System.IO.StreamWriter]::new($report, $false, $utf8)
+
+    try {
+        $writer.WriteLine('LOCAL WILDCARD DIAGNOSTIC')
+        $writer.WriteLine('Created: ' + (Get-Date -Format 'yyyy-MM-dd HH:mm:ss zzz'))
+        $writer.WriteLine('Root: ' + $root)
+        $writer.WriteLine('PowerShell: ' + $PSVersionTable.PSVersion.ToString())
+        $writer.WriteLine('TASK: Fix wildcard issuance/attachment only.')
+        $writer.WriteLine('PRESERVE: sequential queue, aliases, UI, settings, DB.')
+        $writer.WriteLine('Settings, databases, logs and build directories excluded.')
+        $writer.WriteLine('Secret masking is best-effort. Review before sharing.')
+
+        $writer.WriteLine("`r`n===== DOTNET SDKS =====")
+        if (Get-Command dotnet -ErrorAction SilentlyContinue) {
+            try {
+                $sdkInfo = (& dotnet --list-sdks 2>&1 | Out-String)
+                $writer.WriteLine($sdkInfo)
+            }
+            catch {
+                $writer.WriteLine($_.Exception.Message)
+            }
+        }
+        else {
+            $writer.WriteLine('dotnet not found in PATH')
+        }
+
+        $writer.WriteLine("`r`n===== FILE INVENTORY =====")
+
+        foreach ($file in ($files | Sort-Object FullName)) {
+            $relative = $file.FullName.Substring($root.Length).TrimStart([char]92)
+
+            # Строка собирается отдельно, без неоднозначного -f в WriteLine.
+            $line = $relative +
+                ' | ' + $file.Length.ToString() +
+                ' bytes | modified ' +
+                $file.LastWriteTime.ToString('yyyy-MM-dd HH:mm:ss')
+
+            $writer.WriteLine($line)
+        }
+
+        $writer.WriteLine("`r`n===== SOURCE CONTENTS =====")
+
+        $totalBytes = 0L
+        $maxFileBytes = 2MB
+        $maxTotalBytes = 20MB
+
+        $sources = @(
+            $files |
+                Where-Object {
+                    $extensions -contains $_.Extension -and
+                    $_.Name -notmatch '(?i)(AssemblyInfo\.cs$|\.g\.cs$|\.g\.i\.cs$)'
+                } |
+                Sort-Object LastWriteTime -Descending
+        )
+
+        foreach ($file in $sources) {
+            $relative = $file.FullName.Substring($root.Length).TrimStart([char]92)
+
+            $writer.WriteLine("`r`n----------------------------------------")
+            $writer.WriteLine('FILE: ' + $relative)
+
+            if (
+                $file.Length -gt $maxFileBytes -or
+                ($totalBytes + $file.Length) -gt $maxTotalBytes
+            ) {
+                $writer.WriteLine('[CONTENT OMITTED: size limit]')
+                continue
+            }
+
+            try {
+                $hash = (Get-FileHash -LiteralPath $file.FullName -Algorithm SHA256).Hash
+                $text = [IO.File]::ReadAllText($file.FullName)
+                $maskedText = Hide-CommonSecrets -Text $text
+
+                $writer.WriteLine('SHA256 of original: ' + $hash)
+                $writer.WriteLine('BEGIN SOURCE')
+                $writer.WriteLine($maskedText)
+                $writer.WriteLine('END SOURCE')
+
+                $totalBytes += $file.Length
+            }
+            catch {
+                $writer.WriteLine('[READ ERROR] ' + $_.Exception.Message)
+            }
+        }
+
+        $writer.WriteLine("`r`n===== SCAN ERRORS =====")
+        if ($scanErrors.Count -eq 0) {
+            $writer.WriteLine('None')
+        }
+        else {
+            foreach ($message in $scanErrors) {
+                $writer.WriteLine($message)
+            }
+        }
+
+        $writer.WriteLine("`r`n===== REPORT COMPLETE =====")
+    }
+    finally {
+        $writer.Dispose()
+    }
+
+    Write-Host "`nОтчёт создан:" -ForegroundColor Green
+    Write-Host $report
+    Write-Host 'Исходники, настройки и БД не изменялись.'
+    Write-Host 'Перед отправкой проверьте файл на пароли и ключи.' -ForegroundColor Yellow
+
+    Invoke-Item -LiteralPath $report
+}
+
+Пришлите новый .txt сюда. Автоматическая маскировка секретов не гарантирует обнаружение всех паролей, поэтому перед отправкой проверьте содержимое.
+
+Дальше работаем только над Wildcard-сертификатами; рабочую поочерёдную обработку выбранных сайтов и добавление псевдонимов сохраняем.
+
+это ты просил ранее
+https://github.com/raliya/346Jvfch75v6f634vf765/blob/main/www-root%20out%3Dxml%20lang%3Den.txt
+
+файл вот: https://github.com/raliya/346Jvfch75v6f634vf765/blob/main/Wildcard-Diagnostic-20260912-185031-800.txt
+GPT-6 Astra
+GPT-6 Astra
+Навык активирован: page_content
+get_page_content
+Содержимое страницы
+get_page_content
+Содержимое страницы
+Да, это те файлы. Оба открыл, отчёт завершён без ошибок сканирования. Повторно собирать весь проект не нужно.
+
+Что обнаружено
+В Services\DeploymentSchemaFix.cs, в методе RequestCertificate, сейчас реализована отправка заявки, но не полный цикл проверки и подключения Wildcard:
+
+Локальный файл submitted прекращает дальнейшую обработку сертификата.
+Программа возвращает «запрос ранее отправлен», не проверяя текущее состояние в ISPmanager. Сертификат к этому моменту мог выпуститься, завершиться ошибкой или остаться в ожидании TXT.
+
+Имя сертификата жёстко задано как домен_le1.
+В вашем XML есть реальные сертификаты с суффиксом _le2. Например, у casino71.cfd:
+
+_le1 — самоподписанный, неактивный;
+_le2 — ssl_existing, Let’s Encrypt, привязан к сайту.
+Поэтому выбирать сертификат только по предполагаемому имени нельзя.
+
+После отправки заявки нет проверки назначения сертификата сайту.
+Передаётся enable_cert=on, но код не перечитывает webdomain.edit и не проверяет secure / ssl_cert. Сам этот параметр ещё не доказывает успешное подключение.
+
+Общая очередь не вызывает синхронизацию ACME TXT.
+В MainWindow.SelectedJobsFix.cs вызывается TestSpaceshipAsync, который только читает DNS-зону. Отдельный модуль MainWindow.Build10.cs существует, но в общий процесс не включён.
+
+Кроме того, в Build10VerifyAcmeRecords проверки фактически отключены: вместо обработки несовпадений стоят комментарии. Поэтому сообщение этого модуля «TXT проверены» сейчас ненадёжно.
+
+Это подтверждённые недостатки кода. Какой именно из них остановил конкретный домен, без его текущего состояния утверждать нельзя.
+
+Что показывает XML панели
+В нём действительно различаются:
+
+выпущенные и назначенные сертификаты;
+самоподписанные сертификаты;
+неудачный выпуск — letsencrypt_failed;
+ожидание проверки / TXT — letsencrypt_verifying, letsencrypt_txt.
+То есть проверять нужно состояние панели, покрытие домена и фактическую привязку, а не только локальный .state.
+
+Один недостающий фрагмент для точной правки
+Список sslcert показывает идентификаторы сертификатов, но не показывает, какие значения принимает поле ssl_cert в форме сайта под вашей административной учётной записью. Угадывать это значение при изменении HTTPS не буду.
+
+Выполните в SSH-консоли сервера, не в PowerShell:
+
+/usr/local/mgr5/sbin/mgrctl -m ispmgr \
+  webdomain.edit elid=casino9200.cfd out=devel lang=en |
+python3 -c '
+import sys
+import xml.etree.ElementTree as ET
+
+root = ET.parse(sys.stdin).getroot()
+if root.tag != "doc" or root.find(".//error") is not None:
+    sys.exit("Панель не вернула ожидаемую форму сайта; сохранение не выполнялось.")
+
+result = ET.Element("site_ssl_diagnostic")
+for node in root:
+    if node.tag in ("name", "owner", "aliases", "secure", "ssl_cert"):
+        result.append(node)
+    elif node.tag == "slist" and node.get("name") == "ssl_cert":
+        result.append(node)
+
+ET.indent(result, space="  ")
+print(ET.tostring(result, encoding="unicode"))
+'
+
+Здесь выбран сайт, для которого в присланном списке уже есть активный _le2. Команда читает форму без sok=ok, ничего не сохраняет и выводит только поля сайта и варианты выбора сертификата. Нужен установленный python3.
+
+Пришлите этот короткий вывод. Он нужен для правки назначения сертификата без предположений о формате API. Рабочую последовательную очередь, добавление псевдонимов и код БД менять для этого не требуется.
+
+И отдельно: не удаляйте пока файлы .state — это может разрешить повторную отправку уже существующих заявок.
+
+-bash: webdomain.edit: command not found
+Traceback (most recent call last):
+File "<string>", line 9, in <module>
+File "/usr/lib64/python3.6/xml/etree/ElementTree.py", line 1196, in parse
+tree.parse(source, parser)
+File "/usr/lib64/python3.6/xml/etree/ElementTree.py", line 597, in parse
+self._root = parser._parse_whole(source)
+xml.etree.ElementTree.ParseError: no element found: line 1, column 0
+[root@mail ~]#
+GPT-6 Astra
+GPT-6 Astra
+Ошибка указывает, что webdomain.edit выполнилась как отдельная команда, а не как аргумент mgrctl. Вероятно, при вставке потерялся перенос с \. Затем Python получил пустой ввод — отсюда ошибка XML.
+
+Ещё моя недоработка: в предыдущем варианте был ET.indent, которого нет в вашей версии Python 3.6.
+
+Вставьте следующую команду целиком одной строкой в SSH:
+
+/usr/local/mgr5/sbin/mgrctl -m ispmgr webdomain.edit elid=casino9200.cfd out=devel lang=en | python3 -c 'import sys, xml.etree.ElementTree as ET; data=sys.stdin.read(); data.strip() or sys.exit("Пустой ответ mgrctl — пришлите ошибку выше."); root=ET.fromstring(data); (root.tag=="doc" and root.find(".//error") is None) or sys.exit("Панель вернула ошибку или неожиданный XML; сохранение не выполнялось."); print("<site_ssl_diagnostic>"); [print(ET.tostring(n, encoding="unicode")) for n in root if n.tag in ("name","owner","aliases","secure","ssl_cert") or (n.tag=="slist" and n.get("name")=="ssl_cert")]; print("</site_ssl_diagnostic>")'
+
+Команда только читает форму сайта, ничего не сохраняет. Она совместима с Python 3.6 и выводит только выбранные поля, относящиеся к сайту и сертификату.
+
+Пришлите полученный вывод. Если снова будет ошибка — пришлите её целиком, включая строки перед Traceback.
+
+-bash: webdomain.edit: command not found
+Traceback (most recent call last):
+File "<string>", line 9, in <module>
+File "/usr/lib64/python3.6/xml/etree/ElementTree.py", line 1196, in parse
+tree.parse(source, parser)
+File "/usr/lib64/python3.6/xml/etree/ElementTree.py", line 597, in parse
+self._root = parser._parse_whole(source)
+xml.etree.ElementTree.ParseError: no element found: line 1, column 0
+[root@mail ~]# /...
+Развернуть
+GPT-6 Astra
+GPT-6 Astra
+Навык активирован: page_content
+get_page_content
+Содержимое страницы
+get_page_content
+Содержимое страницы
+Размышление
+
+
+
+
+
+
+
+
+
+Теперь команда отработала успешно. Ошибки в начале сообщения относятся к предыдущему запуску; новый вывод XML получен корректно.
+
+Что подтверждено для casino9200.cfd
+Проверка	Результат
+Владелец	www-root
+HTTPS в настройках сайта	Включён — secure=on
+Выбранный сертификат	casino9200.cfd_le2
+Домены в описании сертификата	casino9200.cfd и *.casino9200.cfd
+Псевдонимы сайта	*.casino9200.cfd и www.casino9200.cfd
+Привязка Wildcard в панели уже есть. Для этого сайта повторно запрашивать или назначать сертификат не нужно. Это подтверждение конфигурации ISPmanager, но ещё не проверка сертификата, который фактически отдаётся посетителям по HTTPS.
+
+Также теперь известен формат поля: в этой форме ssl_cert принимает ключ casino9200.cfd_le2, без добавления владельца. Для остальных сайтов ключ нужно получать из их форм, а не заменять _le1 на _le2 по шаблону.
+
+Что ещё нужно для полного исправления
+Я сверил исходники из отчёта. Проверять состояние панели действительно нужно до проверки локального .state — иначе программа не замечает уже подключённый сертификат.
+
+Но уточню моё прежнее обещание: этот XML закрывает вопрос привязки, а для надёжной автоматизации DNS-01 данных пока недостаточно. Старый модуль ищет любые 43-символьные строки во всём XML и считает их TXT. Переносить такой парсер в общую очередь нельзя: нужно увидеть структуру реальной формы с заданиями DNS-01.
+
+В ранее присланном списке pin-up-casino7.click находился в ожидании TXT. Получим только его текущую форму, без запуска нового выпуска.
+
+Вставьте блок целиком в SSH-консоль. Он совместим с Python 3.6, не использует переносы Bash через \ и скрывает 43-символьные значения в выводе:
+
+python3 - <<'PY'
+import re
+import subprocess
+import sys
+import xml.etree.ElementTree as ET
+
+args = [
+    "/usr/local/mgr5/sbin/mgrctl",
+    "-m", "ispmgr",
+    "webdomain.letsencrypt.txt",
+    "elid=pin-up-casino7.click",
+    "out=devel",
+    "lang=en"
+]
+
+try:
+    result = subprocess.run(
+        args,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        universal_newlines=True,
+        timeout=90
+    )
+except (OSError, subprocess.TimeoutExpired) as exc:
+    sys.exit("Не удалось прочитать форму: " + str(exc))
+
+if not result.stdout.strip():
+    sys.exit(
+        "mgrctl не вернул XML. Код завершения: " +
+        str(result.returncode)
+    )
+
+try:
+    root = ET.fromstring(result.stdout)
+except ET.ParseError:
+    sys.exit("Ответ mgrctl не является корректным XML.")
+
+error = root.find(".//error")
+if error is not None:
+    sys.exit(
+        "Ошибка панели: type=" + error.get("type", "") +
+        "; object=" + error.get("object", "") +
+        "; code=" + error.get("code", "")
+    )
+
+if result.returncode != 0 or root.tag != "doc":
+    sys.exit("Неожиданный ответ панели; диагностика остановлена.")
+
+# Убираем служебные параметры и возможные поля авторизации.
+root.attrib.clear()
+hidden = {
+    "tparams", "auth", "authinfo", "password",
+    "passwd", "session", "sessionid"
+}
+for parent in list(root.iter()):
+    for child in list(parent):
+        if child.tag.lower() in hidden:
+            parent.remove(child)
+
+text = ET.tostring(root, encoding="unicode")
+masked = {}
+
+def mask(match):
+    value = match.group(0)
+    if value not in masked:
+        masked[value] = "MASKED_VALUE_" + str(len(masked) + 1)
+    return masked[value]
+
+text = re.sub(
+    r"(?<![A-Za-z0-9_-])[A-Za-z0-9_-]{43}(?![A-Za-z0-9_-])",
+    mask,
+    text
+)
+print(text)
+PY
+
+Это чтение формы без sok=ok: команда не отправляет заявку на выпуск и не меняет DNS. Пришлите вывод 
