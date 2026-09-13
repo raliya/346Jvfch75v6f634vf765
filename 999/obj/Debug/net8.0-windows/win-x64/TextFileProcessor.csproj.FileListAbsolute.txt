@@ -1,0 +1,10 @@
+C:\Users\User\Desktop\Wildcard-ISPmanager-FINAL-20260913-154853-b02900\source\obj\Debug\net8.0-windows\win-x64\TextFileProcessor.csproj.AssemblyReference.cache
+C:\Users\User\Desktop\Wildcard-ISPmanager-FINAL-20260913-154853-b02900\source\obj\Debug\net8.0-windows\win-x64\MainWindow.baml
+C:\Users\User\Desktop\Wildcard-ISPmanager-FINAL-20260913-154853-b02900\source\obj\Debug\net8.0-windows\win-x64\MainWindow.g.cs
+C:\Users\User\Desktop\Wildcard-ISPmanager-FINAL-20260913-154853-b02900\source\obj\Debug\net8.0-windows\win-x64\App.g.cs
+C:\Users\User\Desktop\Wildcard-ISPmanager-FINAL-20260913-154853-b02900\source\obj\Debug\net8.0-windows\win-x64\TextFileProcessor_MarkupCompile.cache
+C:\Users\User\Desktop\Wildcard-ISPmanager-FINAL-20260913-154853-b02900\source\obj\Debug\net8.0-windows\win-x64\TextFileProcessor.g.resources
+C:\Users\User\Desktop\Wildcard-ISPmanager-FINAL-20260913-154853-b02900\source\obj\Debug\net8.0-windows\win-x64\TextFileProcessor.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\User\Desktop\Wildcard-ISPmanager-FINAL-20260913-154853-b02900\source\obj\Debug\net8.0-windows\win-x64\TextFileProcessor.AssemblyInfoInputs.cache
+C:\Users\User\Desktop\Wildcard-ISPmanager-FINAL-20260913-154853-b02900\source\obj\Debug\net8.0-windows\win-x64\TextFileProcessor.AssemblyInfo.cs
+C:\Users\User\Desktop\Wildcard-ISPmanager-FINAL-20260913-154853-b02900\source\obj\Debug\net8.0-windows\win-x64\TextFileProcessor.csproj.CoreCompileInputs.cache
