@@ -1,0 +1,3048 @@
+
+GPT-6 Astra
+Навык активирован: web_search
+get_serp
+Поисковая выдача
+Результаты (9)
+Отчёт открыл. Нужный код найден: Services\DeploymentSchemaFix.WildcardOnly.cs. Искать и присылать исходники ещё раз не нужно.
+
+Теперь видно, что проблема не в вашей настройке www-root. В текущем коде даже есть проверка совпадения владельца перед отправкой. Мои прежние объяснения про его подмену были неверными.
+
+Что обнаружено в коде
+1. Программа сама выбирает имя сертификата и игнорирует предложенное панелью.
+
+В строках 179–198 она перебирает:
+
+casino723.cfd_le1
+casino723.cfd_le2
+casino723.cfd_le3
+
+Первое имя, которого нет в полученном списке, считается свободным. Однако отсутствие имени в этом списке не гарантирует, что сервер разрешит его использовать.
+
+Далее программа получает форму, но не использует возвращённый crtname. В отправку уходит самостоятельно выбранное имя. В вашей диагностике панель предложила casino723.cfd_le2. Если программа получила такой же список без совпадений, она выбрала бы casino723.cfd_le1. Это уже конкретное расхождение, а не предположение о владельце.
+
+2. После ошибки остаётся блокировка повторной попытки.
+
+В строках 288–301, непосредственно перед отправкой, записывается файл:
+
+outcome-unknown
+имя_отправленного_сертификата
+
+При ответе exists/crtname этот файл не обновляется. Следующий запуск останавливается только из-за его наличия — строки 157–163. Поэтому одной замены алгоритма выбора имени недостаточно: старая попытка останется заблокированной.
+
+Получим точное имя из уже сохранённой попытки
+Новый выпуск для этого не нужен. Вставьте в Windows PowerShell этот короткий блок. Он прочитает только маркеры попыток для casino723.cfd, ничего не изменит и не обратится к серверу. Переменных со знаком доллара здесь нет.
+
+& {
+ Write-Host 'Сохранённые попытки для casino723.cfd:' -ForegroundColor Cyan
+
+ Get-ChildItem -LiteralPath (
+ [System.IO.Path]::Combine(
+ [Environment]::GetFolderPath(
+ [Environment+SpecialFolder]::LocalApplicationData
+ ),
+ 'TextFileProcessor',
+ 'deployment-certificate-requests'
+ )
+ ) -File -Filter '*.wc2-attempt' -ErrorAction Stop |
+ Select-String -Pattern '^casino723\.cfd_le[0-9]+$' -Context 1,0 |
+ ForEach-Object -MemberName ToString |
+ Out-Host
+
+ Write-Host ''
+ Write-Host 'Чтение завершено. Если совпадений выше нет — сообщите об этом.'
+ Write-Host 'Маркеры не изменялись. Заявки не отправлялись.'
+}
+
+Пришлите вывод этого блока. Это позволит сопоставить имя сохранённой попытки с вашим отказом exists/crtname, прежде чем разрешать повтор. Удалять все маркеры или просто начинать новый перебор имён нельзя считать исправлением: среди других попыток могут быть принятые сервером заявки.
+
+Направление исправления теперь определено: учитывать имя из формы, раздельно сохранять явный отказ API и неизвестный исход при обрыве связи, не повторять отправку автоматически. Но проверенной рабочей сборкой это пока не является — я не буду снова утверждать обратное.
+
+Сохранённые попытки для casino723.cfd:
+C:\Users\User\AppData\Local\TextFileProcessor\deployment-certificate-requests\DCD5D8482BC66C2E42854F7C507A55A34723B371D7C98402B84984D407E6E037.wc2-attempt:1:outcome-unknown
+> C:\Users\User\AppData\Local\TextFileProcessor\deployment-certificate-requests\DCD5D8482BC66C2E42854F7C507A55A34723B371D7C98402B84984D407E6E037.wc2-attempt:2:casino723.cfd_le1
+
+Чтение завершено. Если совпадений выше нет — сообщите об этом.
+Маркеры не изменялись. Заявки не отправлялись.
+PS C:\Users\User\Desktop\Wildcard-FormFixV2-20260913-123431-3573e4>
+
+В предыдущем чате https://github.com/raliya/346Jvfch75v6f634vf765/blob/main/%D1%87%D0%B0%D1%82%2013.09%20%D0%B2%2012.54.txt
+GPT-6 Astra
+GPT-6 Astra
+Навык активирован: page_content
+get_page_content
+Содержимое страницы
+get_page_content
+Содержимое страницы
+get_page_content
+Содержимое страницы
+Размышление
+
+
+
+
+Прочитал предыдущий чат и отчёт с исходниками. Повторно собирать диагностику не нужно.
+
+Теперь подтверждено: в маркере сохранено casino723.cfd_le1, тогда как при последующей проверке форма панели предложила casino723.cfd_le2. Программа действительно не использует предложенное имя. Это расхождение нужно исправить, но само по себе оно ещё не доказывает всю причину серверного конфликта.
+
+Ниже — один PowerShell-блок для вашей текущей версии. Он:
+
+создаёт отдельную копию проекта;
+убирает перебор _le1, _le2 и получает crtname из формы;
+сохраняет явный состав сертификата: основной домен и *.домен;
+различает полученную ошибку API и неизвестный результат сетевого запроса;
+сохраняет существующие создание сайта, обработку TXT и проверку TLS;
+собирает EXE, но не запускает выпуск;
+после сборки предлагает отдельно архивировать только найденный маркер casino723.cfd, с вашим подтверждением. Остальные маркеры не трогает.
+Это исправление исходников, а не испытанная на вашей панели сборка. Здесь я не могу запустить Windows-компилятор или проверить реальный выпуск — сборка выполнится на вашем компьютере.
+
+Закройте TextFileProcessor и вставьте весь блок в Windows PowerShell
+& {
+    $ErrorActionPreference = 'Stop'
+
+    function Replace-One {
+        param(
+            [string]$Text,
+            [string]$Pattern,
+            [string]$Replacement
+        )
+
+        $rx = [regex]::new($Pattern)
+        $hits = $rx.Matches($Text)
+
+        if ($hits.Count -ne 1) {
+            throw (
+                'Структура исходника отличается от ожидаемой. ' +
+                'Количество совпадений: ' + $hits.Count +
+                '. Автоматическая правка остановлена.'
+            )
+        }
+
+        $hit = $hits[0]
+
+        return (
+            $Text.Substring(0, $hit.Index) +
+            $Replacement +
+            $Text.Substring($hit.Index + $hit.Length)
+        )
+    }
+
+    try {
+        if (Get-Process -Name TextFileProcessor -ErrorAction SilentlyContinue) {
+            throw 'Сначала закройте все окна TextFileProcessor.'
+        }
+
+        if (-not (Get-Command dotnet -ErrorAction SilentlyContinue)) {
+            throw 'Не найден .NET SDK: команда dotnet недоступна.'
+        }
+
+        if (-not (Get-Command robocopy.exe -ErrorAction SilentlyContinue)) {
+            throw 'Не найдена robocopy.exe.'
+        }
+
+        $source = 'C:\Users\User\Desktop\Wildcard-FormFixV2-20260913-123431-3573e4\source'
+
+        $required = @(
+            'TextFileProcessor.csproj'
+            'App.xaml'
+            'MainWindow.xaml'
+            'app.manifest'
+            'Services\DeploymentSchemaFix.cs'
+            'Services\DeploymentSchemaFix.WildcardOnly.cs'
+            'Services\IspmanagerAutomationService.cs'
+        )
+
+        foreach ($relative in $required) {
+            $path = Join-Path $source $relative
+
+            if (-not (Test-Path -LiteralPath $path -PathType Leaf)) {
+                throw ('Не найден файл: ' + $path)
+            }
+        }
+
+        $wildcardPath = Join-Path $source 'Services\DeploymentSchemaFix.WildcardOnly.cs'
+        $apiPath = Join-Path $source 'Services\DeploymentSchemaFix.cs'
+
+        $wildcard = [IO.File]::ReadAllText($wildcardPath)
+        $apiCode = [IO.File]::ReadAllText($apiPath)
+
+        if (-not $wildcard.Contains('STAGE1_WILDCARD_FORM_FIX_V2')) {
+            throw 'Это не изученная версия FormFixV2. Оригинал не изменён.'
+        }
+
+        if ($wildcard.Contains('WC3_PANEL_CERTIFICATE_NAME')) {
+            throw 'Исправление WC3 уже присутствует.'
+        }
+
+        # Заменяем только выбор имени и подготовку параметров.
+        # Запись намерения перед отправкой остаётся на прежнем месте.
+        $preparePattern = '(?ms)^[ \t]*var names = certificates\r?\n.*?^[ \t]*ct\.ThrowIfCancellationRequested%%MATH_INLINE_0%%;[ \t]*\r?$'
+
+        $apiReplacement = @'
+                var apiException = new InvalidOperationException(message);
+
+                if (error is not null &&
+                    result.Document?.Root?.Name.LocalName == "doc")
+                {
+                    apiException.Data["WC3.ApiError"] = true;
+                    apiException.Data["WC3.Function"] = function;
+                    apiException.Data["WC3.Type"] = type;
+                    apiException.Data["WC3.Field"] = field;
+                }
+
+                throw apiException;
+'@
+
+        $patchedApi = Replace-One `
+            -Text $apiCode `
+            -Pattern $apiPattern `
+            -Replacement $apiReplacement
+
+        # Единственный вызов сохранения заявки: автоматических повторов нет.
+        $sendPattern = '(?m)^[ \t]*await api\.Call%%MATH_INLINE_1%%;[ \t]*\r?$'
+
+        $sendReplacement = @'
+                phase = "отправка заявки Wildcard; crtname=" + certificateName;
+
+                try
+                {
+                    await api.Call("letsencrypt.generate", fields, ct);
+                }
+                catch (InvalidOperationException ex) when (
+                    ex.Data["WC3.ApiError"] is bool received && received &&
+                    string.Equals(
+                        ex.Data["WC3.Function"] as string,
+                        "letsencrypt.generate",
+                        StringComparison.Ordinal))
+                {
+                    var conflict =
+                        string.Equals(
+                            ex.Data["WC3.Type"] as string,
+                            "exists",
+                            StringComparison.Ordinal) &&
+                        string.Equals(
+                            ex.Data["WC3.Field"] as string,
+                            "crtname",
+                            StringComparison.Ordinal);
+
+                    // Ошибка API не доказывает отсутствие частичных
+                    // изменений на сервере. Маркер остаётся блокирующим.
+                    var status = conflict
+                        ? "api-error-exists-crtname"
+                        : "api-error";
+
+                    try
+                    {
+                        Wc3SaveAttempt(
+                            attemptFile, status + "\n" + certificateName);
+                    }
+                    catch (Exception saveError) when (
+                        saveError is IOException ||
+                        saveError is UnauthorizedAccessException)
+                    {
+                        // Если запись не удалась, прежний outcome-unknown
+                        // остаётся защитой от повторной отправки.
+                    }
+
+                    throw;
+                }
+
+                // Ответ без ошибки ещё не означает готовый сертификат.
+                // Ниже продолжается прежнее ожидание выпуска и TLS-проверка.
+                Wc3SaveAttempt(
+                    attemptFile, "submitted\n" + certificateName);
+'@
+
+        $patchedWildcard = Replace-One `
+            -Text $patchedWildcard `
+            -Pattern $sendPattern `
+            -Replacement $sendReplacement
+
+        # Уточняем этап блокировки, не снимая саму защиту.
+        $markerPattern = '(?m)^[ \t]*if %%MATH_INLINE_2%%\)[ \t]*\r?$'
+
+        $markerReplacement = @'
+                phase = "проверка маркера предыдущей заявки";
+                if (File.Exists(attemptFile))
+'@
+
+        $patchedWildcard = Replace-One `
+            -Text $patchedWildcard `
+            -Pattern $markerPattern `
+            -Replacement $markerReplacement
+
+        $helperCode = @'
+using System;
+using System.IO;
+using System.Text;
+
+namespace TextFileProcessor.Services;
+
+internal static partial class DeploymentSchemaFix
+{
+    // Запись через временный файл в том же каталоге.
+    // При сбое до замены старый блокирующий маркер сохраняется.
+    private static void Wc3SaveAttempt(string path, string text)
+    {
+        var temporary = path + "." + Guid.NewGuid().ToString("N") + ".tmp";
+
+        try
+        {
+            using (var stream = new FileStream(
+                temporary,
+                FileMode.CreateNew,
+                FileAccess.Write,
+                FileShare.None))
+            {
+                var bytes = Encoding.UTF8.GetBytes(text);
+                stream.Write(bytes, 0, bytes.Length);
+                stream.Flush(true);
+            }
+
+            File.Move(temporary, path, true);
+        }
+        finally
+        {
+            try
+            {
+                if (File.Exists(temporary))
+                    File.Delete(temporary);
+            }
+            catch (IOException)
+            {
+            }
+            catch (UnauthorizedAccessException)
+            {
+            }
+        }
+    }
+}
+'@
+
+        $desktop = [Environment]::GetFolderPath('Desktop')
+        $stamp = Get-Date -Format 'yyyyMMdd-HHmmss'
+        $suffix = [Guid]::NewGuid().ToString('N').Substring(0, 6)
+        $work = Join-Path $desktop ('Wildcard-PanelName-' + $stamp + '-' + $suffix)
+        $copy = Join-Path $work 'source'
+        $output = Join-Path $work 'program'
+        $backup = Join-Path $work 'before-patch'
+        $log = Join-Path $work 'build.log'
+
+        New-Item -ItemType Directory -Path $copy -Force | Out-Null
+        New-Item -ItemType Directory -Path $backup -Force | Out-Null
+
+        Write-Host 'Создаю отдельную копию проекта...' -ForegroundColor Cyan
+
+        & robocopy.exe $source $copy /E /XJ /R:1 /W:1 `
+            /XD bin obj .git .vs `
+            /XF *.user *.suo `
+            /NFL /NDL /NJH /NJS /NP | Out-Null
+
+        if ($LASTEXITCODE -ge 8) {
+            throw 'Ошибка копирования проекта.'
+        }
+
+        Copy-Item -LiteralPath $wildcardPath -Destination $backup
+        Copy-Item -LiteralPath $apiPath -Destination $backup
+
+        $utf8 = [Text.UTF8Encoding]::new($false)
+
+        [IO.File]::WriteAllText(
+            (Join-Path $copy 'Services\DeploymentSchemaFix.WildcardOnly.cs'),
+            $patchedWildcard,
+            $utf8
+        )
+
+        [IO.File]::WriteAllText(
+            (Join-Path $copy 'Services\DeploymentSchemaFix.cs'),
+            $patchedApi,
+            $utf8
+        )
+
+        $helperPath = Join-Path $copy 'Services\DeploymentSchemaFix.Wc3State.cs'
+
+        if (Test-Path -LiteralPath $helperPath) {
+            throw 'В копии уже существует Wc3State.cs. Сборка остановлена.'
+        }
+
+        [IO.File]::WriteAllText($helperPath, $helperCode, $utf8)
+
+        $project = Join-Path $copy 'TextFileProcessor.csproj'
+
+        Write-Host ''
+        Write-Host 'Собираю программу из исправленных исходников...' -ForegroundColor Cyan
+
+        & dotnet publish $project `
+            --configuration Release `
+            --runtime win-x64 `
+            --self-contained true `
+            --output $output `
+            --nologo `
+            '-p:Version=1.0.3' `
+            '-p:InformationalVersion=Wildcard-PanelName-WC3' `
+            '-p:UseSharedCompilation=false' `
+            2>&1 | Tee-Object -FilePath $log
+
+        if ($LASTEXITCODE -ne 0) {
+            throw ('Сборка не прошла. Журнал: ' + $log)
+        }
+
+        $exe = Join-Path $output 'TextFileProcessor.exe'
+
+        if (-not (Test-Path -LiteralPath $exe -PathType Leaf)) {
+            throw 'После сборки EXE не найден.'
+        }
+
+        $hash = (Get-FileHash -LiteralPath $exe -Algorithm SHA256).Hash
+
+        @(
+            'Patch: Wildcard-PanelName-WC3'
+            ('Original: ' + $source)
+            ('Executable: ' + $exe)
+            ('SHA256: ' + $hash)
+            'Server issuance: not tested by build script'
+        ) | Set-Content -LiteralPath (Join-Path $work 'BUILD-INFO.txt') -Encoding UTF8
+
+        Write-Host ''
+        Write-Host 'СБОРКА ЗАВЕРШЕНА.' -ForegroundColor Green
+        Write-Host $exe
+        Write-Host 'Оригинальный проект сохранён. Программа не запускалась.'
+
+        # Отдельное, добровольное восстановление только известной попытки.
+        # Никакого массового удаления и смены ключа состояния программы.
+        $stateDir = Join-Path (
+            [Environment]::GetFolderPath('LocalApplicationData')
+        ) 'TextFileProcessor\deployment-certificate-requests'
+
+        $knownKey = 'DCD5D8482BC66C2E42854F7C507A55A34723B371D7C98402B84984D407E6E037'
+        $marker = Join-Path $stateDir ($knownKey + '.wc2-attempt')
+        $lockPath = Join-Path $stateDir ($knownKey + '.wc2-lock')
+        $oldState = Join-Path $stateDir ($knownKey + '.state')
+
+        if (Test-Path -LiteralPath $marker -PathType Leaf) {
+            Write-Host ''
+            Write-Host 'Найден прежний маркер casino723.cfd.' -ForegroundColor Yellow
+            Write-Host 'Без его отдельного разрешения новая версия сохранит блокировку.'
+            Write-Host ''
+            Write-Host 'Архивирование разрешает НОВУЮ заявку при следующем запуске.'
+            Write-Host 'Оно не отменяет и не удаляет ничего на сервере.'
+            Write-Host 'Подтверждайте только после проверки в панели, что нет'
+            Write-Host 'выпускающегося сертификата или заявки, которую нужно продолжить.'
+            Write-Host 'При сомнениях нажмите Enter: маркер останется на месте.'
+            Write-Host ''
+
+            $answer = Read-Host 'Для разрешения введите точно: ПОВТОР casino723.cfd'
+
+            if ($answer -ceq 'ПОВТОР casino723.cfd') {
+                if (Get-Process -Name TextFileProcessor -ErrorAction SilentlyContinue) {
+                    throw 'Программа запущена. Маркер не архивирован.'
+                }
+
+                $gate = [IO.File]::Open(
+                    $lockPath,
+                    [IO.FileMode]::OpenOrCreate,
+                    [IO.FileAccess]::ReadWrite,
+                    [IO.FileShare]::None
+                )
+
+                try {
+                    $actual = [IO.File]::ReadAllText($marker).
+                        Replace("`r`n", "`n").Trim()
+
+                    $expected = "outcome-unknown`ncasino723.cfd_le1"
+
+                    if ($actual -cne $expected) {
+                        throw 'Содержимое маркера изменилось. Архивирование отменено.'
+                    }
+
+                    if (Test-Path -LiteralPath $oldState -PathType Leaf) {
+                        $legacy = [IO.File]::ReadAllText($oldState).Trim()
+
+                        if ($legacy.Length -gt 0 -and $legacy -cne 'submitted') {
+                            throw 'Есть дополнительное старое состояние с неизвестным исходом. Маркеры сохранены.'
+                        }
+                    }
+
+                    $archive = $marker + '.manual-retry-' +
+                        [Guid]::NewGuid().ToString('N') + '.bak'
+
+                    [IO.File]::Move($marker, $archive)
+
+                    Write-Host ''
+                    Write-Host 'Только указанный маркер архивирован с вашего подтверждения.' -ForegroundColor Green
+                    Write-Host $archive
+                    Write-Host 'Другие маркеры не изменены.'
+                }
+                finally {
+                    $gate.Dispose()
+                }
+            }
+            else {
+                Write-Host 'Маркер сохранён. Повторная заявка остаётся заблокированной.'
+            }
+        }
+
+        Write-Host ''
+        Write-Host 'Папка новой программы:'
+        Write-Host $output
+        Write-Host 'Этот скрипт не обращался к ISPmanager и не запускал выпуск.'
+
+        Start-Process explorer.exe -ArgumentList ('"' + $output + '"')
+    }
+    catch {
+        Write-Host ''
+        Write-Host ('ОСТАНОВЛЕНО: ' + $_.Exception.Message) -ForegroundColor Red
+        Write-Host 'Оригинальный проект не изменён.'
+        Write-Host 'При ошибке сборки не запускайте промежуточный EXE.'
+    }
+}
+
+После выполнения
+Если сборка прошла и вы осознанно разрешили повтор для casino723.cfd, запустите EXE из открывшейся папки и выберите только этот домен, только первый этап.
+
+Теперь при отказе сообщение покажет фактическое имя:
+
+отправка заявки Wildcard; crtname=имя_из_формы
+
+Успех — назначенный Wildcard и пройденная TLS-проверка. Если снова будет exists/crtname, не снимайте новый маркер: это будет означать, что использование имени из формы не устранило серверный конфликт; повторного перебора имён в этой версии нет.
+
+>>
+
+ОСТАНОВЛЕНО: The variable '$apiPattern' cannot be retrieved because it has not been set.
+Оригинальный проект не изменён.
+При ошибке сборки не запускайте промежуточный EXE.
+PS C:\Users\User\Desktop\Wildcard-FormFixV2-20260913-123431-3573e4>
+GPT-5.6 Sol
+GPT-5.6 Sol
+Размышление
+
+
+
+Понял. Выпуск не запускался, сервер и исходный проект не изменены. Ошибка возникла в моём PowerShell-блоке до копирования и сборки, а не в вашем проекте.
+
+В предыдущем блоке замените этот фрагмент:
+
+$patchedApi = Replace-One `
+    -Text $apiCode `
+    -Pattern $apiPattern `
+    -Replacement $apiReplacement
+
+на этот — шаблон передаётся непосредственно, без переменной $apiPattern:
+
+$patchedApi = Replace-One `
+    -Text $apiCode `
+    -Pattern '(?m)^[ \t]*throw new InvalidOperationException\(message\);[ \t]*\r?$' `
+    -Replacement $apiReplacement
+
+И удалите необязательную строку выше:
+
+$apiPattern = '(?m)^[ \t]*throw new InvalidOperationException%%MATH_INLINE_1%%;[ \t]*\r?$'
+
+После этого повторно выполните весь исправленный блок с самого начала. В конце не подтверждайте архивирование маркера, пока сначала не убедимся, что новая версия успешно собралась.
+
+Ожидаемый результат на этом этапе:
+
+СБОРКА ЗАВЕРШЕНА.
+...
+Оригинальный проект сохранён. Программа не запускалась.
+
+Если появится следующая ошибка, пришлите весь вывод начиная со строки:
+
+Создаю отдельную копию проекта...
+
+До успешной сборки EXE запускать не нужно.
+
+ОСТАНОВЛЕНО: The variable '$patchedWildcard' cannot be retrieved because it has not been set.
+Оригинальный проект не изменён.
+При ошибке сборки не запускайте промежуточный EXE.
+PS C:\Users\User\Desktop\Wildcard-FormFixV2-20260913-123431-3573e4>
+Пришли полный код!
+GPT-5.6 Sol
+GPT-5.6 Sol
+get_page_content
+Содержимое страницы
+Размышление
+
+
+Понял. Ниже полный самостоятельный PowerShell-блок, без переменных $apiPattern` и `$patchedWildcard, которые могли оказаться неопределёнными при частичном копировании.
+
+Он:
+
+автоматически находит текущую папку source;
+создаёт новую копию проекта;
+меняет только логику получения crtname;
+берёт имя сертификата из формы ISPmanager вместо локального перебора _le1, _le2;
+собирает новый EXE;
+не запускает программу и не отправляет заявку;
+после успешной сборки отдельно предлагает архивировать только известный маркер casino723.cfd;
+исходную папку не изменяет.
+Закройте TextFileProcessor. Если PowerShell показывает >>, сначала нажмите Ctrl+C. Затем вставьте весь блок целиком:
+
+& {
+    Set-StrictMode -Version Latest
+    $ErrorActionPreference = 'Stop'
+
+    function Replace-ExactlyOnce {
+        param(
+            [Parameter(Mandatory = $true)]
+            [string] $SourceText,
+
+            [Parameter(Mandatory = $true)]
+            [string] $Pattern,
+
+            [Parameter(Mandatory = $true)]
+            [string] $Replacement,
+
+            [Parameter(Mandatory = $true)]
+            [string] $Description
+        )
+
+        $regex = New-Object System.Text.RegularExpressions.Regex(
+            $Pattern,
+            [System.Text.RegularExpressions.RegexOptions]::Multiline `
+                -bor [System.Text.RegularExpressions.RegexOptions]::Singleline
+        )
+
+        $matches = $regex.Matches($SourceText)
+
+        if ($matches.Count -ne 1) {
+            throw (
+                'Не удалось однозначно найти участок: ' +
+                $Description +
+                '. Найдено совпадений: ' +
+                $matches.Count +
+                '. Никакие исходники не изменены.'
+            )
+        }
+
+        $match = $matches[0]
+
+        return (
+            $SourceText.Substring(0, $match.Index) +
+            $Replacement +
+            $SourceText.Substring($match.Index + $match.Length)
+        )
+    }
+
+    function Find-SourceDirectory {
+        param(
+            [Parameter(Mandatory = $true)]
+            [string] $StartDirectory
+        )
+
+        $candidates = New-Object System.Collections.Generic.List[string]
+
+        $direct = Join-Path $StartDirectory 'source'
+
+        if (Test-Path -LiteralPath $direct -PathType Container) {
+            $candidates.Add($direct)
+        }
+
+        if (
+            (Test-Path -LiteralPath (
+                Join-Path $StartDirectory 'TextFileProcessor.csproj'
+            ) -PathType Leaf) -and
+            (Test-Path -LiteralPath (
+                Join-Path $StartDirectory `
+                    'Services\DeploymentSchemaFix.WildcardOnly.cs'
+            ) -PathType Leaf)
+        ) {
+            $candidates.Add($StartDirectory)
+        }
+
+        $foundFiles = @(
+            Get-ChildItem `
+                -LiteralPath $StartDirectory `
+                -Recurse `
+                -File `
+                -Filter 'DeploymentSchemaFix.WildcardOnly.cs' `
+                -ErrorAction SilentlyContinue |
+            Where-Object {
+                $_.FullName -notmatch '\%%MATH_INLINE_0%%;[ \t]*\r?$'
+        )
+
+        $selectionReplacement = @'
+                // WC3_PANEL_CRTNAME
+                //
+                // Имя сертификата не подбирается локально. Форма
+                // ISPmanager сама возвращает crtname, допустимый в
+                // текущем контексте пользователя панели.
+                phase = "получение формы выпуска и имени сертификата";
+
+                var request = new Dictionary<string, string>
+                {
+                    ["out"] = "devel",
+                    ["lang"] = "en",
+                    ["username"] = owner,
+                    ["domain_name"] = domain,
+
+                    // Оставляем совместимый с текущей версией панели
+                    // параметр aliases и одновременно явно задаём
+                    // документированный состав сертификата.
+                    ["aliases"] = "*." + domain,
+                    ["domain"] = domain + " *." + domain,
+
+                    ["email"] = "webmaster@" + domain,
+                    ["from_webdomain"] = "on",
+                    ["wildcard"] = "on",
+                    ["dns_check"] = "on",
+                    ["enable_cert"] = "on"
+                };
+
+                // Важно: crtname намеренно не передаётся при первом
+                // обращении. Получаем предложенное панелью значение.
+                var form = await api.Call(
+                    "letsencrypt.generate", request, ct);
+
+                RequireForm(form, "letsencrypt.generate");
+                RequireControls(form, "crtname", "wildcard");
+
+                var fields = FormValues(form);
+                var certificateName = Value(form, "crtname").Trim();
+
+                if (certificateName.Length == 0)
+                {
+                    throw new InvalidOperationException(
+                        "ISPmanager не вернул имя сертификата crtname. " +
+                        "Заявка не отправлена.");
+                }
+
+                if (certificateName.Length > 240 ||
+                    certificateName.Contains("/") ||
+                    certificateName.Contains("\\") ||
+                    certificateName.Contains("\r") ||
+                    certificateName.Contains("\n") ||
+                    certificateName.Contains("\0"))
+                {
+                    throw new InvalidOperationException(
+                        "ISPmanager вернул неподдерживаемое значение " +
+                        "crtname. Заявка не отправлена.");
+                }
+
+                // Проверяем предложенное имя по уже прочитанному списку.
+                // При совпадении не подбираем другое имя автоматически.
+                var certificateNameAlreadyVisible = certificates.Any(row =>
+                    string.Equals(
+                        Wc2Field(row, "name"),
+                        certificateName,
+                        StringComparison.Ordinal) ||
+                    string.Equals(
+                        Wc2CertKey(row),
+                        certificateName,
+                        StringComparison.Ordinal) ||
+                    string.Equals(
+                        Wc2CertKey(row),
+                        owner + "%#%" + certificateName,
+                        StringComparison.Ordinal));
+
+                if (certificateNameAlreadyVisible)
+                {
+                    throw new InvalidOperationException(
+                        "Предложенное ISPmanager имя сертификата уже " +
+                        "присутствует в прочитанном списке: " +
+                        certificateName +
+                        ". Новая заявка не отправлена.");
+                }
+
+                // Сохраняем значения и скрытые поля, полученные из формы,
+                // но явно фиксируем проверенные параметры выпуска.
+                foreach (var pair in request)
+                    fields[pair.Key] = pair.Value;
+
+                fields["crtname"] = certificateName;
+                fields["out"] = "xml";
+                fields["sok"] = "ok";
+
+                // Если форма не вернула отдельное имя CSR, задаём его.
+                // Существующее значение формы не перезаписывается.
+                if (!fields.TryGetValue("name", out var csrName) ||
+                    string.IsNullOrWhiteSpace(csrName))
+                {
+                    fields["name"] = certificateName + "_csr";
+                }
+
+                var requestedDomains = SplitValues(fields["domain"])
+                    .Select(value => value.TrimEnd('.'))
+                    .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+                if (requestedDomains.Count != 2 ||
+                    !requestedDomains.Contains(domain) ||
+                    !requestedDomains.Contains("*." + domain))
+                {
+                    throw new InvalidOperationException(
+                        "Не удалось подтвердить состав сертификата: " +
+                        domain + " и *." + domain +
+                        ". Заявка не отправлена.");
+                }
+
+                ct.ThrowIfCancellationRequested();
+'@
+
+        $patchedText = Replace-ExactlyOnce `
+            -SourceText $originalText `
+            -Pattern $selectionPattern `
+            -Replacement $selectionReplacement `
+            -Description 'получение формы и выбор crtname'
+
+        # Добавляем фактическое имя в описание стадии. Это позволит
+        # увидеть его в журнале при ответе exists/crtname.
+        $phasePattern = (
+            '^[ \t]*phase = "отправка заявки Wildcard";[ \t]*\r?$'
+        )
+
+        $phaseReplacement = @'
+                phase =
+                    "отправка заявки Wildcard; crtname=" +
+                    certificateName;
+'@
+
+        $patchedText = Replace-ExactlyOnce `
+            -SourceText $patchedText `
+            -Pattern $phasePattern `
+            -Replacement $phaseReplacement `
+            -Description 'стадия отправки заявки'
+
+        if (
+            $patchedText.IndexOf(
+                'WC3_PANEL_CRTNAME',
+                [System.StringComparison]::Ordinal
+            ) -lt 0
+        ) {
+            throw 'Контрольная метка правки не появилась.'
+        }
+
+        if (
+            $patchedText.IndexOf(
+                'var names = certificates',
+                [System.StringComparison]::Ordinal
+            ) -ge 0
+        ) {
+            throw 'Старый локальный подбор имени остался в исходнике.'
+        }
+
+        $desktop = [Environment]::GetFolderPath(
+            [Environment+SpecialFolder]::Desktop
+        )
+
+        $timestamp = Get-Date -Format 'yyyyMMdd-HHmmss'
+        $randomSuffix = [Guid]::NewGuid().ToString('N').Substring(0, 8)
+
+        $workDirectory = Join-Path `
+            $desktop `
+            ('Wildcard-PanelName-WC3-' + $timestamp + '-' + $randomSuffix)
+
+        $copyDirectory = Join-Path $workDirectory 'source'
+        $outputDirectory = Join-Path $workDirectory 'APP'
+        $backupDirectory = Join-Path $workDirectory 'original-file'
+        $buildLog = Join-Path $workDirectory 'build.log'
+
+        New-Item `
+            -ItemType Directory `
+            -Path $workDirectory `
+            -Force |
+            Out-Null
+
+        New-Item `
+            -ItemType Directory `
+            -Path $copyDirectory `
+            -Force |
+            Out-Null
+
+        New-Item `
+            -ItemType Directory `
+            -Path $backupDirectory `
+            -Force |
+            Out-Null
+
+        Write-Host ''
+        Write-Host '=== КОПИРОВАНИЕ ПРОЕКТА ===' -ForegroundColor Cyan
+        Write-Host ('Новая папка: ' + $workDirectory)
+
+        & robocopy.exe `
+            $sourceDirectory `
+            $copyDirectory `
+            /E `
+            /XJ `
+            /R:1 `
+            /W:1 `
+            /XD bin obj .git .vs APP program `
+            /XF '*.user' '*.suo' `
+            /NFL `
+            /NDL `
+            /NJH `
+            /NJS `
+            /NP |
+            Out-Null
+
+        $robocopyExitCode = $LASTEXITCODE
+
+        if ($robocopyExitCode -ge 8) {
+            throw (
+                'Robocopy не смог скопировать проект. Код: ' +
+                $robocopyExitCode
+            )
+        }
+
+        Copy-Item `
+            -LiteralPath $wildcardPath `
+            -Destination (
+                Join-Path `
+                    $backupDirectory `
+                    'DeploymentSchemaFix.WildcardOnly.cs'
+            )
+
+        $copiedWildcardPath = Join-Path `
+            $copyDirectory `
+            'Services\DeploymentSchemaFix.WildcardOnly.cs'
+
+        if (
+            -not (
+                Test-Path `
+                    -LiteralPath $copiedWildcardPath `
+                    -PathType Leaf
+            )
+        ) {
+            throw (
+                'После копирования не найден файл: ' +
+                $copiedWildcardPath
+            )
+        }
+
+        $utf8WithoutBom = New-Object System.Text.UTF8Encoding($false)
+
+        [System.IO.File]::WriteAllText(
+            $copiedWildcardPath,
+            $patchedText,
+            $utf8WithoutBom
+        )
+
+        # Контроль: исходный файл должен остаться байт-в-байт прежним.
+        $sourceHashAfter = (
+            Get-FileHash `
+                -LiteralPath $wildcardPath `
+                -Algorithm SHA256
+        ).Hash
+
+        $backupHash = (
+            Get-FileHash `
+                -LiteralPath (
+                    Join-Path `
+                        $backupDirectory `
+                        'DeploymentSchemaFix.WildcardOnly.cs'
+                ) `
+                -Algorithm SHA256
+        ).Hash
+
+        if ($sourceHashAfter -ne $backupHash) {
+            throw (
+                'Контроль исходного файла не пройден. ' +
+                'Сборка остановлена.'
+            )
+        }
+
+        $copiedProjectPath = Join-Path `
+            $copyDirectory `
+            'TextFileProcessor.csproj'
+
+        Write-Host ''
+        Write-Host '=== СБОРКА ===' -ForegroundColor Cyan
+        Write-Host 'Программа и выпуск сертификата не запускаются.'
+
+        $publishArguments = @(
+            'publish'
+            $copiedProjectPath
+            '--configuration'
+            'Release'
+            '--runtime'
+            'win-x64'
+            '--self-contained'
+            'true'
+            '--output'
+            $outputDirectory
+            '--nologo'
+            '-p:Version=1.0.3'
+            '-p:InformationalVersion=Wildcard-PanelName-WC3'
+            '-p:UseSharedCompilation=false'
+        )
+
+        & dotnet @publishArguments 2>&1 |
+            Tee-Object -FilePath $buildLog |
+            Out-Host
+
+        $dotnetExitCode = $LASTEXITCODE
+
+        if ($dotnetExitCode -ne 0) {
+            throw (
+                'Сборка завершилась с ошибкой. Код: ' +
+                $dotnetExitCode +
+                '. Журнал: ' +
+                $buildLog
+            )
+        }
+
+        $executablePath = Join-Path `
+            $outputDirectory `
+            'TextFileProcessor.exe'
+
+        if (
+            -not (
+                Test-Path `
+                    -LiteralPath $executablePath `
+                    -PathType Leaf
+            )
+        ) {
+            throw (
+                'dotnet publish завершился без ошибки, но EXE не найден: ' +
+                $executablePath
+            )
+        }
+
+        $executableHash = (
+            Get-FileHash `
+                -LiteralPath $executablePath `
+                -Algorithm SHA256
+        ).Hash
+
+        $buildInformation = @(
+            'Patch: Wildcard-PanelName-WC3'
+            ('Created: ' + (Get-Date -Format 'yyyy-MM-dd HH:mm:ss'))
+            ('Original source: ' + $sourceDirectory)
+            ('Patched source: ' + $copyDirectory)
+            ('Executable: ' + $executablePath)
+            ('SHA256: ' + $executableHash)
+            'Program started by script: no'
+            'ISPmanager request sent by script: no'
+            'Real certificate issuance tested: no'
+        )
+
+        $buildInformation |
+            Set-Content `
+                -LiteralPath (
+                    Join-Path $workDirectory 'BUILD-INFO.txt'
+                ) `
+                -Encoding UTF8
+
+        Write-Host ''
+        Write-Host '=== СБОРКА ЗАВЕРШЕНА ===' -ForegroundColor Green
+        Write-Host ('EXE: ' + $executablePath)
+        Write-Host ('SHA256: ' + $executableHash)
+        Write-Host ''
+        Write-Host 'Исходная папка не изменена.'
+        Write-Host 'EXE не запускался.'
+        Write-Host 'Запрос в ISPmanager не отправлялся.'
+
+        # Работаем только с точно известным маркером casino723.cfd.
+        # Другие состояния и маркеры этот блок не изменяет.
+        $stateDirectory = Join-Path `
+            ([Environment]::GetFolderPath(
+                [Environment+SpecialFolder]::LocalApplicationData
+            )) `
+            'TextFileProcessor\deployment-certificate-requests'
+
+        $knownStateKey = (
+            'DCD5D8482BC66C2E42854F7C507A55A3' +
+            '4723B371D7C98402B84984D407E6E037'
+        )
+
+        $attemptPath = Join-Path `
+            $stateDirectory `
+            ($knownStateKey + '.wc2-attempt')
+
+        $lockPath = Join-Path `
+            $stateDirectory `
+            ($knownStateKey + '.wc2-lock')
+
+        if (
+            Test-Path `
+                -LiteralPath $attemptPath `
+                -PathType Leaf
+        ) {
+            $markerText = [System.IO.File]::ReadAllText($attemptPath)
+            $normalizedMarker = $markerText.Replace("`r`n", "`n").Trim()
+
+            Write-Host ''
+            Write-Host '=== ПРЕЖНИЙ МАРКЕР casino723.cfd ===' `
+                -ForegroundColor Yellow
+            Write-Host ('Файл: ' + $attemptPath)
+            Write-Host 'Содержимое:'
+            Write-Host $normalizedMarker
+            Write-Host ''
+
+            if (
+                $normalizedMarker -ceq (
+                    "outcome-unknown`ncasino723.cfd_le1"
+                )
+            ) {
+                Write-Host (
+                    'Чтобы новая версия смогла выполнить ровно одну ' +
+                    'новую попытку, прежний маркер нужно архивировать.'
+                )
+                Write-Host (
+                    'Это не удаляет сертификаты и заявки в ISPmanager.'
+                )
+                Write-Host (
+                    'Если в панели может выполняться старая заявка, ' +
+                    'нажмите Enter и сначала проверьте её.'
+                )
+                Write-Host ''
+
+                $confirmation = Read-Host (
+                    'Для архивирования введите точно: ' +
+                    'ПОВТОР casino723.cfd'
+                )
+
+                if ($confirmation -ceq 'ПОВТОР casino723.cfd') {
+                    $runningBeforeArchive = @(
+                        Get-Process `
+                            -Name 'TextFileProcessor' `
+                            -ErrorAction SilentlyContinue
+                    )
+
+                    if ($runningBeforeArchive.Count -gt 0) {
+                        throw (
+                            'TextFileProcessor был запущен. ' +
+                            'Маркер не архивирован.'
+                        )
+                    }
+
+                    $lockStream = $null
+
+                    try {
+                        $lockStream = New-Object System.IO.FileStream(
+                            $lockPath,
+                            [System.IO.FileMode]::OpenOrCreate,
+                            [System.IO.FileAccess]::ReadWrite,
+                            [System.IO.FileShare]::None
+                        )
+
+                        if (
+                            -not (
+                                Test-Path `
+                                    -LiteralPath $attemptPath `
+                                    -PathType Leaf
+                            )
+                        ) {
+                            throw (
+                                'Маркер исчез или был перемещён другим ' +
+                                'процессом. Архивирование остановлено.'
+                            )
+                        }
+
+                        $currentText = [System.IO.File]::ReadAllText(
+                            $attemptPath
+                        )
+
+                        $currentNormalized = $currentText.
+                            Replace("`r`n", "`n").
+                            Trim()
+
+                        if (
+                            $currentNormalized -cne (
+                                "outcome-unknown`ncasino723.cfd_le1"
+                            )
+                        ) {
+                            throw (
+                                'Содержимое маркера изменилось. ' +
+                                'Архивирование остановлено.'
+                            )
+                        }
+
+                        $archivePath = (
+                            $attemptPath +
+                            '.manual-retry-' +
+                            (Get-Date -Format 'yyyyMMdd-HHmmss') +
+                            '-' +
+                            [Guid]::NewGuid().ToString('N').Substring(0, 8) +
+                            '.bak'
+                        )
+
+                        [System.IO.File]::Move(
+                            $attemptPath,
+                            $archivePath
+                        )
+
+                        Write-Host ''
+                        Write-Host (
+                            'Маркер casino723.cfd архивирован.'
+                        ) -ForegroundColor Green
+                        Write-Host ('Архив: ' + $archivePath)
+                        Write-Host 'Остальные маркеры не изменены.'
+                    }
+                    finally {
+                        if ($null -ne $lockStream) {
+                            $lockStream.Dispose()
+                        }
+                    }
+                }
+                else {
+                    Write-Host ''
+                    Write-Host (
+                        'Маркер сохранён. Повторная заявка остаётся ' +
+                        'заблокированной.'
+                    )
+                }
+            }
+            else {
+                Write-Host (
+                    'Содержимое отличается от ранее полученного. ' +
+                    'Маркер автоматически не изменён.'
+                ) -ForegroundColor Yellow
+            }
+        }
+        else {
+            Write-Host ''
+            Write-Host (
+                'Известный маркер casino723.cfd сейчас не найден. ' +
+                'Никакие файлы состояния не изменялись.'
+            )
+        }
+
+        Write-Host ''
+        Write-Host '=== ГОТОВО ===' -ForegroundColor Green
+        Write-Host ('Папка программы: ' + $outputDirectory)
+        Write-Host (
+            'Сначала сообщите результат сборки. ' +
+            'Сам выпуск этим скриптом не выполнялся.'
+        )
+
+        Start-Process `
+            -FilePath 'explorer.exe' `
+            -ArgumentList ('"' + $outputDirectory + '"')
+    }
+    catch {
+        Write-Host ''
+        Write-Host (
+            'ОСТАНОВЛЕНО: ' + $_.Exception.Message
+        ) -ForegroundColor Red
+
+        Write-Host 'Исходный проект не изменён.'
+        Write-Host (
+            'При ошибке сборки не запускайте промежуточный EXE.'
+        )
+    }
+}
+
+Нормальный итог должен содержать:
+
+=== СБОРКА ЗАВЕРШЕНА ===
+EXE: ...\APP\TextFileProcessor.exe
+Исходная папка не изменена.
+EXE не запускался.
+Запрос в ISPmanager не отправлялся.
+
+Если блок остановится, пришлите весь фрагмент от === ПРОВЕРКА === до строки ОСТАНОВЛЕНО.
+
+ParserError:
+Line |
+80 | Where-Object {
+| ~
+| Missing closing '}' in statement block or type definition.
+PS C:\Users\User\Desktop\Wildcard-FormFixV2-20260913-123431-3573e4>
+GPT-5.6 Sol
+GPT-5.6 Sol
+Размышление
+
+
+
+
+
+
+
+
+
+
+Извините — ошибка была в предыдущем блоке: PowerShell некорректно разобрал конструкцию внутри Find-SourceDirectory. Ниже упрощённый полный скрипт без этой функции. Он рассчитан на вашу текущую папку:
+
+C:\Users\User\Desktop\Wildcard-FormFixV2-20260913-123431-3573e4
+
+Если приглашение показывает >>, сначала нажмите Ctrl+C. Закройте TextFileProcessor и вставьте блок целиком, от & { до последней }:
+
+& {
+    Set-StrictMode -Version Latest
+    $ErrorActionPreference = 'Stop'
+
+    function Replace-One {
+        param(
+            [Parameter(Mandatory = $true)]
+            [string] $Text,
+
+            [Parameter(Mandatory = $true)]
+            [string] $Pattern,
+
+            [Parameter(Mandatory = $true)]
+            [string] $Replacement,
+
+            [Parameter(Mandatory = $true)]
+            [string] $Description
+        )
+
+        $hits = [regex]::Matches($Text, $Pattern)
+
+        if ($hits.Count -ne 1) {
+            throw (
+                'Не удалось однозначно найти участок "' +
+                $Description +
+                '". Количество совпадений: ' +
+                $hits.Count +
+                '.'
+            )
+        }
+
+        $hit = $hits[0]
+
+        return (
+            $Text.Substring(0, $hit.Index) +
+            $Replacement +
+            $Text.Substring($hit.Index + $hit.Length)
+        )
+    }
+
+    try {
+        Write-Host ''
+        Write-Host '=== ПРОВЕРКА ===' -ForegroundColor Cyan
+
+        $runningProcesses = @(
+            Get-Process `
+                -Name 'TextFileProcessor' `
+                -ErrorAction SilentlyContinue
+        )
+
+        if ($runningProcesses.Count -gt 0) {
+            throw 'Сначала закройте все окна TextFileProcessor.'
+        }
+
+        if ($null -eq (Get-Command dotnet -ErrorAction SilentlyContinue)) {
+            throw 'Не найден .NET SDK: команда dotnet недоступна.'
+        }
+
+        if ($null -eq (Get-Command robocopy.exe -ErrorAction SilentlyContinue)) {
+            throw 'Не найдена системная программа robocopy.exe.'
+        }
+
+        $currentDirectory = (Get-Location).Path
+        $source = Join-Path $currentDirectory 'source'
+
+        if (
+            -not (
+                Test-Path `
+                    -LiteralPath (
+                        Join-Path $source 'TextFileProcessor.csproj'
+                    ) `
+                    -PathType Leaf
+            )
+        ) {
+            if (
+                Test-Path `
+                    -LiteralPath (
+                        Join-Path $currentDirectory 'TextFileProcessor.csproj'
+                    ) `
+                    -PathType Leaf
+            ) {
+                $source = $currentDirectory
+            }
+            else {
+                throw (
+                    'Не найден TextFileProcessor.csproj. ' +
+                    'Запустите скрипт из папки ' +
+                    'Wildcard-FormFixV2-20260913-123431-3573e4.'
+                )
+            }
+        }
+
+        $projectPath = Join-Path `
+            $source `
+            'TextFileProcessor.csproj'
+
+        $wildcardPath = Join-Path `
+            $source `
+            'Services\DeploymentSchemaFix.WildcardOnly.cs'
+
+        $requiredFiles = @(
+            $projectPath
+            $wildcardPath
+            (Join-Path $source 'Services\DeploymentSchemaFix.cs')
+            (Join-Path $source 'App.xaml')
+            (Join-Path $source 'MainWindow.xaml')
+        )
+
+        foreach ($requiredFile in $requiredFiles) {
+            if (
+                -not (
+                    Test-Path `
+                        -LiteralPath $requiredFile `
+                        -PathType Leaf
+                )
+            ) {
+                throw ('Не найден обязательный файл: ' + $requiredFile)
+            }
+        }
+
+        Write-Host ('Исходный проект: ' + $source)
+
+        $originalHash = (
+            Get-FileHash `
+                -LiteralPath $wildcardPath `
+                -Algorithm SHA256
+        ).Hash
+
+        $wildcardText = [IO.File]::ReadAllText($wildcardPath)
+
+        if ($wildcardText.Contains('WC3_PANEL_CERTIFICATE_NAME')) {
+            throw (
+                'Правка WC3_PANEL_CERTIFICATE_NAME уже присутствует ' +
+                'в выбранном исходнике.'
+            )
+        }
+
+        if (-not $wildcardText.Contains('var names = certificates')) {
+            throw (
+                'Не найден прежний локальный подбор имени сертификата. ' +
+                'Версия исходника отличается от ожидаемой.'
+            )
+        }
+
+        if (
+            -not $wildcardText.Contains(
+                'await api.Call("letsencrypt.generate", fields, ct);'
+            )
+        ) {
+            throw (
+                'Не найден ожидаемый вызов letsencrypt.generate. ' +
+                'Версия исходника отличается от ожидаемой.'
+            )
+        }
+
+        Write-Host ''
+        Write-Host '=== ПОДГОТОВКА ПРАВКИ ===' -ForegroundColor Cyan
+
+        $preparePattern = (
+            '(?ms)^[ \t]*var names = certificates\r?\n' +
+            '.*?' +
+            '^[ \t]*ct\.ThrowIfCancellationRequested\(\);'
+        )
+
+        $prepareReplacement = @'
+                // WC3_PANEL_CERTIFICATE_NAME
+                phase = "получение имени сертификата из формы";
+
+                // Не передаём crtname при открытии формы.
+                // Имя сертификата выбирает ISPmanager в контексте
+                // текущего владельца и сайта.
+                var request = new Dictionary<string, string>(
+                    StringComparer.Ordinal)
+                {
+                    ["out"] = "devel",
+                    ["lang"] = "en",
+                    ["username"] = owner,
+                    ["domain_name"] = domain,
+                    ["domain"] = domain + " *." + domain,
+                    ["email"] = "webmaster@" + domain,
+                    ["keylen"] = "2048",
+                    ["wildcard"] = "on",
+                    ["dns_check"] = "on",
+                    ["skip_check_a_record"] = "on",
+                    ["enable_cert"] = "on"
+                };
+
+                var form = await api.Call(
+                    "letsencrypt.generate", request, ct);
+
+                RequireForm(form, "letsencrypt.generate");
+                RequireControls(
+                    form,
+                    "domain",
+                    "crtname",
+                    "wildcard",
+                    "dns_check");
+
+                var returnedOwner = Value(form, "username").Trim();
+
+                if (!string.Equals(
+                    returnedOwner,
+                    owner,
+                    StringComparison.Ordinal))
+                {
+                    throw new InvalidOperationException(
+                        "Владелец формы выпуска не подтверждён. " +
+                        "Заявка не отправлена.");
+                }
+
+                var returnedDomain = Value(
+                    form,
+                    "domain_name").Trim();
+
+                if (!SameDomain(returnedDomain, domain))
+                {
+                    throw new InvalidOperationException(
+                        "Форма выпуска относится к другому сайту " +
+                        "или не содержит его имени. " +
+                        "Заявка не отправлена.");
+                }
+
+                string certificateName = Value(
+                    form,
+                    "crtname").Trim();
+
+                if (!Regex.IsMatch(
+                    certificateName,
+                    @"\A[A-Za-z0-9][A-Za-z0-9_.-]{0,239}\z"))
+                {
+                    throw new InvalidOperationException(
+                        "Панель не вернула поддерживаемое имя " +
+                        "сертификата. Заявка не отправлена.");
+                }
+
+                if (certificates.Any(row =>
+                    string.Equals(
+                        Wc2Field(row, "name"),
+                        certificateName,
+                        StringComparison.Ordinal) ||
+                    string.Equals(
+                        Wc2CertKey(row),
+                        certificateName,
+                        StringComparison.Ordinal) ||
+                    string.Equals(
+                        Wc2CertKey(row),
+                        owner + "%#%" + certificateName,
+                        StringComparison.Ordinal)))
+                {
+                    throw new InvalidOperationException(
+                        "Предложенное формой имя уже присутствует " +
+                        "в прочитанном списке: " +
+                        certificateName +
+                        ". Новая заявка не отправлена.");
+                }
+
+                var csrName = certificateName + "_csr";
+
+                var fields = new Dictionary<string, string>(
+                    request,
+                    StringComparer.Ordinal)
+                {
+                    ["out"] = "xml",
+                    ["sok"] = "ok",
+                    ["crtname"] = certificateName,
+                    ["name"] = csrName
+                };
+
+                var requestedDomains = SplitValues(fields["domain"])
+                    .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+                if (requestedDomains.Count != 2 ||
+                    !requestedDomains.Contains(domain) ||
+                    !requestedDomains.Contains("*." + domain))
+                {
+                    throw new InvalidOperationException(
+                        "Некорректный состав доменов сертификата. " +
+                        "Заявка не отправлена.");
+                }
+
+                ct.ThrowIfCancellationRequested();
+'@
+
+        $patchedWildcard = Replace-One `
+            -Text $wildcardText `
+            -Pattern $preparePattern `
+            -Replacement $prepareReplacement `
+            -Description 'выбор имени сертификата'
+
+        $sendPattern = (
+            '(?m)^[ \t]*await api\.Call\(' +
+            '"letsencrypt\.generate", fields, ct\);[ \t]*\r?$'
+        )
+
+        $sendReplacement = @'
+                phase =
+                    "отправка заявки Wildcard; crtname=" +
+                    certificateName;
+
+                await api.Call(
+                    "letsencrypt.generate",
+                    fields,
+                    ct);
+'@
+
+        $patchedWildcard = Replace-One `
+            -Text $patchedWildcard `
+            -Pattern $sendPattern `
+            -Replacement $sendReplacement `
+            -Description 'отправка заявки'
+
+        if (-not $patchedWildcard.Contains('WC3_PANEL_CERTIFICATE_NAME')) {
+            throw 'После замены отсутствует контрольная метка WC3.'
+        }
+
+        if ($patchedWildcard.Contains('var names = certificates')) {
+            throw 'Прежний локальный перебор имён остался в коде.'
+        }
+
+        $desktop = [Environment]::GetFolderPath(
+            [Environment+SpecialFolder]::Desktop
+        )
+
+        $stamp = Get-Date -Format 'yyyyMMdd-HHmmss'
+        $suffix = [Guid]::NewGuid().ToString('N').Substring(0, 8)
+
+        $workDirectory = Join-Path `
+            $desktop `
+            ('Wildcard-PanelName-WC3-' + $stamp + '-' + $suffix)
+
+        $copyDirectory = Join-Path $workDirectory 'source'
+        $outputDirectory = Join-Path $workDirectory 'APP'
+        $backupDirectory = Join-Path $workDirectory 'original-file'
+        $buildLog = Join-Path $workDirectory 'build.log'
+
+        New-Item `
+            -ItemType Directory `
+            -Path $copyDirectory `
+            -Force |
+            Out-Null
+
+        New-Item `
+            -ItemType Directory `
+            -Path $backupDirectory `
+            -Force |
+            Out-Null
+
+        Write-Host ''
+        Write-Host '=== КОПИРОВАНИЕ ===' -ForegroundColor Cyan
+        Write-Host ('Рабочая папка: ' + $workDirectory)
+
+        & robocopy.exe `
+            $source `
+            $copyDirectory `
+            /E `
+            /XJ `
+            /R:1 `
+            /W:1 `
+            /XD `
+            bin `
+            obj `
+            .git `
+            .vs `
+            APP `
+            program `
+            /XF `
+            '*.user' `
+            '*.suo' `
+            /NFL `
+            /NDL `
+            /NJH `
+            /NJS `
+            /NP |
+            Out-Null
+
+        $robocopyExitCode = $LASTEXITCODE
+
+        if ($robocopyExitCode -ge 8) {
+            throw (
+                'Ошибка копирования проекта. Код robocopy: ' +
+                $robocopyExitCode
+            )
+        }
+
+        $backupPath = Join-Path `
+            $backupDirectory `
+            'DeploymentSchemaFix.WildcardOnly.cs'
+
+        Copy-Item `
+            -LiteralPath $wildcardPath `
+            -Destination $backupPath
+
+        $copiedWildcardPath = Join-Path `
+            $copyDirectory `
+            'Services\DeploymentSchemaFix.WildcardOnly.cs'
+
+        if (
+            -not (
+                Test-Path `
+                    -LiteralPath $copiedWildcardPath `
+                    -PathType Leaf
+            )
+        ) {
+            throw (
+                'Файл исходника отсутствует в созданной копии: ' +
+                $copiedWildcardPath
+            )
+        }
+
+        $utf8WithoutBom = [Text.UTF8Encoding]::new($false)
+
+        [IO.File]::WriteAllText(
+            $copiedWildcardPath,
+            $patchedWildcard,
+            $utf8WithoutBom
+        )
+
+        $originalHashAfterCopy = (
+            Get-FileHash `
+                -LiteralPath $wildcardPath `
+                -Algorithm SHA256
+        ).Hash
+
+        if ($originalHashAfterCopy -ne $originalHash) {
+            throw (
+                'Контроль исходного проекта не пройден: ' +
+                'оригинальный файл изменился.'
+            )
+        }
+
+        $backupHash = (
+            Get-FileHash `
+                -LiteralPath $backupPath `
+                -Algorithm SHA256
+        ).Hash
+
+        if ($backupHash -ne $originalHash) {
+            throw 'Резервная копия исходного файла не прошла проверку.'
+        }
+
+        $copiedProjectPath = Join-Path `
+            $copyDirectory `
+            'TextFileProcessor.csproj'
+
+        Write-Host ''
+        Write-Host '=== СБОРКА ===' -ForegroundColor Cyan
+        Write-Host 'Программа не запускается, запросы не отправляются.'
+
+        $publishArguments = @(
+            'publish'
+            $copiedProjectPath
+            '--configuration'
+            'Release'
+            '--runtime'
+            'win-x64'
+            '--self-contained'
+            'true'
+            '--output'
+            $outputDirectory
+            '--nologo'
+            '-p:Version=1.0.3'
+            '-p:InformationalVersion=Wildcard-PanelName-WC3'
+            '-p:UseSharedCompilation=false'
+        )
+
+        & dotnet @publishArguments 2>&1 |
+            Tee-Object -FilePath $buildLog |
+            Out-Host
+
+        $dotnetExitCode = $LASTEXITCODE
+
+        if ($dotnetExitCode -ne 0) {
+            throw (
+                'Сборка не прошла. Код dotnet: ' +
+                $dotnetExitCode +
+                '. Журнал: ' +
+                $buildLog
+            )
+        }
+
+        $executablePath = Join-Path `
+            $outputDirectory `
+            'TextFileProcessor.exe'
+
+        if (
+            -not (
+                Test-Path `
+                    -LiteralPath $executablePath `
+                    -PathType Leaf
+            )
+        ) {
+            throw (
+                'Сборка сообщила об успехе, но EXE не найден: ' +
+                $executablePath
+            )
+        }
+
+        $executableHash = (
+            Get-FileHash `
+                -LiteralPath $executablePath `
+                -Algorithm SHA256
+        ).Hash
+
+        $buildInfoPath = Join-Path `
+            $workDirectory `
+            'BUILD-INFO.txt'
+
+        @(
+            'Patch: Wildcard-PanelName-WC3'
+            ('Created: ' + (Get-Date -Format 'yyyy-MM-dd HH:mm:ss'))
+            ('Original project: ' + $source)
+            ('Patched copy: ' + $copyDirectory)
+            ('Executable: ' + $executablePath)
+            ('SHA256: ' + $executableHash)
+            'Program started by script: no'
+            'ISPmanager request sent by script: no'
+            'Certificate issuance tested: no'
+        ) |
+            Set-Content `
+                -LiteralPath $buildInfoPath `
+                -Encoding UTF8
+
+        Write-Host ''
+        Write-Host '=== СБОРКА ЗАВЕРШЕНА ===' -ForegroundColor Green
+        Write-Host ('EXE: ' + $executablePath)
+        Write-Host ('SHA256: ' + $executableHash)
+        Write-Host ''
+        Write-Host 'Исходный проект не изменён.'
+        Write-Host 'Программа не запускалась.'
+        Write-Host 'Запрос в ISPmanager не отправлялся.'
+
+        # Необязательное архивирование только ранее известного маркера.
+        $localAppData = [Environment]::GetFolderPath(
+            [Environment+SpecialFolder]::LocalApplicationData
+        )
+
+        $stateDirectory = Join-Path `
+            $localAppData `
+            'TextFileProcessor\deployment-certificate-requests'
+
+        $knownKey = (
+            'DCD5D8482BC66C2E42854F7C507A55A3' +
+            '4723B371D7C98402B84984D407E6E037'
+        )
+
+        $markerPath = Join-Path `
+            $stateDirectory `
+            ($knownKey + '.wc2-attempt')
+
+        $lockPath = Join-Path `
+            $stateDirectory `
+            ($knownKey + '.wc2-lock')
+
+        if (
+            Test-Path `
+                -LiteralPath $markerPath `
+                -PathType Leaf
+        ) {
+            $markerText = [IO.File]::ReadAllText($markerPath)
+            $normalizedMarker = $markerText.Replace(
+                "`r`n",
+                "`n"
+            ).Trim()
+
+            $expectedMarker = (
+                "outcome-unknown`ncasino723.cfd_le1"
+            )
+
+            Write-Host ''
+            Write-Host (
+                'Найден прежний маркер casino723.cfd.'
+            ) -ForegroundColor Yellow
+            Write-Host ('Файл: ' + $markerPath)
+            Write-Host 'Содержимое:'
+            Write-Host $normalizedMarker
+            Write-Host ''
+
+            if ($normalizedMarker -ceq $expectedMarker) {
+                Write-Host (
+                    'Архивирование разрешит одну новую попытку ' +
+                    'при последующем ручном запуске программы.'
+                )
+                Write-Host (
+                    'Оно не отменяет заявку и не удаляет сертификат ' +
+                    'на сервере.'
+                )
+                Write-Host (
+                    'Если состояние заявки в ISPmanager неизвестно, ' +
+                    'нажмите Enter и сначала проверьте панель.'
+                )
+                Write-Host ''
+
+                $answer = Read-Host (
+                    'Для архивирования введите точно: ' +
+                    'ПОВТОР casino723.cfd'
+                )
+
+                if ($answer -ceq 'ПОВТОР casino723.cfd') {
+                    $runningAgain = @(
+                        Get-Process `
+                            -Name 'TextFileProcessor' `
+                            -ErrorAction SilentlyContinue
+                    )
+
+                    if ($runningAgain.Count -gt 0) {
+                        throw (
+                            'TextFileProcessor запущен. ' +
+                            'Маркер не архивирован.'
+                        )
+                    }
+
+                    $lockStream = $null
+
+                    try {
+                        $lockStream = [IO.File]::Open(
+                            $lockPath,
+                            [IO.FileMode]::OpenOrCreate,
+                            [IO.FileAccess]::ReadWrite,
+                            [IO.FileShare]::None
+                        )
+
+                        if (
+                            -not (
+                                Test-Path `
+                                    -LiteralPath $markerPath `
+                                    -PathType Leaf
+                            )
+                        ) {
+                            throw (
+                                'Маркер исчез после подтверждения. ' +
+                                'Архивирование отменено.'
+                            )
+                        }
+
+                        $currentMarker = [IO.File]::ReadAllText(
+                            $markerPath
+                        ).Replace(
+                            "`r`n",
+                            "`n"
+                        ).Trim()
+
+                        if ($currentMarker -cne $expectedMarker) {
+                            throw (
+                                'Содержимое маркера изменилось. ' +
+                                'Архивирование отменено.'
+                            )
+                        }
+
+                        $archivePath = (
+                            $markerPath +
+                            '.manual-retry-' +
+                            (Get-Date -Format 'yyyyMMdd-HHmmss') +
+                            '-' +
+                            [Guid]::NewGuid().ToString('N').Substring(0, 8) +
+                            '.bak'
+                        )
+
+                        [IO.File]::Move(
+                            $markerPath,
+                            $archivePath
+                        )
+
+                        Write-Host ''
+                        Write-Host (
+                            'Маркер архивирован.'
+                        ) -ForegroundColor Green
+                        Write-Host ('Архив: ' + $archivePath)
+                        Write-Host 'Другие маркеры не изменялись.'
+                    }
+                    finally {
+                        if ($null -ne $lockStream) {
+                            $lockStream.Dispose()
+                        }
+                    }
+                }
+                else {
+                    Write-Host ''
+                    Write-Host (
+                        'Маркер сохранён. Повторная заявка ' +
+                        'остаётся заблокированной.'
+                    )
+                }
+            }
+            else {
+                Write-Host (
+                    'Маркер имеет другое содержимое. ' +
+                    'Он оставлен без изменений.'
+                ) -ForegroundColor Yellow
+            }
+        }
+        else {
+            Write-Host ''
+            Write-Host (
+                'Известный маркер casino723.cfd не найден. ' +
+                'Файлы состояния не изменялись.'
+            )
+        }
+
+        Write-Host ''
+        Write-Host '=== ГОТОВО ===' -ForegroundColor Green
+        Write-Host ('Папка новой программы: ' + $outputDirectory)
+
+        Start-Process `
+            -FilePath 'explorer.exe' `
+            -ArgumentList ('"' + $outputDirectory + '"')
+    }
+    catch {
+        Write-Host ''
+        Write-Host (
+            'ОСТАНОВЛЕНО: ' + $_.Exception.Message
+        ) -ForegroundColor Red
+        Write-Host 'Оригинальный проект не изменён.'
+        Write-Host 'При ошибке сборки не запускайте промежуточный EXE.'
+    }
+}
+
+Успешный результат начинается так:
+
+=== СБОРКА ЗАВЕРШЕНА ===
+EXE: ...\APP\TextFileProcessor.exe
+
+Если возникнет ошибка, пришлите вывод от === ПРОВЕРКА === до ОСТАНОВЛЕНО.
+
+13.09.2026 13:28:08 INFO casino723.cfd Запуск выбранного задания 1/1.
+не выпускается! просто зависает задание и ничего не происходит!
+Так давай срочно заканчивать программу! Скажи что прислать тебе! Или ты специально тратишь мои деньги!!!???
+Срочно реши проблему!!!
+
+13.09.2026 13:30:14 ERROR casino723.cfd Сайт casino723.cfd и оба псевдонима проверены. Этап запроса сертификата не завершён: Wildcard — повторная DNS-проверка в ISPmanager: ISPmanager: функция webdomain.letsencrypt.txt; ошибка letsencrypt; поле txt.
+13.09.2026 13:30:14 WARN Очередь завершена. Выбрано: 1; успешно: 0; ошибок: 1; не начато: 0. Статус выпуска и установки Wildcard этим итогом не подтверждается.
+GPT-5.6 Sol
+GPT-5.6 Sol
+Понимаю ваше раздражение. По журналу задание не зависло окончательно: оно ждало ответ около 2 минут, а затем ISPmanager отклонил этап повторной DNS-проверки:
+
+webdomain.letsencrypt.txt
+ошибка letsencrypt
+поле txt
+
+Вероятная причина: программа вызывает webdomain.letsencrypt.txt, но не получает из формы или не передаёт обязательное поле txt. Это уже конкретная точка для исправления. Пока не запускайте повторно, чтобы не создавать лишние заявки и не попасть под лимиты Let’s Encrypt.
+
+Пришлите, пожалуйста, следующее.
+
+1. Два исходных файла целиком
+Services\DeploymentSchemaFix.WildcardOnly.cs
+Services\DeploymentSchemaFix.cs
+
+И файл класса, в котором реализован вызов ISPmanager API (api.Call). Найти его можно командой из папки проекта:
+
+Get-ChildItem -Recurse -File -Filter *.cs |
+    Select-String -Pattern 'webdomain\.letsencrypt\.txt|class .*Api|Task.*Call\(' |
+    Select-Object Path, LineNumber, Line |
+    Format-List
+
+Пришлите весь вывод команды и найденный файл API-клиента.
+
+2. Полный журнал одной попытки
+Нужен фрагмент с 13:28:08 по 13:30:14 целиком, включая строки DEBUG, если они есть. Особенно важны ответы ISPmanager перед вызовом:
+
+webdomain.letsencrypt.txt
+
+Удалите из журнала:
+
+пароль;
+API-токен;
+cookie/session ID;
+ключи авторизации.
+Но не удаляйте названия полей формы, XML/JSON-структуру ошибки и значения txt, crtname, domain, elid, если они не содержат секретов.
+
+3. Информация об ISPmanager
+Напишите:
+
+Версия ISPmanager:
+DNS управляется в этом ISPmanager: да/нет
+Авторитетные DNS casino723.cfd:
+
+Авторитетные DNS можно получить так:
+
+Resolve-DnsName casino723.cfd -Type NS |
+    Select-Object NameHost
+
+А текущую TXT-запись:
+
+Resolve-DnsName _acme-challenge.casino723.cfd -Type TXT `
+    -ErrorAction SilentlyContinue
+
+Быстрый сбор исходников в архив
+Эта команда соберёт только исходный код и проект, без bin, obj и готового EXE:
+
+$root = (Get-Location).Path
+$out = Join-Path $env:USERPROFILE 'Desktop\Wildcard-diagnostics'
+$zip = Join-Path $env:USERPROFILE 'Desktop\Wildcard-diagnostics.zip'
+
+Remove-Item $out -Recurse -Force -ErrorAction SilentlyContinue
+Remove-Item $zip -Force -ErrorAction SilentlyContinue
+New-Item $out -ItemType Directory | Out-Null
+
+Get-ChildItem $root -Recurse -File |
+    Where-Object {
+        $_.Extension -in '.cs', '.csproj', '.xaml' -and
+        $_.FullName -notmatch '\\(bin|obj|APP|program|\.git|\.vs)\\'
+    } |
+    ForEach-Object {
+        $relative = $_.FullName.Substring($root.Length).TrimStart('\')
+        $target = Join-Path $out $relative
+        New-Item (Split-Path $target) -ItemType Directory -Force |
+            Out-Null
+        Copy-Item $_.FullName $target
+    }
+
+Compress-Archive -Path "$out\*" -DestinationPath $zip
+Write-Host "Архив: $zip"
+
+Перед отправкой проверьте, что внутри нет паролей и токенов. В первую очередь присылайте DeploymentSchemaFix.WildcardOnly.cs и результаты команд DNS — по ним можно будет подготовить точечную правку без очередного угадывания.
+
+так нет стоп
+программа создала домен и псевдонимы и wild сертификат но она что то ждет долго, нужно чтоб не ждала так как подтверждение записей txt на другом этапе. просто пусть так же создает домен + псевдонимы + Wild сертификат и идет далее к следующему домену, если выбрано
+GPT-5.6 Sol
+GPT-5.6 Sol
+Стоп, понял. Не нужно ждать подтверждения TXT на этом этапе.
+
+Требуемая логика:
+
+Создать домен.
+Создать оба псевдонима.
+Создать/отправить заявку на Wildcard-сертификат.
+Не вызывать и не ожидать webdomain.letsencrypt.txt.
+Зафиксировать состояние как «заявка отправлена, ожидает отдельной DNS-проверки».
+Сразу перейти к следующему выбранному домену.
+Не отправлять повторную заявку при следующем запуске.
+Ошибка сейчас именно в лишнем этапе:
+
+Wildcard — повторная DNS-проверка в ISPmanager
+webdomain.letsencrypt.txt
+
+Пришлите только это
+Нужен текущий файл именно из исходников, из которых собран запущенный EXE:
+
+Services\DeploymentSchemaFix.WildcardOnly.cs
+
+Если он не помещается одним сообщением — отправьте частями: 1/2, 2/2.
+
+Также выполните в папке текущих исходников и пришлите вывод:
+
+Get-ChildItem -Recurse -File -Filter *.cs |
+    Select-String -Pattern 'webdomain\.letsencrypt\.txt|повторная DNS-проверка|outcome-unknown|wc2-attempt|letsencrypt\.generate' |
+    Select-Object Path, LineNumber, Line |
+    Format-List
+
+Если команда найдёт webdomain.letsencrypt.txt ещё в другом .cs-файле, пришлите и этот файл целиком.
+
+Пока не запускайте задание повторно
+Заявка уже могла быть создана. Повторный запуск может попытаться создать дубликат. После получения файла я подготовлю точечную правку: отправили заявку → записали состояние ожидания DNS → без двухминутного ожидания перешли к следующему домену.
+
+создай кнопку отдельно повторно проверить txt записи по выбранным доменам
+вот твой файл
+https://github.com/raliya/346Jvfch75v6f634vf765/blob/main/DeploymentSchemaFix.WildcardOnly.cs
+
+и вывод который просиш
+
+PS C:\Users\User\Desktop\Wildcard-FormFixV2-20260913-123431-3573e4> Get-ChildItem -Recurse -File -Filter *.cs |
+>> Select-String -Pattern 'webdomain\.letsencrypt\.txt|повторная DNS-проверка|outcome-unknown|wc2-attempt|letsencrypt\.generate' |
+>> Select-Object Path, LineNumber, Line |
+>> Format-List
+>>
+
+Path : C:\Users\User\Desktop\Wildcard-FormFixV2-20260913-123431-3573e4\source\MainWindow.Build10.cs
+LineNumber : 740
+Line : ["func"] = "webdomain.letsencrypt.txt",
+
+Path : C:\Users\User\Desktop\Wildcard-FormFixV2-20260913-123431-3573e4\source\MainWindow.Build10.cs
+LineNumber : 820
+Line : $"В ответе webdomain.letsencrypt.txt для " +
+
+Path : C:\Users\User\Desktop\Wildcard-FormFixV2-20260913-123431-3573e4\source\Services\DeploymentSchemaFix.Wildca
+rdOnly.cs
+LineNumber : 106
+Line : var attemptFile = Path.Combine(directory, key + ".wc2-attempt");
+
+Path : C:\Users\User\Desktop\Wildcard-FormFixV2-20260913-123431-3573e4\source\Services\DeploymentSchemaFix.Wildca
+rdOnly.cs
+LineNumber : 219
+Line : // Документированные параметры letsencrypt.generate.
+
+Path : C:\Users\User\Desktop\Wildcard-FormFixV2-20260913-123431-3573e4\source\Services\DeploymentSchemaFix.Wildca
+rdOnly.cs
+LineNumber : 244
+Line : "letsencrypt.generate", request, ct);
+
+Path : C:\Users\User\Desktop\Wildcard-FormFixV2-20260913-123431-3573e4\source\Services\DeploymentSchemaFix.Wildca
+rdOnly.cs
+LineNumber : 246
+Line : RequireForm(form, "letsencrypt.generate");
+
+Path : C:\Users\User\Desktop\Wildcard-FormFixV2-20260913-123431-3573e4\source\Services\DeploymentSchemaFix.Wildca
+rdOnly.cs
+LineNumber : 295
+Line : "outcome-unknown\n" + certificateName);
+
+Path : C:\Users\User\Desktop\Wildcard-FormFixV2-20260913-123431-3573e4\source\Services\DeploymentSchemaFix.Wildca
+rdOnly.cs
+LineNumber : 301
+Line : await api.Call("letsencrypt.generate", fields, ct);
+
+Path : C:\Users\User\Desktop\Wildcard-FormFixV2-20260913-123431-3573e4\source\Services\DeploymentSchemaFix.Wildca
+rdOnly.cs
+LineNumber : 305
+Line : // Повторный letsencrypt.generate в этом цикле не отправляется.
+
+Path : C:\Users\User\Desktop\Wildcard-FormFixV2-20260913-123431-3573e4\source\Services\DeploymentSchemaFix.Wildca
+rdOnly.cs
+LineNumber : 366
+Line : "webdomain.letsencrypt.txt",
+
+Path : C:\Users\User\Desktop\Wildcard-FormFixV2-20260913-123431-3573e4\source\Services\DeploymentSchemaFix.Wildca
+rdOnly.cs
+LineNumber : 425
+Line : phase = "повторная DNS-проверка в ISPmanager";
+
+Path : C:\Users\User\Desktop\Wildcard-FormFixV2-20260913-123431-3573e4\source\Services\DeploymentSchemaFix.Wildca
+rdOnly.cs
+LineNumber : 429
+Line : "webdomain.letsencrypt.txt",
+
+PS C:\Users\User\Desktop\Wildcard-FormFixV2-20260913-123431-3573e4>
+GPT-5.6 Sol
+GPT-5.6 Sol
+Навык активирован: page_content
+get_page_content
+Содержимое страницы
+get_page_content
+Содержимое страницы
+get_page_content
+Содержимое страницы
+get_page_content
+Содержимое страницы
+get_page_content
+Содержимое страницы
+get_page_content
+Содержимое страницы
+Размышление
+
+
+
+Понял задачу. Причина найдена: основной сценарий после создания Wildcard-заявки входит в цикл ожидания до 18 минут и сам вызывает webdomain.letsencrypt.txt. Это убираем.
+
+Новая логика:
+
+основная кнопка создаёт сайт, псевдонимы и Wildcard-заявку;
+не ждёт TXT и сразу переходит к следующему домену;
+отдельная кнопка «ПОВТОРНО ПРОВЕРИТЬ TXT В ISPMANAGER» обрабатывает домены из поля «Домены»;
+при повторной проверке используется ID заявки, возвращённый ISPmanager, а не имя домена — именно из-за этого раньше возникала ошибка поля txt;
+программа не создаёт повторную Wildcard-заявку.
+Закройте программу. В текущем PowerShell выполните весь блок целиком:
+
+& {
+    Set-StrictMode -Version Latest
+    $ErrorActionPreference = 'Stop'
+
+    function Replace-Once {
+        param(
+            [string] $Text,
+            [string] $Pattern,
+            [string] $Replacement,
+            [string] $Name
+        )
+
+        $matches = [regex]::Matches($Text, $Pattern)
+
+        if ($matches.Count -ne 1) {
+            throw (
+                'Участок "' + $Name +
+                '" найден ' + $matches.Count +
+                ' раз вместо одного.'
+            )
+        }
+
+        $match = $matches[0]
+
+        return (
+            $Text.Substring(0, $match.Index) +
+            $Replacement +
+            $Text.Substring($match.Index + $match.Length)
+        )
+    }
+
+    try {
+        Write-Host ''
+        Write-Host '=== ПРОВЕРКА ===' -ForegroundColor Cyan
+
+        if (
+            Get-Process `
+                -Name TextFileProcessor `
+                -ErrorAction SilentlyContinue
+        ) {
+            throw 'Закройте TextFileProcessor перед сборкой.'
+        }
+
+        if ($null -eq (Get-Command dotnet -ErrorAction SilentlyContinue)) {
+            throw 'Не найден .NET SDK.'
+        }
+
+        $base = (Get-Location).Path
+
+        if (
+            Test-Path `
+                -LiteralPath (Join-Path $base 'source\TextFileProcessor.csproj') `
+                -PathType Leaf
+        ) {
+            $source = Join-Path $base 'source'
+        }
+        elseif (
+            Test-Path `
+                -LiteralPath (Join-Path $base 'TextFileProcessor.csproj') `
+                -PathType Leaf
+        ) {
+            $source = $base
+        }
+        else {
+            throw (
+                'Не найден TextFileProcessor.csproj. ' +
+                'Откройте PowerShell в папке проекта.'
+            )
+        }
+
+        $wildcardRelative =
+            'Services\DeploymentSchemaFix.WildcardOnly.cs'
+
+        $wildcardSource = Join-Path $source $wildcardRelative
+        $build10Source = Join-Path $source 'MainWindow.Build10.cs'
+        $projectSource = Join-Path $source 'TextFileProcessor.csproj'
+
+        foreach ($path in @(
+            $wildcardSource
+            $build10Source
+            $projectSource
+        )) {
+            if (-not (Test-Path -LiteralPath $path -PathType Leaf)) {
+                throw ('Не найден файл: ' + $path)
+            }
+        }
+
+        $desktop = [Environment]::GetFolderPath(
+            [Environment+SpecialFolder]::Desktop
+        )
+
+        $stamp = Get-Date -Format 'yyyyMMdd-HHmmss'
+        $suffix = [Guid]::NewGuid().ToString('N').Substring(0, 8)
+
+        $work = Join-Path `
+            $desktop `
+            ('Wildcard-DeferredTxt-' + $stamp + '-' + $suffix)
+
+        $copy = Join-Path $work 'source'
+        $app = Join-Path $work 'APP'
+        $log = Join-Path $work 'build.log'
+
+        New-Item -ItemType Directory -Path $copy -Force |
+            Out-Null
+
+        Write-Host ('Исходный проект: ' + $source)
+        Write-Host ('Новая копия: ' + $copy)
+
+        & robocopy.exe `
+            $source `
+            $copy `
+            /E `
+            /XJ `
+            /R:1 `
+            /W:1 `
+            /XD bin obj .git .vs APP program `
+            /XF '*.user' '*.suo' `
+            /NFL `
+            /NDL `
+            /NJH `
+            /NJS `
+            /NP |
+            Out-Null
+
+        if ($LASTEXITCODE -ge 8) {
+            throw ('Ошибка robocopy: ' + $LASTEXITCODE)
+        }
+
+        $wildcardPath = Join-Path $copy $wildcardRelative
+        $build10Path = Join-Path $copy 'MainWindow.Build10.cs'
+        $projectPath = Join-Path $copy 'TextFileProcessor.csproj'
+
+        $utf8 = [Text.UTF8Encoding]::new($false)
+
+        # ------------------------------------------------------------
+        # 1. Основная очередь: не ждать DNS/TXT после создания заявки.
+        # ------------------------------------------------------------
+
+        Write-Host ''
+        Write-Host '=== ИЗМЕНЕНИЕ ОСНОВНОЙ ОЧЕРЕДИ ===' `
+            -ForegroundColor Cyan
+
+        $wildcard = [IO.File]::ReadAllText($wildcardPath)
+
+        if ($wildcard.Contains('WC4_DEFER_TXT_VERIFICATION')) {
+            throw 'Правка WC4 уже присутствует в исходнике.'
+        }
+
+        $pendingPattern = (
+            '(?ms)' +
+            '            if \(pending\.Count > 1\)\r?\n' +
+            '                throw new InvalidOperationException\(\r?\n' +
+            '                    "Найдено несколько незавершённых Wildcard-заявок\. " \+\r?\n' +
+            '                    "Автоматический выбор остановлен\."\);\r?\n' +
+            '            phase = "чтение сохранённых настроек Spaceship";\r?\n' +
+            '            dns = Wc2Dns\.Load\(\);\r?\n' +
+            '            phase = "проверка DNS перед выпуском";\r?\n' +
+            '            await dns\.Preflight\(domain, ct\);'
+        )
+
+        $pendingReplacement = @'
+            if (pending.Count > 1)
+                throw new InvalidOperationException(
+                    "Найдено несколько незавершённых Wildcard-заявок. " +
+                    "Автоматический выбор остановлен.");
+
+            // WC4_DEFER_TXT_VERIFICATION
+            // Ожидающая заявка не проверяется основной очередью.
+            // TXT обрабатываются отдельной кнопкой.
+            if (pending.Count == 1)
+                return Wc2Deferred(domain, alreadyPending: true);
+'@
+
+        $wildcard = Replace-Once `
+            -Text $wildcard `
+            -Pattern $pendingPattern `
+            -Replacement $pendingReplacement `
+            -Name 'отключение ожидания существующей заявки'
+
+        $waitingPattern = (
+            '(?ms)' +
+            '                await api\.Call\(\r?\n' +
+            '                    "letsencrypt\.generate",\r?\n' +
+            '                    fields,\r?\n' +
+            '                    ct\);\r?\n' +
+            '            \}\r?\n' +
+            '            // Все последующие действия продолжают серверную заявку\..*?' +
+            '            throw new TimeoutException\(\r?\n' +
+            '                "За отведённое время выпуск не подтверждён: " \+\r?\n' +
+            '                lastState \+ "\. Заявка не удалялась; следующий запуск " \+\r?\n' +
+            '                "сначала проверит её состояние\."\);'
+        )
+
+        $waitingReplacement = @'
+                await api.Call(
+                    "letsencrypt.generate",
+                    fields,
+                    ct);
+
+                // Заявка создана. Основная очередь не получает TXT,
+                // не ждёт распространения DNS и не запускает повторную
+                // проверку ISPmanager.
+                return Wc2Deferred(domain, alreadyPending: false);
+            }
+
+            throw new InvalidOperationException(
+                "Не удалось однозначно определить состояние " +
+                "Wildcard-заявки.");
+'@
+
+        $wildcard = Replace-Once `
+            -Text $wildcard `
+            -Pattern $waitingPattern `
+            -Replacement $waitingReplacement `
+            -Name '18-минутный цикл ожидания TXT'
+
+        $resultPattern = (
+            '(?m)^    private static IspmanagerOperationResult ' +
+            'Wc2Success\(string domain\) =>'
+        )
+
+        $resultReplacement = @'
+    private static IspmanagerOperationResult Wc2Deferred(
+        string domain,
+        bool alreadyPending) =>
+        new()
+        {
+            Success = true,
+            Message =
+                alreadyPending
+                    ? $"Сайт {domain} и псевдонимы проверены. " +
+                      "Wildcard-заявка уже ожидает TXT-проверки. " +
+                      "Основная очередь продолжает следующий домен."
+                    : $"Сайт {domain} и псевдонимы проверены. " +
+                      "Wildcard-заявка создана. TXT-проверка отложена " +
+                      "до нажатия отдельной кнопки. Основная очередь " +
+                      "продолжает следующий домен."
+        };
+
+    private static IspmanagerOperationResult Wc2Success(string domain) =>
+'@
+
+        $wildcard = Replace-Once `
+            -Text $wildcard `
+            -Pattern $resultPattern `
+            -Replacement $resultReplacement `
+            -Name 'результат отложенной TXT-проверки'
+
+        if (
+            $wildcard.Contains(
+                'var finishBy = DateTime.UtcNow.AddMinutes(18)'
+            )
+        ) {
+            throw 'Цикл ожидания 18 минут остался в файле.'
+        }
+
+        [IO.File]::WriteAllText(
+            $wildcardPath,
+            $wildcard,
+            $utf8
+        )
+
+        # ------------------------------------------------------------
+        # 2. Добавление отдельной кнопки повторной проверки TXT.
+        # ------------------------------------------------------------
+
+        Write-Host ''
+        Write-Host '=== ДОБАВЛЕНИЕ КНОПКИ TXT ===' `
+            -ForegroundColor Cyan
+
+        $build10 = [IO.File]::ReadAllText($build10Path)
+
+        if ($build10.Contains('WC4_RETRY_ISP_TXT')) {
+            throw 'Кнопка WC4 уже присутствует в исходнике.'
+        }
+
+        $fieldPattern = (
+            '(?m)^    private Button\? _build10SyncButton;$'
+        )
+
+        $fieldReplacement = @'
+    private Button? _build10SyncButton;
+
+    // WC4_RETRY_ISP_TXT
+    private Button? _build10RetryTxtButton;
+'@
+
+        $build10 = Replace-Once `
+            -Text $build10 `
+            -Pattern $fieldPattern `
+            -Replacement $fieldReplacement `
+            -Name 'поле новой кнопки'
+
+        $buttonPattern = (
+            '(?ms)' +
+            '        buttonPanel\.Children\.Add\(\r?\n' +
+            '            _build10SyncButton\);'
+        )
+
+        $buttonReplacement = @'
+        buttonPanel.Children.Add(
+            _build10SyncButton);
+
+        _build10RetryTxtButton = new Button
+        {
+            Content = "ПОВТОРНО ПРОВЕРИТЬ TXT В ISPMANAGER",
+            Width = 330,
+            Padding = new Thickness(12, 9, 12, 9),
+            Margin = new Thickness(0, 0, 10, 0),
+            FontWeight = FontWeights.Bold,
+            Foreground = Brushes.White,
+            Background = new SolidColorBrush(
+                Color.FromRgb(31, 92, 160))
+        };
+
+        _build10RetryTxtButton.Click +=
+            Build10RetryTxtButton_Click;
+
+        buttonPanel.Children.Add(
+            _build10RetryTxtButton);
+'@
+
+        $build10 = Replace-Once `
+            -Text $build10 `
+            -Pattern $buttonPattern `
+            -Replacement $buttonReplacement `
+            -Name 'размещение новой кнопки'
+
+        $methodMarker = @'
+    private List<string> Build10ReadDomains()
+'@
+
+        if (
+            $build10.IndexOf(
+                $methodMarker,
+                [StringComparison]::Ordinal
+            ) -lt 0
+        ) {
+            throw 'Не найдено место для обработчика новой кнопки.'
+        }
+
+        $retryMethods = @'
+    private async void Build10RetryTxtButton_Click(
+        object sender,
+        RoutedEventArgs eventArgs)
+    {
+        if (_isRunning)
+        {
+            MessageBox.Show(
+                this,
+                "Дождитесь завершения текущей операции.",
+                "Повторная проверка TXT",
+                MessageBoxButton.OK,
+                MessageBoxImage.Information);
+            return;
+        }
+
+        var confirmation = MessageBox.Show(
+            this,
+            "ISPmanager повторно проверит TXT-записи для доменов " +
+            "из основного поля «Домены».\n\n" +
+            "Новые сертификаты создаваться не будут. " +
+            "Команда отправляется только для уже существующих " +
+            "Wildcard-заявок.\n\nПродолжить?",
+            "Повторная проверка TXT",
+            MessageBoxButton.YesNo,
+            MessageBoxImage.Question);
+
+        if (confirmation != MessageBoxResult.Yes)
+            return;
+
+        _isRunning = true;
+
+        if (_build10RetryTxtButton is not null)
+            _build10RetryTxtButton.IsEnabled = false;
+
+        if (_build10SyncButton is not null)
+            _build10SyncButton.IsEnabled = false;
+
+        StartButton.IsEnabled = false;
+        CancelButton.IsEnabled = true;
+
+        _cancellationTokenSource =
+            new CancellationTokenSource();
+
+        try
+        {
+            var domains = Build10ReadDomains();
+
+            if (domains.Count == 0)
+                throw new InvalidOperationException(
+                    "В поле «Домены» не указаны домены.");
+
+            var ispUrl = IspmanagerUrlTextBox.Text.Trim();
+            var ispLogin = IspmanagerLoginTextBox.Text.Trim();
+            var ispPassword =
+                IspmanagerPasswordBox.Password;
+
+            if (!Uri.TryCreate(
+                    ispUrl,
+                    UriKind.Absolute,
+                    out var ispUri) ||
+                (ispUri.Scheme != Uri.UriSchemeHttps &&
+                 ispUri.Scheme != Uri.UriSchemeHttp))
+            {
+                throw new InvalidOperationException(
+                    "Укажите корректный адрес ISPmanager.");
+            }
+
+            if (ispLogin.Length == 0)
+                throw new InvalidOperationException(
+                    "Укажите логин ISPmanager.");
+
+            if (ispPassword.Length == 0)
+                throw new InvalidOperationException(
+                    "Введите пароль ISPmanager.");
+
+            var ct = _cancellationTokenSource.Token;
+
+            using var ispClient =
+                Build10CreateIspClient(
+                    IgnoreCertificateErrorsCheckBox
+                        .IsChecked == true);
+
+            SetBuild10Status(
+                1,
+                "Авторизация в ISPmanager...");
+
+            var sessionId =
+                await Build10AuthenticateIspAsync(
+                    ispClient,
+                    ispUrl,
+                    ispLogin,
+                    ispPassword,
+                    ct);
+
+            ispPassword = string.Empty;
+
+            var sent = 0;
+            var alreadyConfirmed = 0;
+            var failed = 0;
+
+            for (var index = 0;
+                 index < domains.Count;
+                 index++)
+            {
+                ct.ThrowIfCancellationRequested();
+
+                var domain = domains[index];
+
+                try
+                {
+                    SetBuild10Status(
+                        index * 100.0 / domains.Count,
+                        $"{domain}: чтение Wildcard-заявки...");
+
+                    var result =
+                        await Build10RetryIspTxtAsync(
+                            ispClient,
+                            ispUrl,
+                            sessionId,
+                            domain,
+                            ct);
+
+                    if (result)
+                    {
+                        alreadyConfirmed++;
+
+                        AddLog(
+                            "INFO",
+                            domain,
+                            "TXT уже подтверждены ISPmanager; " +
+                            "повторная команда не отправлялась.");
+                    }
+                    else
+                    {
+                        sent++;
+
+                        AddLog(
+                            "INFO",
+                            domain,
+                            "Команда повторной TXT-проверки " +
+                            "отправлена в ISPmanager.");
+                    }
+                }
+                catch (Exception exception)
+                {
+                    failed++;
+
+                    var safeMessage =
+                        SensitiveDataRedactor.Redact(
+                            exception.Message);
+
+                    AddLog(
+                        "ERROR",
+                        domain,
+                        "Повторная TXT-проверка: " +
+                        safeMessage);
+                }
+
+                SetBuild10Status(
+                    (index + 1) * 100.0 / domains.Count,
+                    $"{domain}: обработка завершена. " +
+                    $"Отправлено: {sent}; " +
+                    $"уже подтверждено: {alreadyConfirmed}; " +
+                    $"ошибок: {failed}.");
+            }
+
+            var finalMessage =
+                "Повторная проверка TXT завершена. " +
+                $"Команд отправлено: {sent}; " +
+                $"уже подтверждено: {alreadyConfirmed}; " +
+                $"ошибок: {failed}.";
+
+            SetBuild10Status(100, finalMessage);
+            SetStatus(finalMessage);
+
+            AddLog(
+                failed == 0 ? "INFO" : "WARN",
+                string.Empty,
+                finalMessage);
+
+            MessageBox.Show(
+                this,
+                finalMessage,
+                "Повторная проверка TXT",
+                MessageBoxButton.OK,
+                failed == 0
+                    ? MessageBoxImage.Information
+                    : MessageBoxImage.Warning);
+        }
+        catch (OperationCanceledException)
+        {
+            const string message =
+                "Повторная TXT-проверка остановлена пользователем.";
+
+            SetBuild10Status(
+                _build10ProgressBar?.Value ?? 0,
+                message);
+
+            AddLog(
+                "WARN",
+                string.Empty,
+                message);
+        }
+        catch (Exception exception)
+        {
+            var safeMessage =
+                SensitiveDataRedactor.Redact(
+                    exception.Message);
+
+            SetBuild10Status(
+                _build10ProgressBar?.Value ?? 0,
+                safeMessage);
+
+            AddLog(
+                "ERROR",
+                string.Empty,
+                safeMessage);
+
+            MessageBox.Show(
+                this,
+                safeMessage,
+                "Ошибка повторной TXT-проверки",
+                MessageBoxButton.OK,
+                MessageBoxImage.Error);
+        }
+        finally
+        {
+            _cancellationTokenSource?.Dispose();
+            _cancellationTokenSource = null;
+            _isRunning = false;
+
+            if (_build10RetryTxtButton is not null)
+                _build10RetryTxtButton.IsEnabled = true;
+
+            if (_build10SyncButton is not null)
+                _build10SyncButton.IsEnabled = true;
+
+            StartButton.IsEnabled = true;
+            CancelButton.IsEnabled = false;
+        }
+    }
+
+    private static async Task<bool>
+        Build10RetryIspTxtAsync(
+            HttpClient client,
+            string panelUrl,
+            string sessionId,
+            string domain,
+            CancellationToken cancellationToken)
+    {
+        var openFields =
+            new Dictionary<string, string>
+            {
+                ["out"] = "devel",
+                ["lang"] = "ru",
+                ["auth"] = sessionId,
+                ["func"] = "webdomain.letsencrypt.txt",
+                ["elid"] = domain,
+                ["elname"] = domain
+            };
+
+        var form =
+            await Build10PostIspAsync(
+                client,
+                Build10NormalizeIspUrl(panelUrl),
+                openFields,
+                cancellationToken);
+
+        var alreadyFound =
+            form.Descendants().Any(element =>
+                string.Equals(
+                    element.Name.LocalName,
+                    "field",
+                    StringComparison.OrdinalIgnoreCase) &&
+                string.Equals(
+                    element.Attribute("name")?.Value,
+                    "txt_found_banner",
+                    StringComparison.OrdinalIgnoreCase));
+
+        if (alreadyFound)
+            return true;
+
+        // Важно: отправлять нужно идентификатор заявки,
+        // возвращённый формой, например owner%#%domain_le1.
+        // Передача самого домена приводила к ошибке поля txt.
+        var requestId =
+            form.Root?
+                .Elements()
+                .FirstOrDefault(element =>
+                    string.Equals(
+                        element.Name.LocalName,
+                        "elid",
+                        StringComparison.OrdinalIgnoreCase))
+                ?.Value
+                .Trim() ?? string.Empty;
+
+        if (requestId.Length == 0 ||
+            requestId.Length > 512 ||
+            requestId.Any(char.IsControl) ||
+            !requestId.Contains(
+                "%#%",
+                StringComparison.Ordinal))
+        {
+            throw new InvalidOperationException(
+                "ISPmanager не вернул допустимый идентификатор " +
+                "Wildcard-заявки. Повторная команда не отправлена.");
+        }
+
+        var submitFields =
+            new Dictionary<string, string>
+            {
+                ["out"] = "xml",
+                ["lang"] = "ru",
+                ["auth"] = sessionId,
+                ["func"] = "webdomain.letsencrypt.txt",
+                ["elid"] = requestId,
+                ["elname"] = domain,
+                ["tconvert"] = "punycode",
+                ["sok"] = "ok"
+            };
+
+        await Build10PostIspAsync(
+            client,
+            Build10NormalizeIspUrl(panelUrl),
+            submitFields,
+            cancellationToken);
+
+        // false означает: команда отправлена.
+        // Выпуск сертификата остаётся асинхронной задачей ISPmanager.
+        return false;
+    }
+
+'@
+
+        $build10 = $build10.Replace(
+            $methodMarker,
+            $retryMethods + $methodMarker
+        )
+
+        [IO.File]::WriteAllText(
+            $build10Path,
+            $build10,
+            $utf8
+        )
+
+        # ------------------------------------------------------------
+        # 3. Контроль изменений.
+        # ------------------------------------------------------------
+
+        $wildcardCheck =
+            [IO.File]::ReadAllText($wildcardPath)
+
+        $build10Check =
+            [IO.File]::ReadAllText($build10Path)
+
+        if (
+            -not $wildcardCheck.Contains(
+                'WC4_DEFER_TXT_VERIFICATION'
+            )
+        ) {
+            throw 'Не появилась метка основной правки WC4.'
+        }
+
+        if (
+            -not $build10Check.Contains(
+                'WC4_RETRY_ISP_TXT'
+            )
+        ) {
+            throw 'Не появилась метка кнопки WC4.'
+        }
+
+        if (
+            $wildcardCheck.Contains(
+                'phase = "повторная DNS-проверка в ISPmanager"'
+            )
+        ) {
+            throw (
+                'Основной сценарий всё ещё содержит ' +
+                'автоматическую повторную TXT-проверку.'
+            )
+        }
+
+        # ------------------------------------------------------------
+        # 4. Сборка.
+        # ------------------------------------------------------------
+
+        Write-Host ''
+        Write-Host '=== СБОРКА ===' -ForegroundColor Cyan
+        Write-Host 'Программа этим скриптом не запускается.'
+        Write-Host 'Запросы в ISPmanager не отправляются.'
+
+        $publishArguments = @(
+            'publish'
+            $projectPath
+            '--configuration'
+            'Release'
+            '--runtime'
+            'win-x64'
+            '--self-contained'
+            'true'
+            '--output'
+            $app
+            '--nologo'
+            '-p:Version=1.0.4'
+            '-p:InformationalVersion=Wildcard-DeferredTxt-WC4'
+            '-p:UseSharedCompilation=false'
+        )
+
+        & dotnet @publishArguments 2>&1 |
+            Tee-Object -FilePath $log |
+            Out-Host
+
+        $exitCode = $LASTEXITCODE
+
+        if ($exitCode -ne 0) {
+            throw (
+                'dotnet publish завершился с кодом ' +
+                $exitCode +
+                '. Журнал: ' +
+                $log
+            )
+        }
+
+        $exe = Join-Path $app 'TextFileProcessor.exe'
+
+        if (-not (Test-Path -LiteralPath $exe -PathType Leaf)) {
+            throw ('Собранный EXE не найден: ' + $exe)
+        }
+
+        $hash = (
+            Get-FileHash `
+                -LiteralPath $exe `
+                -Algorithm SHA256
+        ).Hash
+
+        @(
+            'Build: Wildcard-DeferredTxt-WC4'
+            ('Created: ' + (Get-Date -Format 'yyyy-MM-dd HH:mm:ss'))
+            ('Source copy: ' + $copy)
+            ('EXE: ' + $exe)
+            ('SHA256: ' + $hash)
+            'Automatic TXT waiting in deployment queue: disabled'
+            'Separate ISPmanager TXT retry button: enabled'
+            'Program started by build script: no'
+            'ISPmanager requests sent by build script: no'
+        ) |
+            Set-Content `
+                -LiteralPath (Join-Path $work 'BUILD-INFO.txt') `
+                -Encoding UTF8
+
+        Write-Host ''
+        Write-Host '=== СБОРКА ЗАВЕРШЕНА ===' `
+            -ForegroundColor Green
+        Write-Host ('EXE: ' + $exe)
+        Write-Host ('SHA256: ' + $hash)
+        Write-Host ''
+        Write-Host (
+            'Основная очередь больше не ждёт TXT.'
+        )
+        Write-Host (
+            'Добавлена отдельная кнопка повторной проверки TXT.'
+        )
+        Write-Host (
+            'Исходная папка не изменена.'
+        )
+        Write-Host (
+            'EXE и запросы ISPmanager скриптом не запускались.'
+        )
+
+        Start-Process `
+            -FilePath explorer.exe `
+            -ArgumentList ('"' + $app + '"')
+    }
+    catch {
+        Write-Host ''
+        Write-Host (
+            'ОСТАНОВЛЕНО: ' + $_.Exception.Message
+        ) -ForegroundColor Red
+        Write-Host 'Исходный проект не изменён.'
+        Write-Host (
+            'При ошибке не запускайте промежуточный EXE.'
+        )
+    }
+}
+
+После успешной сборки:
+
+Запустите новый APP\TextFileProcessor.exe.
+Основной кнопкой обработайте выбранные домены — после создания заявки программа должна сразу переходить к следующему.
+На этапе TXT откройте вкладку «ACME TXT → Spaceship».
+Сначала используйте существующую кнопку размещения TXT.
+После распространения записей нажмите новую кнопку «ПОВТОРНО ПРОВЕРИТЬ TXT В ISPMANAGER».
+Для casino723.cfd не запускайте основное создание повторно: заявка уже существует. Используйте только TXT-вкладку и новую кнопку повторной проверки.
