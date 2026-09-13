@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
@@ -386,7 +386,12 @@ internal static partial class DeploymentSchemaFix
 
                     allowedIds.Remove("");
 
-                    if (!allowedIds.Contains(returnedId))
+                    // LOCAL_TXT_ELID_DOMAIN_FIX_1
+                    if (!allowedIds.Contains(returnedId) &&
+                        !string.Equals(
+                            returnedId,
+                            domain,
+                            StringComparison.OrdinalIgnoreCase))
                         throw new InvalidOperationException(
                             "Форма TXT относится не к ожидаемой заявке. " +
                             "DNS не изменён.");

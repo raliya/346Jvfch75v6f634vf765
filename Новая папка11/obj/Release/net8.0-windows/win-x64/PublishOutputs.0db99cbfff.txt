@@ -1,0 +1,2 @@
+C:\Users\User\Desktop\Wildcard-CompleteSource-20260913-153604-1504e2\app\TextFileProcessor.pdb
+C:\Users\User\Desktop\Wildcard-CompleteSource-20260913-153604-1504e2\app\TextFileProcessor.exe
