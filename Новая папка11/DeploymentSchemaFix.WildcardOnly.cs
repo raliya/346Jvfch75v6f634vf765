@@ -103,7 +103,7 @@ internal static partial class DeploymentSchemaFix
         var key = Convert.ToHexString(SHA256.HashData(
             Encoding.UTF8.GetBytes(panel + "\n" + owner + "\n" + domain)));
 
-        var attemptFile = Path.Combine(directory, key + ".wc2-attempt");
+        var attemptFile = Path.Combine(directory, key + ".wc6-unique-certname-attempt");
 
         // Межпроцессная блокировка. Сам файл может оставаться после выхода.
         using var gate = new FileStream(
@@ -143,13 +143,25 @@ internal static partial class DeploymentSchemaFix
                     "Найдено несколько незавершённых Wildcard-заявок. " +
                     "Автоматический выбор остановлен.");
 
-            phase = "чтение сохранённых настроек Spaceship";
-            dns = Wc2Dns.Load();
+            // FINAL_ISPMANAGER_WILDCARD_FORM_V1
+ //
+ // Существующая заявка не создаётся повторно.
+ // TXT подтверждаются отдельной кнопкой.
+ if (pending.Count == 1)
+ {
+ return Wc2Deferred(
+ domain,
+ alreadyPending: true);
+ }
 
-            phase = "проверка DNS перед выпуском";
-            await dns.Preflight(domain, ct);
+ // Доступ к DNS проверяется только перед созданием
+ // совершенно новой Wildcard-заявки.
+ phase = "чтение сохранённых настроек Spaceship";
+ dns = Wc2Dns.Load();
 
-            if (pending.Count == 0)
+ phase = "проверка DNS перед выпуском";
+ await dns.Preflight(domain, ct);
+ if (pending.Count == 0)
             {
                 // Новый маркер этой версии означает, что запрос уже мог
                 // быть принят. Сначала необходимо обнаружить его в панели.
@@ -176,286 +188,198 @@ internal static partial class DeploymentSchemaFix
                     // Отсутствие подходящего сертификата уже проверено в панели.
                 }
 
-                var names = certificates
-                    .SelectMany(row => new[]
-                    {
-                        Wc2CertKey(row), Wc2Field(row, "name")
-                    })
-                    .ToHashSet(StringComparer.Ordinal);
+        // WILDCARD_UNIQUE_CERTNAME_V6
+        //
+        // ISPmanager может скрывать некоторые сертификаты и заявки
+        // из результата списка. Поэтому последовательные имена
+        // domain_le1, domain_le2 и т. п. ненадёжны.
+        //
+        // Используем новое имя с UTC-временем и случайным суффиксом.
+        // Вероятность совпадения с существующим crtname практически
+        // исключена.
+        var certificateSuffix =
+            DateTime.UtcNow.ToString(
+                "yyyyMMddHHmmss",
+                CultureInfo.InvariantCulture) +
+            "_" +
+            Convert.ToHexString(
+                RandomNumberGenerator.GetBytes(6))
+                .ToLowerInvariant();
 
-                string certificateName = "";
-                for (int number = 1; number <= 999; number++)
-                {
-                    var candidate = domain + "_le" +
-                        number.ToString(CultureInfo.InvariantCulture);
+        var certificateName =
+            domain + "_le_" + certificateSuffix;
 
-                    if (!names.Contains(candidate) &&
-                        !names.Contains(owner + "%#%" + candidate))
-                    {
-                        certificateName = candidate;
-                        break;
-                    }
-                }
-
-                if (certificateName.Length == 0)
-                    throw new InvalidOperationException(
-                        "Не найдено свободное имя сертификата.");
-
-                // STAGE1_WILDCARD_FORM_FIX_V1
-                phase = "получение формы выпуска";
-
-                // crtname — сертификат, name — отдельный CSR.
-                // Не используем автоматически подставленное имя CSR.
-                var csrName = certificateName + "_csr";
-
-                if (names.Contains(csrName) ||
-                    names.Contains(owner + "%#%" + csrName))
-                {
-                    throw new InvalidOperationException(
-                        "Имя CSR уже присутствует в полученном списке: " +
-                        csrName + ". Новая заявка не отправлена.");
-                }
-
-                // Документированные параметры letsencrypt.generate.
-                // aliases относится к сайту и здесь не используется.
-                var request = new Dictionary<string, string>(
-                    StringComparer.Ordinal)
-                {
-                    ["out"] = "devel",
-                    ["lang"] = "en",
-                    ["username"] = owner,
-                    ["domain_name"] = domain,
-                    ["domain"] = domain + " *." + domain,
-                    ["crtname"] = certificateName,
-                    ["name"] = csrName,
-                    ["email"] = "webmaster@" + domain,
-                    ["keylen"] = "2048",
-                    ["wildcard"] = "on",
-                    ["dns_check"] = "on",
-
-                    // DNS-01 подтверждает TXT, а не A-запись сайта.
-                    // Саму DNS-01 проверку не отключаем.
-                    ["skip_check_a_record"] = "on",
-                    ["enable_cert"] = "on"
-                };
-
-                // Получаем форму без sok=ok.
-                var form = await api.Call(
-                    "letsencrypt.generate", request, ct);
-
-                RequireForm(form, "letsencrypt.generate");
-                RequireControls(
-                    form, "domain", "crtname", "wildcard", "dns_check");
-
-                // STAGE1_WILDCARD_FORM_FIX_V2
-                // name передаётся явно как документированный параметр API.
-                // Наличие отдельного поля name в UI-форме не требуется.
-
-                var returnedOwner = Value(form, "username").Trim();
-                if (returnedOwner.Length > 0 &&
-                    !string.Equals(
-                        returnedOwner, owner, StringComparison.Ordinal))
-                {
-                    throw new InvalidOperationException(
-                        "Форма выпуска вернула другого владельца. " +
-                        "Заявка не отправлена.");
-                }
-
-                // Не копируем FormValues(form): возвращённые служебные
-                // значения не должны подменять параметры новой заявки.
-                var fields = new Dictionary<string, string>(
-                    request, StringComparer.Ordinal)
-                {
-                    ["out"] = "xml",
-                    ["sok"] = "ok"
-                };
-
-                var requestedDomains = SplitValues(fields["domain"])
-                    .ToHashSet(StringComparer.OrdinalIgnoreCase);
-
-                if (requestedDomains.Count != 2 ||
-                    !requestedDomains.Contains(domain) ||
-                    !requestedDomains.Contains("*." + domain) ||
-                    fields["name"] == fields["crtname"])
-                {
-                    throw new InvalidOperationException(
-                        "Некорректные параметры Wildcard-заявки. " +
-                        "Отправка остановлена.");
-                }
-
-                ct.ThrowIfCancellationRequested();
-
-                using (var stateStream = new FileStream(
-                    attemptFile,
-                    FileMode.CreateNew,
-                    FileAccess.Write,
-                    FileShare.None))
-                {
-                    var bytes = Encoding.UTF8.GetBytes(
-                        "outcome-unknown\n" + certificateName);
-                    stateStream.Write(bytes);
-                    stateStream.Flush(true);
-                }
-
-                phase = "отправка заявки Wildcard";
-                await api.Call("letsencrypt.generate", fields, ct);
-            }
-
-            // Все последующие действия продолжают серверную заявку.
-            // Повторный letsencrypt.generate в этом цикле не отправляется.
-            var finishBy = DateTime.UtcNow.AddMinutes(18);
-            string lastTxtSet = "";
-            bool retriedForCurrentSet = false;
-            string lastState = "ожидание появления заявки";
-
-            while (DateTime.UtcNow < finishBy)
-            {
-                ct.ThrowIfCancellationRequested();
-
-                phase = "проверка состояния выпуска";
-                certificates = await Wc2Certificates(api, owner, ct);
-
-                ready = certificates
-                    .Where(row => Wc2Ready(row, domain))
-                    .OrderByDescending(row => Wc2Field(row, "valid_after"))
-                    .FirstOrDefault();
-
-                if (ready is not null)
-                {
-                    phase = "назначение Wildcard и проверка HTTPS";
-                    await Wc2AttachAndVerify(
-                        api, ready, domain, owner, ct);
-
-                    return Wc2Success(domain);
-                }
-
-                pending = certificates
-                    .Where(row => Wc2Covers(row, domain) && Wc2Pending(row))
-                    .ToList();
-
-                if (pending.Count > 1)
-                    throw new InvalidOperationException(
-                        "Обнаружено несколько ожидающих Wildcard-заявок.");
-
-                if (pending.Count == 0)
-                {
-                    if (certificates.Any(row =>
-                        Wc2Covers(row, domain) &&
-                        Wc2Field(row, "letsencrypt_failed") == "on"))
-                        throw new InvalidOperationException(
-                            "ISPmanager сообщил letsencrypt_failed. " +
-                            "Нужен текст ошибки этой заявки в панели. " +
-                            "Повторный выпуск автоматически не запускался.");
-
-                    lastState = "заявка пока не появилась в списке";
-                    await Task.Delay(TimeSpan.FromSeconds(15), ct);
-                    continue;
-                }
-
-                var current = pending[0];
-
-                if (Wc2Field(current, "letsencrypt_failed") == "on")
-                    throw new InvalidOperationException(
-                        "ISPmanager сообщил ошибку текущей заявки.");
-
-                if (Wc2Field(current, "letsencrypt_txt") == "on")
-                {
-                    phase = "получение актуальных ACME TXT";
-
-                    var form = await api.Call(
-                        "webdomain.letsencrypt.txt",
-                        new Dictionary<string, string>
-                        {
-                            ["out"] = "devel",
-                            ["lang"] = "en",
-                            ["elid"] = domain
-                        }, ct);
-
-                    var returnedId = Value(form, "elid").Trim();
-                    var certKey = Wc2CertKey(current);
-                    var certName = Wc2Field(current, "name");
-
-                    var allowedIds = new HashSet<string>(
-                        StringComparer.Ordinal)
-                    {
-                        certKey,
-                        certName,
-                        owner + "%#%" + certKey,
-                        owner + "%#%" + certName
-                    };
-
-                    allowedIds.Remove("");
-
-                    if (!allowedIds.Contains(returnedId))
-                        throw new InvalidOperationException(
-                            "Форма TXT относится не к ожидаемой заявке. " +
-                            "DNS не изменён.");
-
-                    var records = Wc2ReadTxt(form, domain);
-
-                    if (records.Count > 0)
-                    {
-                        var signature = string.Join("\n",
-                            records
-                                .Select(r => r.Name + "=" + r.Content)
-                                .OrderBy(x => x, StringComparer.Ordinal));
-
-                        if (signature != lastTxtSet)
-                        {
-                            phase = "публикация ACME TXT в Spaceship";
-                            await dns.Ensure(domain, records, ct);
-
-                            lastTxtSet = signature;
-                            retriedForCurrentSet = false;
-                        }
-
-                        phase = "ожидание TXT в публичном DNS";
-
-                        if (!await dns.PublicTxtPresent(domain, records, ct))
-                        {
-                            lastState = "TXT сохранены, ожидается публичный DNS";
-                            await Task.Delay(TimeSpan.FromSeconds(15), ct);
-                            continue;
-                        }
-
-                        if (!retriedForCurrentSet)
-                        {
-                            // Используется тот же обработчик сайта,
-                            // из которого была прочитана форма TXT.
-                            phase = "повторная DNS-проверка в ISPmanager";
-                            retriedForCurrentSet = true;
-
-                            await api.Call(
-                                "webdomain.letsencrypt.txt",
-                                new Dictionary<string, string>
-                                {
-                                    ["out"] = "xml",
-                                    ["elid"] = domain,
-                                    ["sok"] = "ok"
-                                }, ct);
-                        }
-
-                        lastState = "TXT видны; ISPmanager проверяет заявку";
-                    }
-                    else
-                    {
-                        lastState = "ISPmanager подтвердил TXT; ожидается выпуск";
-                    }
-                }
-                else
-                {
-                    lastState = "ISPmanager выполняет выпуск сертификата";
-                }
-
-                await Task.Delay(TimeSpan.FromSeconds(15), ct);
-            }
-
-            throw new TimeoutException(
-                "За отведённое время выпуск не подтверждён: " +
-                lastState + ". Заявка не удалялась; следующий запуск " +
-                "сначала проверит её состояние.");
+        if (certificateName.Length > 250)
+        {
+            throw new InvalidOperationException(
+                "Домен слишком длинный для формирования " +
+                "уникального имени сертификата.");
         }
-        catch (OperationCanceledException)
+
+        // WILDCARD_DOCUMENTED_API_FLOW_V5
+        //
+        // Шаг 1: открывается окно letsencrypt.generate с теми же
+        // параметрами, которые находятся в URL окна ISPmanager:
+        //
+        // aliases=www.domain *.domain
+        // domain_name=domain
+        // from_webdomain=on
+        //
+        // Шаг 2: отправляется документированный API-запрос
+        // letsencrypt.generate с wildcard=on и sok=ok.
+        phase = "открытие окна выпуска Wildcard";
+
+        var aliasesValue =
+            "www." + domain + " *." + domain;
+
+        var openFields =
+            new Dictionary<string, string>(
+                StringComparer.Ordinal)
+            {
+                ["out"] = "devel",
+                ["lang"] = "ru",
+                ["tconvert"] = "punycode",
+                ["aliases"] = aliasesValue,
+                ["crtname"] = certificateName,
+                ["domain_name"] = domain,
+                ["email"] = "webmaster@" + domain,
+                ["from_webdomain"] = "on",
+                ["username"] = owner
+            };
+
+        var form = await api.Call(
+            "letsencrypt.generate",
+            openFields,
+            ct);
+
+        RequireForm(
+            form,
+            "letsencrypt.generate");
+
+        // aliases является параметром открытия окна ISPmanager.
+        // Панель может не возвращать его как элемент XML-формы,
+        // поэтому RequireControls для aliases здесь отсутствует.
+
+        var returnedDomain =
+            Value(form, "domain_name")
+                .Trim()
+                .TrimEnd('.');
+
+        if (returnedDomain.Length > 0 &&
+            !SameDomain(returnedDomain, domain))
+        {
+            throw new InvalidOperationException(
+                "ISPmanager открыл форму другого домена. " +
+                "Wildcard-заявка не отправлена.");
+        }
+
+        var returnedOwner =
+            Value(form, "username").Trim();
+
+        if (returnedOwner.Length > 0 &&
+            !string.Equals(
+                returnedOwner,
+                owner,
+                StringComparison.Ordinal))
+        {
+            throw new InvalidOperationException(
+                "ISPmanager открыл форму другого владельца. " +
+                "Wildcard-заявка не отправлена.");
+        }
+
+        // Скрытые служебные значения сохраняются, но параметры
+        // выпуска ниже задаются явно по документации ISPmanager.
+        var fields =
+            FormValues(
+                form,
+                includeHidden: true);
+
+        // domain — документированный список имён сертификата.
+        // Включаем основной домен, www и Wildcard.
+        var protectedNames =
+            domain + " www." + domain + " *." + domain;
+
+        fields["out"] = "xml";
+        fields["lang"] = "ru";
+        fields["sok"] = "ok";
+        fields["tconvert"] = "punycode";
+
+        fields["domain_name"] = domain;
+        fields["domain"] = protectedNames;
+        fields["aliases"] = aliasesValue;
+
+        fields["email"] = "webmaster@" + domain;
+        fields["crtname"] = certificateName;
+        fields["name"] = certificateName + "_csr";
+        fields["username"] = owner;
+
+        fields["keylen"] = "2048";
+        fields["wildcard"] = "on";
+        fields["dns_check"] = "on";
+        fields["skip_check_a_record"] = "on";
+        fields["enable_cert"] = "on";
+        fields["from_webdomain"] = "on";
+
+        var requestedNames =
+            SplitValues(fields["domain"])
+                .Select(value => value.TrimEnd('.'))
+                .ToHashSet(
+                    StringComparer.OrdinalIgnoreCase);
+
+        if (!requestedNames.Contains(domain) ||
+            !requestedNames.Contains("www." + domain) ||
+            !requestedNames.Contains("*." + domain) ||
+            fields["wildcard"] != "on" ||
+            fields["dns_check"] != "on" ||
+            fields["skip_check_a_record"] != "on" ||
+            fields["enable_cert"] != "on" ||
+            fields["sok"] != "ok")
+        {
+            throw new InvalidOperationException(
+                "Не удалось сформировать документированные " +
+                "параметры Wildcard-заявки.");
+        }
+
+        ct.ThrowIfCancellationRequested();
+
+        // Маркер создаётся перед единственным изменяющим запросом,
+        // чтобы не выпустить второй сертификат после сетевой ошибки.
+        using (var stateStream = new FileStream(
+            attemptFile,
+            FileMode.CreateNew,
+            FileAccess.Write,
+            FileShare.None))
+        {
+            var stateBytes =
+                Encoding.UTF8.GetBytes(
+                    "outcome-unknown\n" +
+                    certificateName);
+
+            stateStream.Write(stateBytes);
+            stateStream.Flush(true);
+        }
+
+        phase =
+            "нажатие «Выпустить» в окне Wildcard";
+
+        // sok=ok соответствует кнопке «Выпустить».
+        await api.Call(
+            "letsencrypt.generate",
+            fields,
+            ct);
+
+ // Заявка отправлена один раз. Основная очередь
+ // не ждёт TXT и не отправляет повторную заявку.
+ return Wc2Deferred(
+ domain,
+ alreadyPending: false);
+            }
+
+            // pending.Count может быть только 0 или 1:
+ // обе ветки завершились выше.
+ throw new InvalidOperationException(
+ "Не удалось определить состояние Wildcard-заявки.");
+ } catch (OperationCanceledException)
         {
             throw;
         }
@@ -470,7 +394,24 @@ internal static partial class DeploymentSchemaFix
         }
     }
 
-    private static IspmanagerOperationResult Wc2Success(string domain) =>
+    private static IspmanagerOperationResult Wc2Deferred(
+ string domain,
+ bool alreadyPending) =>
+ new()
+ {
+ Success = true,
+ Message =
+ alreadyPending
+ ? $"Сайт {domain} и псевдонимы проверены. " +
+ "Wildcard-заявка уже ожидает TXT. " +
+ "Разместите TXT и нажмите кнопку " +
+ "«ПОВТОРНО ПРОВЕРИТЬ TXT В ISPMANAGER»."
+ : $"Сайт {domain} и псевдонимы проверены. " +
+ "Wildcard-заявка создана с выбранной галочкой " +
+ "Wildcard. Разместите TXT и нажмите кнопку " +
+ "«ПОВТОРНО ПРОВЕРИТЬ TXT В ISPMANAGER»."
+ };
+ private static IspmanagerOperationResult Wc2Success(string domain) =>
         new()
         {
             Success = true,
