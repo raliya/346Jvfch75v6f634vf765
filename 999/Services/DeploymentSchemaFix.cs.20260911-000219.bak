@@ -1,0 +1,671 @@
+using System.Net.Http;
+using System.Security.Cryptography;
+using System.Text;
+using System.Xml.Linq;
+using TextFileProcessor.Models;
+using static TextFileProcessor.Services.IspmanagerAutomationService;
+
+namespace TextFileProcessor.Services;
+
+internal static class DeploymentSchemaFix
+{
+    private static readonly SemaphoreSlim SiteGate = new(1, 1);
+    private static readonly SemaphoreSlim DatabaseGate = new(1, 1);
+
+    private sealed class Api : IDisposable
+    {
+        private readonly HttpClient client;
+        private readonly IspmanagerSettings settings;
+        private readonly string session;
+        private readonly string password;
+
+        private Api(
+            HttpClient client,
+            IspmanagerSettings settings,
+            string session,
+            string password)
+        {
+            this.client = client;
+            this.settings = settings;
+            this.session = session;
+            this.password = password;
+        }
+
+        internal static async Task<Api> Open(
+            IspmanagerSettings settings,
+            string password,
+            CancellationToken ct)
+        {
+            if (string.IsNullOrWhiteSpace(settings.Login) ||
+                string.IsNullOrWhiteSpace(settings.Owner) ||
+                string.IsNullOrEmpty(password))
+            {
+                throw new InvalidOperationException(
+                    "Заполните логин, владельца и пароль ISPmanager.");
+            }
+
+            var client = CreateClient(settings);
+            try
+            {
+                var session = await AuthenticateAsync(
+                    client, settings, password, ct);
+                return new Api(client, settings, session, password);
+            }
+            catch
+            {
+                client.Dispose();
+                throw;
+            }
+        }
+
+        internal async Task<XDocument> Call(
+            string function,
+            Dictionary<string, string>? parameters,
+            CancellationToken ct)
+        {
+            var result = await CallAsync(
+                client, settings, session, function, parameters, ct);
+
+            if (!result.Success)
+            {
+                var error = result.Document?
+                    .Descendants()
+                    .FirstOrDefault(x => x.Name.LocalName == "error");
+
+                var type = error?.Attribute("type")?.Value
+                    ?? result.ErrorCode;
+                var field = error?.Attribute("object")?.Value ?? "";
+
+                // Не выводим параметры запроса, пароли или полный XML.
+                var message =
+                    $"ISPmanager: функция {function}; ошибка {type}; поле {field}.";
+
+                foreach (var secret in new[] { password, session })
+                {
+                    if (!string.IsNullOrEmpty(secret))
+                        message = message.Replace(
+                            secret, "[СКРЫТО]", StringComparison.Ordinal);
+                }
+
+                throw new InvalidOperationException(message);
+            }
+
+            if (result.Document?.Root?.Name.LocalName != "doc")
+            {
+                throw new InvalidOperationException(
+                    $"ISPmanager: {function} не вернула XML-документ doc.");
+            }
+
+            return result.Document;
+        }
+
+        public void Dispose() => client.Dispose();
+    }
+
+    private sealed record SiteInfo(string Id, XDocument Form);
+
+    private static string Value(XDocument doc, string name) =>
+        doc.Root?.Element(name)?.Value ?? "";
+
+    private static HashSet<string> Options(XDocument doc, string name) =>
+        (doc.Root?.Elements("slist")
+            .Where(x => (string?)x.Attribute("name") == name)
+            .Elements("val")
+            .Select(x => (string?)x.Attribute("key") ?? "")
+            ?? Enumerable.Empty<string>())
+        .ToHashSet(StringComparer.Ordinal);
+
+    private static HashSet<string> Controls(XDocument doc) =>
+        (doc.Root?.Element("metadata")?
+            .Descendants()
+            .Where(x => x.Name.LocalName is "input" or "select" or "textarea")
+            .Select(x => (string?)x.Attribute("name") ?? "")
+            .Where(x => x.Length > 0)
+            ?? Enumerable.Empty<string>())
+        .ToHashSet(StringComparer.Ordinal);
+
+    private static Dictionary<string, string> FormValues(XDocument doc)
+    {
+        var fields = new Dictionary<string, string>(StringComparer.Ordinal);
+
+        foreach (var name in Controls(doc))
+        {
+            if (name.Contains("pass", StringComparison.OrdinalIgnoreCase) ||
+                name.Contains("confirm", StringComparison.OrdinalIgnoreCase))
+                continue;
+
+            var element = doc.Root?.Element(name);
+            if (element is not null)
+                fields[name] = element.Value;
+        }
+
+        return fields;
+    }
+
+    private static void RequireControls(XDocument doc, params string[] names)
+    {
+        var controls = Controls(doc);
+        var missing = names.Where(x => !controls.Contains(x)).ToArray();
+
+        if (missing.Length != 0)
+        {
+            throw new InvalidOperationException(
+                "Форма панели не содержит ожидаемые поля: " +
+                string.Join(", ", missing) +
+                ". Сохранение этой формы не выполнялось.");
+        }
+    }
+
+    private static void RequireChoice(
+        XDocument doc, string field, string expected)
+    {
+        var options = Options(doc, field);
+
+        // При фиксированном поле slist может отсутствовать:
+        // тогда проверяем реально возвращённое значение.
+        var accepted = options.Count > 0
+            ? options.Contains(expected)
+            : string.Equals(
+                Value(doc, field), expected, StringComparison.Ordinal);
+
+        if (!accepted)
+        {
+            throw new InvalidOperationException(
+                $"Панель не подтвердила значение поля {field}: {expected}.");
+        }
+    }
+
+    private static bool SameDomain(string left, string right) =>
+        string.Equals(
+            left.Trim().TrimEnd('.'),
+            right.Trim().TrimEnd('.'),
+            StringComparison.OrdinalIgnoreCase);
+
+    private static HashSet<string> Aliases(XDocument form) =>
+        Value(form, "site_aliases")
+            .Split(
+                new[] { ' ', '\r', '\n', '\t', ',' },
+                StringSplitOptions.RemoveEmptyEntries)
+            .Select(x => x.TrimEnd('.'))
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+    private static async Task<SiteInfo?> FindSite(
+        Api api, string domain, CancellationToken ct)
+    {
+        // site.edit работает с идентификаторами списка site.
+        // Идентификатор не собирается из владельца и домена.
+        var list = await api.Call(
+            "site",
+            new Dictionary<string, string> { ["out"] = "devel" },
+            ct);
+
+        var rows = list.Root!.Elements("elem")
+            .OrderByDescending(e => e.Elements()
+                .Any(x => !x.HasElements && SameDomain(x.Value, domain)))
+            .ToList();
+
+        var seen = new HashSet<string>(StringComparer.Ordinal);
+
+        foreach (var row in rows)
+        {
+            ct.ThrowIfCancellationRequested();
+
+            var id = row.Element("name")?.Value;
+            if (string.IsNullOrWhiteSpace(id))
+            {
+                throw new InvalidOperationException(
+                    "Список site вернул запись без идентификатора name. " +
+                    "Автоматическое создание остановлено.");
+            }
+
+            if (!seen.Add(id))
+                continue;
+
+            // Читаем форму по точному ID панели.
+            // Ошибки чтения не считаем отсутствием сайта.
+            var form = await api.Call(
+                "site.edit",
+                new Dictionary<string, string>
+                {
+                    ["out"] = "devel",
+                    ["elid"] = id,
+                    ["tconvert"] = "punycode"
+                },
+                ct);
+
+            if (SameDomain(Value(form, "site_name"), domain))
+                return new SiteInfo(id, form);
+        }
+
+        return null;
+    }
+
+    private static void VerifySite(
+        XDocument form, string domain, string owner)
+    {
+        var aliases = Aliases(form);
+
+        if (!SameDomain(Value(form, "site_name"), domain) ||
+            Value(form, "site_owner") != owner ||
+            !aliases.Contains("www." + domain) ||
+            !aliases.Contains("*." + domain))
+        {
+            throw new InvalidOperationException(
+                "Не подтверждены имя, владелец или оба псевдонима сайта. " +
+                "Запрос сертификата не отправлялся.");
+        }
+    }
+
+    internal static async Task<IspmanagerOperationResult> EnsureSiteAsync(
+        IspmanagerSettings settings,
+        string password,
+        string domain,
+        CancellationToken ct)
+    {
+        domain = NormalizeDomain(domain);
+        var owner = settings.Owner.Trim();
+
+        await SiteGate.WaitAsync(ct);
+        try
+        {
+            using var api = await Api.Open(settings, password, ct);
+            var existing = await FindSite(api, domain, ct);
+
+            XDocument form;
+            if (existing is not null)
+            {
+                form = existing.Form;
+
+                if (Value(form, "site_owner") != owner)
+                {
+                    throw new InvalidOperationException(
+                        "Сайт существует, но принадлежит другому владельцу. " +
+                        "Владелец автоматически не изменялся.");
+                }
+            }
+            else
+            {
+                form = await api.Call(
+                    "site.edit",
+                    new Dictionary<string, string>
+                    {
+                        ["out"] = "devel",
+                        ["plid"] = "",
+                        ["tconvert"] = "punycode",
+                        ["site_owner"] = owner
+                    },
+                    ct);
+
+                RequireChoice(form, "site_owner", owner);
+            }
+
+            RequireControls(
+                form, "site_name", "site_aliases", "site_owner");
+
+            var aliases = Aliases(form);
+            var changed = aliases.Add("www." + domain);
+            changed |= aliases.Add("*." + domain);
+
+            if (existing is null || changed)
+            {
+                var fields = FormValues(form);
+                fields.Remove("elid");
+                fields.Remove("plid");
+
+                fields["out"] = "xml";
+                fields["sok"] = "ok";
+                fields["tconvert"] = "punycode";
+                fields["site_name"] = domain;
+                fields["site_owner"] = owner;
+                fields["site_aliases"] = string.Join(" ", aliases);
+
+                if (existing is not null)
+                {
+                    fields["elid"] = existing.Id;
+                }
+                else
+                {
+                    RequireControls(form, "site_ssl_cert", "lp_db_source");
+                    RequireChoice(form, "site_ssl_cert", "letsencrypt");
+                    RequireChoice(form, "lp_db_source", "db_not_use");
+
+                    fields["plid"] = "";
+                    fields["site_ssl_cert"] = "letsencrypt";
+                    fields["lp_db_source"] = "db_not_use";
+
+                    if (Controls(form).Contains("site_email"))
+                        fields["site_email"] = "webmaster@" + domain;
+                }
+
+                // Сохранение выполняется один раз.
+                // При таймауте автоматического повторного POST нет.
+                await api.Call("site.edit", fields, ct);
+            }
+
+            SiteInfo? saved = null;
+            for (var attempt = 0; attempt < 6; attempt++)
+            {
+                saved = await FindSite(api, domain, ct);
+                if (saved is not null)
+                    break;
+
+                if (attempt < 5)
+                    await Task.Delay(TimeSpan.FromSeconds(2), ct);
+            }
+
+            if (saved is null)
+            {
+                throw new InvalidOperationException(
+                    "После сохранения сайт не найден в списке site. " +
+                    "Повторное создание и выпуск сертификата не выполнялись.");
+            }
+
+            VerifySite(saved.Form, domain, owner);
+
+            return await RequestCertificate(api, settings, domain, owner, ct);
+        }
+        finally
+        {
+            SiteGate.Release();
+        }
+    }
+
+    private static async Task<IspmanagerOperationResult> RequestCertificate(
+        Api api,
+        IspmanagerSettings settings,
+        string domain,
+        string owner,
+        CancellationToken ct)
+    {
+        // Совместимый с предыдущей версией каталог состояний.
+        var stateDirectory = Path.Combine(
+            Environment.GetFolderPath(
+                Environment.SpecialFolder.LocalApplicationData),
+            "TextFileProcessor",
+            "deployment-certificate-requests");
+
+        Directory.CreateDirectory(stateDirectory);
+
+        var panel = new UriBuilder(settings.PanelUrl)
+        {
+            Query = "",
+            Fragment = ""
+        }.Uri.AbsoluteUri.TrimEnd('/');
+
+        var key = Convert.ToHexString(SHA256.HashData(
+            Encoding.UTF8.GetBytes(panel + "\n" + owner + "\n" + domain)));
+
+        var stateFile = Path.Combine(stateDirectory, key + ".state");
+
+        if (File.Exists(stateFile))
+        {
+            var state = await File.ReadAllTextAsync(stateFile, ct);
+
+            if (state == "submitted")
+            {
+                return new IspmanagerOperationResult
+                {
+                    Success = true,
+                    Message =
+                        $"Сайт {domain} и оба псевдонима проверены. " +
+                        "Запрос Wildcard ранее отправлен. " +
+                        "Повторный выпуск не запускался. " +
+                        "Статус выдачи сертификата проверяется отдельно."
+                };
+            }
+
+            throw new InvalidOperationException(
+                "Есть запрос сертификата с неизвестным исходом. " +
+                "Сначала проверьте его в ISPmanager. " +
+                "Автоматический повтор не выполняется. Файл: " + stateFile);
+        }
+
+        var request = new Dictionary<string, string>
+        {
+            ["out"] = "devel",
+            ["username"] = owner,
+            ["domain_name"] = domain,
+            ["aliases"] = $"www.{domain} *.{domain}",
+            ["crtname"] = domain + "_le1",
+            ["email"] = "webmaster@" + domain,
+            ["from_webdomain"] = "on",
+            ["wildcard"] = "on",
+            ["dns_check"] = "on",
+            ["enable_cert"] = "on"
+        };
+
+        var form = await api.Call("letsencrypt.generate", request, ct);
+        RequireControls(form, "wildcard");
+
+        var fields = FormValues(form);
+        foreach (var pair in request)
+            fields[pair.Key] = pair.Value;
+
+        fields["out"] = "xml";
+        fields["sok"] = "ok";
+
+        using (var stream = new FileStream(
+            stateFile, FileMode.CreateNew, FileAccess.Write, FileShare.None))
+        {
+            var bytes = Encoding.UTF8.GetBytes("outcome-unknown");
+            stream.Write(bytes, 0, bytes.Length);
+            stream.Flush(true);
+        }
+
+        await api.Call("letsencrypt.generate", fields, ct);
+        await File.WriteAllTextAsync(stateFile, "submitted", ct);
+
+        return new IspmanagerOperationResult
+        {
+            Success = true,
+            Message =
+                $"Сайт {domain}, владелец и оба псевдонима проверены. " +
+                "Запрос Wildcard отправлен в ISPmanager. " +
+                "Это подтверждение отправки, не завершённого выпуска: " +
+                "при внешнем DNS нужны актуальные TXT DNS-01."
+        };
+    }
+
+    private static async Task<bool> DatabaseExists(
+        Api api,
+        string name,
+        string server,
+        string owner,
+        CancellationToken ct)
+    {
+        var list = await api.Call(
+            "db",
+            new Dictionary<string, string> { ["out"] = "devel" },
+            ct);
+
+        var matches = list.Root!.Elements("elem")
+            .Where(e =>
+            {
+                var rowName = e.Element("name")?.Value ?? "";
+                var rowServer =
+                    e.Element("server")?.Value ??
+                    e.Element("dbserver")?.Value ?? "";
+
+                if (rowName == name + "->" + server)
+                    return true;
+
+                return rowName == name &&
+                    (rowServer.Length == 0 || rowServer == server);
+            })
+            .ToList();
+
+        if (matches.Count > 1)
+        {
+            throw new InvalidOperationException(
+                "В списке db несколько подходящих баз. " +
+                "Автоматический выбор запрещён.");
+        }
+
+        if (matches.Count == 0)
+            return false;
+
+        var actualOwner = matches[0].Element("owner")?.Value ?? "";
+
+        if (actualOwner.Length > 0 && actualOwner != owner)
+        {
+            throw new InvalidOperationException(
+                "База с таким именем принадлежит другому владельцу. " +
+                "Создание и импорт остановлены.");
+        }
+
+        // Доступ именно с user/pass из config.php далее
+        // проверяет DatabaseDeploymentService перед импортом.
+        return true;
+    }
+
+    internal static async Task<bool> EnsureDatabaseAsync(
+        IspmanagerSettings settings,
+        string panelPassword,
+        DeploymentDbConfig db,
+        CancellationToken ct)
+    {
+        await DatabaseGate.WaitAsync(ct);
+        try
+        {
+            using var api = await Api.Open(settings, panelPassword, ct);
+            var owner = settings.Owner.Trim();
+
+            // MySQL — ключ сервера в ранее полученной схеме этой панели.
+            // Не подставляем другой сервер автоматически.
+            const string server = "MySQL";
+
+            if (await DatabaseExists(api, db.Name, server, owner, ct))
+                return false;
+
+            var form = await api.Call(
+                "db.edit",
+                new Dictionary<string, string>
+                {
+                    ["out"] = "devel",
+                    ["plid"] = "",
+                    ["owner"] = owner,
+                    ["server"] = server
+                },
+                ct);
+
+            RequireControls(form, "name", "owner", "server", "charset", "user");
+            RequireChoice(form, "owner", owner);
+            RequireChoice(form, "server", server);
+                        RequireChoice(form, "charset", "utf8mb4");
+
+            if (string.IsNullOrWhiteSpace(db.User))
+            {
+                throw new InvalidOperationException(
+                    "В конфигурации не указан пользователь базы данных.");
+            }
+
+            if (string.IsNullOrEmpty(db.Password))
+            {
+                throw new InvalidOperationException(
+                    "В конфигурации не указан пароль базы данных.");
+            }
+
+            // Проверяем именно ключи вариантов, а не их подписи.
+            var existingUserAvailable = form
+                .Descendants("slist")
+                .Where(x => (string?)x.Attribute("name") == "user")
+                .SelectMany(x => x.Elements("val"))
+                .Any(x => (string?)x.Attribute("key") == db.User);
+
+            var values = new Dictionary<string, string>
+            {
+                ["name"] = db.Name,
+                ["owner"] = owner,
+                ["server"] = server,
+                ["charset"] = "utf8mb4",
+                ["sok"] = "ok"
+            };
+
+            if (existingUserAvailable)
+            {
+                RequireChoice(form, "user", db.User);
+                values["user"] = db.User;
+
+                // Не меняем пароль существующего пользователя:
+                // он может использоваться другими приложениями.
+                // Доступ с паролем из config.php проверяется перед импортом.
+            }
+            else
+            {
+                const string createUserValue = "new";
+
+                RequireChoice(form, "user", createUserValue);
+
+                // Повторно получаем форму с выбранным режимом создания:
+                // набор полей может зависеть от значения user.
+                var createUserForm = await api.Call(
+                    "db.edit",
+                    new Dictionary<string, string>
+                    {
+                        ["out"] = "devel",
+                        ["plid"] = "",
+                        ["owner"] = owner,
+                        ["server"] = server,
+                        ["user"] = createUserValue
+                    },
+                    ct);
+
+                RequireControls(
+                    createUserForm,
+                    "name",
+                    "owner",
+                    "server",
+                    "charset",
+                    "user",
+                    "username",
+                    "password",
+                    "confirm");
+
+                RequireChoice(createUserForm, "owner", owner);
+                RequireChoice(createUserForm, "server", server);
+                RequireChoice(createUserForm, "charset", "utf8mb4");
+                RequireChoice(createUserForm, "user", createUserValue);
+
+                values["user"] = createUserValue;
+                values["username"] = db.User;
+                values["password"] = db.Password;
+                values["confirm"] = db.Password;
+            }
+
+            ct.ThrowIfCancellationRequested();
+
+            // Повторная проверка перед изменением.
+            // DatabaseGate защищает только внутри текущего процесса.
+            if (await DatabaseExists(api, db.Name, server, owner, ct))
+                return false;
+
+            var result = await api.Call("db.edit", values, ct);
+
+            // Не включаем исходный ответ панели в исключение:
+            // он может содержать чувствительные данные.
+            if (result.Descendants("error").Any())
+            {
+                throw new InvalidOperationException(
+                    "Панель сообщила об ошибке создания базы данных. " +
+                    "Импорт остановлен. Проверьте состояние базы " +
+                    "и пользователя в панели перед повторным запуском.");
+            }
+
+            if (!await DatabaseExists(api, db.Name, server, owner, ct))
+            {
+                throw new InvalidOperationException(
+                    "После запроса создания база не найдена " +
+                    "на ожидаемом сервере у ожидаемого владельца. " +
+                    "Импорт остановлен.");
+            }
+
+            // true означает создание БД, но не проверку доступа
+            // и не успешный импорт.
+            return true;
+        }
+        finally
+        {
+            DatabaseGate.Release();
+        }
+    }
+}
