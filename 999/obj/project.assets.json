@@ -922,7 +922,7 @@
             "privateAssets": "none"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.425/PortableRuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "C:\\Users\\User\\AppData\\Local\\Microsoft\\dotnet-sdk8\\sdk\\8.0.425/PortableRuntimeIdentifierGraph.json"
       }
     },
     "runtimes": {
