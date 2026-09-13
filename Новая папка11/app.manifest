@@ -1,0 +1,36 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<assembly manifestVersion="1.0"
+          xmlns="urn:schemas-microsoft-com:asm.v1">
+  <assemblyIdentity
+      version="1.0.0.0"
+      name="TextFileProcessor.app" />
+
+  <trustInfo xmlns="urn:schemas-microsoft-com:asm.v3">
+    <security>
+      <requestedPrivileges>
+        <requestedExecutionLevel
+            level="asInvoker"
+            uiAccess="false" />
+      </requestedPrivileges>
+    </security>
+  </trustInfo>
+
+  <compatibility xmlns="urn:schemas-microsoft-com:compatibility.v1">
+    <application>
+      <supportedOS Id="{4f476546-937b-4f8a-a1c4-7f453f9c34b1}" />
+      <supportedOS Id="{1e6b06f5-3f04-4b55-b6e0-1d6cbf0523e1}" />
+      <supportedOS Id="{8e0f7a12-bfb3-4fe8-b9a5-48fd50a15a9a}" />
+    </application>
+  </compatibility>
+
+  <application xmlns="urn:schemas-microsoft-com:asm.v3">
+    <windowsSettings>
+      <dpiAware xmlns="http://schemas.microsoft.com/SMI/2005/WindowsSettings">
+        true/pm
+      </dpiAware>
+      <longPathAware xmlns="http://schemas.microsoft.com/SMI/2016/WindowsSettings">
+        true
+      </longPathAware>
+    </windowsSettings>
+  </application>
+</assembly>
